@@ -1,0 +1,20 @@
+{
+  "name": "kcsi-med",
+  "version": "11.14.0",
+  "description": "현장 의약품 식별 및 법의학 검토 보조 도구",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/growdaily860-cell/KCSI-MED-main.git"
+  },
+  "scripts": {
+    "test": "node tests/tdz.js index.html && node tests/dom.js index.html && node mark.js",
+    "serve": "node tests/dev-server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "acorn": "^8.18.0"
+  }
+}

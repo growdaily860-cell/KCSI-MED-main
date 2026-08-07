@@ -1,0 +1,6 @@
+# Large generated datasets should not dominate GitHub diffs or language stats.
+pill_db.json -diff linguist-generated=true
+easy_db.json -diff linguist-generated=true
+
+# Binary assets
+*.png binary

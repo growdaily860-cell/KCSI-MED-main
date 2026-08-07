@@ -1,0 +1,76 @@
+﻿# KCSI Copilot — 식약처 낱알식별 DB 월간 자동 갱신
+# 매월 1일 12:00 KST 실행 · Actions 탭에서 수동 실행(Run workflow)도 가능
+# 필요 Secret: DATA_GO_KR_KEY (Settings → Secrets and variables → Actions)
+# 산출물: pill_db.json (각인 매칭용) · easy_db.json (효능·주의사항, 지연 로드용)
+name: 낱알식별 DB 갱신
+
+on:
+  schedule:
+    - cron: '0 3 1 * *'   # 매월 1일 03:00 UTC = 12:00 KST
+  workflow_dispatch:       # 수동 실행 버튼
+    inputs:
+      probe:
+        description: '허가정보 API 스키마 탐색만 수행 (DB 갱신·커밋 안 함)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write          # pill_db.json 커밋 권한
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 리포 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node 20 준비
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 식약처 낱알식별 데이터 수집·변환
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          PROBE: ${{ inputs.probe }}
+        run: node scripts/update_pill_db.mjs
+
+      - name: pill_db.json · easy_db.json 커밋 → Vercel 자동 배포
+        # PROBE 모드는 파일을 만들지 않으므로 커밋 단계를 건너뛴다
+        if: ${{ inputs.probe != true }}
+        run: |
+          # 워크플로를 실행한 GitHub 계정의 noreply 주소를 사용한다.
+          # Vercel에 연결된 GitHub 계정과 실행 계정이 같아야 자동 배포가 차단되지 않는다.
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          git add pill_db.json
+          # e약은요 API 미신청·장애 시 easy_db.json이 생성되지 않을 수 있다.
+          # 그 경우에도 pill_db.json 갱신은 커밋되어야 하므로 존재할 때만 add.
+          if [ -f easy_db.json ]; then
+            git add easy_db.json
+          else
+            echo "· easy_db.json 없음 — 이번 갱신은 pill_db.json만 커밋"
+          fi
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+            exit 0
+          fi
+          git commit -m "chore: 낱알식별 DB 자동 갱신 ($(date -u -d '+9 hours' +%Y-%m-%d))"
+
+          # 수집에 10분 가까이 걸린다. 그 사이 사람이 main에 푸시하면 러너의 기준 커밋이
+          # 밀려 push가 [rejected]된다(실제 발생함). DB 파일은 이 워크플로만 건드리므로
+          # rebase로 얹으면 충돌 없이 해결된다.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              echo "✓ 푸시 성공"
+              exit 0
+            fi
+            echo "· 푸시 거부 — 원격 변경사항을 rebase 후 재시도 ($i/5)"
+            if ! git pull --rebase origin main; then
+              echo "❌ rebase 충돌 — 자동 해결 불가. 수동 확인이 필요합니다."
+              exit 1
+            fi
+            sleep $((i * 3))
+          done
+          echo "❌ 5회 재시도 후에도 푸시 실패"
+          exit 1
