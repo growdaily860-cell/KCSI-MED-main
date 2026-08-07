@@ -898,9 +898,14 @@ function checkForUpdate() {
 //    GPT 키는 OpenAI 대시보드에서 사용 한도(usage limit)를 설정하세요.
 const HARDCODED_GPT_KEY = '';   // 예: 'sk-proj-...'  (프록시 사용 시 비워둠)
 const HARDCODED_DUR_KEY = '';   // 식약처 공공데이터포털 Encoding 인증키
-// ★ GPT 프록시(Cloudflare Worker) 주소를 넣으면 조사관이 OpenAI 키 입력 없이 사용.
-//    키는 Worker에만 저장되어 브라우저에 노출되지 않는다. (openai-worker.js 배포 후 주소 기입)
-const HARDCODED_GPT_PROXY = 'https://kcsi-gpt.highzump.workers.dev';  // OpenAI 프록시 Worker (키는 Worker에만 저장)
+// ★ OpenAI·식약처 요청은 하나의 Cloudflare Worker를 공통 사용한다.
+//    실제 API 키는 Worker Secret에만 저장되어 브라우저에 노출되지 않는다.
+const KCSI_WORKER_PROXY = 'https://kcsi-med-main.growdaily860.workers.dev';
+const LEGACY_WORKER_PROXIES = new Set([
+  'https://kcsi-gpt.highzump.workers.dev',
+  'https://kcsi-proxy.highzump.workers.dev'
+]);
+const HARDCODED_GPT_PROXY = KCSI_WORKER_PROXY;
 const HARDCODED_GPT_TOKEN = '';  // (선택) Worker에 ACCESS_TOKEN을 설정했을 때만 입력
 
 function loadKey(name) {
@@ -909,9 +914,17 @@ function loadKey(name) {
 function saveKey(name, val) {
   try { if (val) localStorage.setItem(name, val); else localStorage.removeItem(name); } catch(e) {}
 }
+function loadProxyKey(name, fallback) {
+  const saved = loadKey(name).trim().replace(/\/+$/, '');
+  if (!saved || LEGACY_WORKER_PROXIES.has(saved)) {
+    saveKey(name, fallback);
+    return fallback;
+  }
+  return saved;
+}
 let GPT_KEY   = loadKey('kcsi_gpt_key')   || HARDCODED_GPT_KEY;
 let DUR_KEY   = loadKey('kcsi_dur_key')   || HARDCODED_DUR_KEY;
-let GPT_PROXY = loadKey('kcsi_gpt_proxy') || HARDCODED_GPT_PROXY;
+let GPT_PROXY = loadProxyKey('kcsi_gpt_proxy', HARDCODED_GPT_PROXY);
 let GPT_TOKEN = loadKey('kcsi_gpt_token') || HARDCODED_GPT_TOKEN;
 
 // ── DOM ──
@@ -1661,11 +1674,10 @@ function checkReady() {
 const EASY_BASE= 'https://apis.data.go.kr/1471000/DrbEasyDrugInfoService';
 const DUR_BASE = 'https://apis.data.go.kr/1471000/DURPrdlstInfoService03';
 
-// ★ Cloudflare Worker 프록시 주소 (하드코딩 기본값).
-//   Worker는 data.go.kr만 통과시키도록 제한돼 있어 주소가 노출돼도 악용 어려움.
-//   앱에서 다른 주소를 입력하면 localStorage 값이 우선 적용됨(주소 변경 대응).
-const DEFAULT_PROXY = 'https://kcsi-proxy.highzump.workers.dev';
-let MY_PROXY = loadKey('kcsi_proxy_url') || DEFAULT_PROXY;
+// ★ 식약처 공공 API도 위의 공통 Cloudflare Worker를 기본값으로 사용한다.
+//   기존 버전의 Worker 주소가 localStorage에 남아 있으면 새 주소로 자동 이전한다.
+const DEFAULT_PROXY = KCSI_WORKER_PROXY;
+let MY_PROXY = loadProxyKey('kcsi_proxy_url', DEFAULT_PROXY);
 
 // CORS 프록시 목록 — 앞에서부터 시도하고 실패하면 다음 프록시로 전환.
 // 1순위는 본인 Worker(MY_PROXY). 그 다음은 공개 프록시(불안정, 최후 수단).
