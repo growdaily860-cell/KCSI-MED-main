@@ -12,6 +12,8 @@
 .arena-eyebrow{font:700 10.5px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#4B5563;text-transform:uppercase}
 .arena-hero h1{font-size:20px;line-height:1.35;margin:7px 0 5px}
 .arena-hero p{font-size:12.5px;line-height:1.65;color:var(--soft)}
+.arena-cost-notice{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:11px;padding:10px 11px;border-radius:9px;background:#EFF6FF;border:1px solid #BFDBFE;color:#1E3A8A;font-size:11.5px;line-height:1.55}
+.arena-cost-notice b{white-space:nowrap}.arena-cost-notice code{font:600 10.5px/1.3 'IBM Plex Mono',monospace;background:#DBEAFE;padding:2px 4px;border-radius:4px}
 .arena-privacy{margin-top:11px;padding:9px 11px;border-radius:9px;background:#FFF7ED;border:1px solid #FED7AA;color:#7C2D12;font-size:11.5px;line-height:1.55}
 .arena-nav{display:flex;gap:6px;margin:12px 0}
 .arena-nav button{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;color:var(--soft);font:700 12px/1.2 inherit;cursor:pointer}
@@ -34,23 +36,38 @@
 .arena-check input{width:16px;height:16px;margin-top:1px;flex:none}
 
 .arena-images{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.arena-upload{position:relative;min-height:150px;border:1.5px dashed #C8C6C0;border-radius:12px;background:#FAFAF9;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
+.arena-upload{position:relative;min-height:185px;border:1.5px dashed #C8C6C0;border-radius:12px;background:#FAFAF9;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .arena-upload.has-image{border-style:solid;border-color:#64748B}
 .arena-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
-.arena-upload .arena-up-ph{font-size:12px;line-height:1.55;color:var(--soft);padding:20px;z-index:1}
+.arena-upload .arena-up-ph{font-size:12px;line-height:1.55;color:var(--soft);padding:34px 16px 8px;z-index:1}
 .arena-upload .arena-up-label{position:absolute;left:8px;top:8px;z-index:2;background:rgba(17,24,39,.82);color:#fff;border-radius:6px;padding:4px 7px;font-size:10.5px;font-weight:700}
 .arena-upload .arena-up-clear{display:none;position:absolute;right:8px;top:8px;z-index:3;width:26px;height:26px;border:0;border-radius:50%;background:rgba(17,24,39,.82);color:#fff;font-size:16px;cursor:pointer}
 .arena-upload.has-image .arena-up-clear{display:block}
-.arena-upload input{display:none}
+.arena-upload-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;padding:0 12px 14px;z-index:2}
+.arena-upload-actions label{display:flex;align-items:center;justify-content:center;min-height:40px;border:1px solid #CBD5E1;border-radius:9px;background:#fff;color:#1F2937;font-size:11.5px;font-weight:800;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.arena-upload-actions label:last-child{background:#111827;border-color:#111827;color:#fff}
+.arena-file-input{display:none}
+.arena-up-ready{display:none;position:absolute;left:8px;bottom:8px;z-index:3;padding:4px 7px;border-radius:6px;background:rgba(22,101,52,.88);color:#fff;font-size:10.5px;font-weight:700}
+.arena-upload.has-image .arena-up-ready{display:block}
+.arena-upload.has-image .arena-up-ph,.arena-upload.has-image .arena-upload-actions{display:none}
 
 .arena-models{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .arena-model{border:1px solid #DDE1E7;border-radius:12px;padding:12px;background:#F8FAFC}
 .arena-model-title{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:800;margin-bottom:9px}
 .arena-model-title span:last-child{font:600 9.5px/1 'IBM Plex Mono',monospace;color:#64748B;background:#E2E8F0;padding:4px 6px;border-radius:4px}
 .arena-model .arena-field{margin-top:8px}
+.arena-model-price{margin-top:8px;padding:8px 9px;border-radius:7px;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;font:700 11px/1.45 'IBM Plex Mono',monospace}
+.arena-model-price span{display:block;color:#047857;font:500 9.5px/1.35 'IBM Plex Sans KR',sans-serif}
+.arena-advanced{margin-top:10px;border-top:1px solid #E2E8F0;padding-top:9px}
+.arena-advanced summary{color:#64748B;font-size:10.5px;font-weight:700;cursor:pointer}
+.arena-advanced[open] summary{margin-bottom:8px}
 .arena-secret-note{padding:8px 9px;border-radius:7px;background:#fff;border:1px solid #E5E7EB;color:#6B7280;font-size:10.5px;line-height:1.45;margin-top:9px}
+.arena-preset{flex:none;border:1px solid #CBD5E1;border-radius:8px;padding:7px 9px;background:#fff;color:#334155;font:700 10.5px/1.2 inherit;cursor:pointer}
+.arena-cost-mode{display:grid;grid-template-columns:1fr 190px;gap:7px 12px;align-items:center;margin-bottom:10px;padding:11px;border:1px solid #BFDBFE;border-radius:11px;background:#EFF6FF}
+.arena-cost-mode div{display:flex;flex-direction:column;gap:3px}.arena-cost-mode b{font-size:12px;color:#1E3A8A}.arena-cost-mode span{font-size:10.5px;color:#1D4ED8}
+.arena-cost-mode p{grid-column:1/-1;font-size:10.5px;line-height:1.5;color:#475569}
 .arena-setup-lock{display:none;padding:12px;border-radius:10px;background:#F1F5F9;border:1px solid #CBD5E1;font-size:12px;color:#334155;line-height:1.55}
-.arena-running .arena-models{display:none}.arena-running .arena-setup-lock{display:block}
+.arena-running .arena-models,.arena-running .arena-cost-mode,.arena-running .arena-preset{display:none}.arena-running .arena-setup-lock{display:block}
 
 .arena-action{width:100%;border:0;border-radius:11px;padding:14px;background:#111827;color:#fff;font:700 14px/1.2 inherit;cursor:pointer}
 .arena-action:disabled{opacity:.38;cursor:not-allowed}
@@ -104,8 +121,11 @@
   .arena-shell{padding-left:14px;padding-right:14px}
   .arena-grid,.arena-grid.three,.arena-models,.arena-compare{grid-template-columns:1fr}
   .arena-images{grid-template-columns:1fr 1fr}
+  .arena-cost-mode{grid-template-columns:1fr}
+  .arena-cost-mode p{grid-column:1}
   .arena-stat-grid{grid-template-columns:1fr 1fr}
   .arena-output{min-height:0}
   .arena-reveal-grid{grid-template-columns:1fr}
 }
-@media (max-width:370px){.arena-images{grid-template-columns:1fr}.arena-votes{grid-template-columns:1fr}.arena-post-actions,.arena-dashboard-actions{grid-template-columns:1fr}}
+@media (max-width:420px){.arena-images{grid-template-columns:1fr}.arena-cost-notice{grid-template-columns:1fr}.arena-upload{min-height:200px}}
+@media (max-width:370px){.arena-votes{grid-template-columns:1fr}.arena-post-actions,.arena-dashboard-actions{grid-template-columns:1fr}}

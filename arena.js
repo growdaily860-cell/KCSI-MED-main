@@ -3,11 +3,24 @@
 
   const STORE_KEY = 'kcsi_arena_runs_v1';
   const MAX_RUNS = 300;
-  const PROMPT_VERSION = 'kcsi-pill-arena-v1';
+  const PROMPT_VERSION = 'kcsi-pill-arena-v2';
+  const DEFAULT_OPENAI_MODELS = ['gpt-5.6-luna', 'gpt-5-mini'];
+  const COST_MODES = {
+    practice: {
+      label: '저비용 연습',
+      detail: 'low',
+      maxCompletionTokens: 1200,
+    },
+    research: {
+      label: '정밀 비교',
+      detail: 'high',
+      maxCompletionTokens: 2200,
+    },
+  };
   const PROVIDERS = {
     openai: {
       label: 'OpenAI',
-      model: 'gpt-4o',
+      model: DEFAULT_OPENAI_MODELS[0],
       endpoint: 'https://api.openai.com/v1/chat/completions',
     },
     gemini: {
@@ -156,7 +169,7 @@
 
   function buildCsv(runs) {
     const columns = [
-      'experiment_id','created_at','case_id','image_sides','image_clarity','prompt_version','blind_label',
+      'experiment_id','created_at','case_id','image_sides','image_clarity','cost_mode','prompt_version','blind_label',
       'provider','model','drug_name','imprint_front','imprint_back','mfds_match','mfds_candidate',
       'verdict','accuracy_score','evidence_score','hallucination_score','clarity_score','total_score','vote','latency_ms',
     ];
@@ -169,7 +182,7 @@
       const rating = result.rating || {};
       rows.push([
         run.id, run.createdAt, run.caseId, run.condition && run.condition.sides,
-        run.condition && run.condition.clarity, run.promptVersion, label,
+        run.condition && run.condition.clarity, run.condition && (run.condition.costModeLabel || run.condition.costMode), run.promptVersion, label,
         model.providerLabel || model.provider, model.model, parsed.drug_name, parsed.imprint_front,
         parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched', db.candidate,
         rating.verdict, accuracyFromVerdict(rating.verdict), rating.evidence, rating.hallucination,
@@ -225,20 +238,26 @@
     };
   }
 
-  function createRequestBody(model, front, back) {
+  function createRequestBody(model, front, back, costMode) {
+    const mode = COST_MODES[costMode] || COST_MODES.practice;
     const content = [{ type: 'text', text: makePrompt(!!back) }];
-    content.push({ type: 'image_url', image_url: { url: front } });
-    if (back) content.push({ type: 'image_url', image_url: { url: back } });
-    return {
+    content.push({ type: 'image_url', image_url: { url: front, detail: mode.detail } });
+    if (back) content.push({ type: 'image_url', image_url: { url: back, detail: mode.detail } });
+    const body = {
       model,
-      temperature: 0,
-      max_tokens: 1200,
+      response_format: { type: 'json_object' },
       messages: [{ role: 'user', content }],
     };
+    if (/^gpt-5(?:[.\-]|$)/i.test(model)) body.max_completion_tokens = mode.maxCompletionTokens;
+    else {
+      body.temperature = 0;
+      body.max_tokens = mode.maxCompletionTokens;
+    }
+    return body;
   }
 
-  async function callCandidate(config, front, back) {
-    const body = createRequestBody(config.model, front, back);
+  async function callCandidate(config, front, back, costMode) {
+    const body = createRequestBody(config.model, front, back, costMode);
     const started = Date.now();
     let response;
     if (config.provider === 'openai' && !config.endpoint && !config.apiKey && typeof root.gptFetch === 'function') {
@@ -330,13 +349,13 @@
         const image = new Image();
         image.onerror = () => reject(new Error('지원하지 않는 이미지 형식입니다'));
         image.onload = () => {
-          const maxSide = 2048;
+          const maxSide = 1600;
           const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
           const canvas = document.createElement('canvas');
           canvas.width = Math.max(1, Math.round(image.width * scale));
           canvas.height = Math.max(1, Math.round(image.height * scale));
           canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', .92));
+          resolve(canvas.toDataURL('image/jpeg', .88));
         };
         image.src = reader.result;
       };
@@ -345,7 +364,8 @@
   }
 
   const core = {
-    PROVIDERS, PROMPT_VERSION, parseModelOutput, accuracyFromVerdict, computeTotal,
+    PROVIDERS, PROMPT_VERSION, DEFAULT_OPENAI_MODELS, COST_MODES, createRequestBody,
+    parseModelOutput, accuracyFromVerdict, computeTotal,
     summarizeRuns, buildCsv, randomizedBlindOrder, normalizeDrugName, suggestedVerdict,
     makePrompt, dbCrossCheck,
   };
@@ -360,31 +380,35 @@
     runs: readRuns(),
   };
 
-  function modelForm(number, defaultProvider) {
-    const provider = PROVIDERS[defaultProvider];
+  function modelForm(number, model, priceText) {
     return `<div class="arena-model" data-model-form="${number}">
-      <div class="arena-model-title"><span>비교 후보 ${number}</span><span>설정 후 무작위 배정</span></div>
-      <div class="arena-field"><label for="arenaProvider${number}">제공자</label>
-        <select class="arena-select" id="arenaProvider${number}">
-          ${Object.entries(PROVIDERS).map(([key, value]) => `<option value="${key}"${key === defaultProvider ? ' selected' : ''}>${esc(value.label)}</option>`).join('')}
-        </select></div>
-      <div class="arena-field"><label for="arenaModel${number}">모델 ID</label><input class="arena-input mono" id="arenaModel${number}" value="${esc(provider.model)}"></div>
-      <div class="arena-field"><label for="arenaEndpoint${number}">호출 URL 또는 전용 Worker <span style="font-weight:400">(선택)</span></label>
-        <input class="arena-input mono" id="arenaEndpoint${number}" placeholder="비우면 제공자 기본값 사용"></div>
-      <div class="arena-field"><label for="arenaKey${number}">직접 API 키 <span style="font-weight:400">(선택)</span></label>
-        <input class="arena-input mono" type="password" id="arenaKey${number}" autocomplete="off" placeholder="Worker 사용 시 비워두기"></div>
-      <div class="arena-field"><label for="arenaToken${number}">Worker 접근 토큰 <span style="font-weight:400">(선택)</span></label>
-        <input class="arena-input mono" type="password" id="arenaToken${number}" autocomplete="off"></div>
-      <div class="arena-secret-note">API 키와 접근 토큰은 연구기록·CSV에 저장하지 않습니다. OpenAI는 모두 비워두면 상단의 기존 GPT 설정을 사용합니다.</div>
+      <div class="arena-model-title"><span>비교 후보 ${number}</span><span id="arenaProviderBadge${number}">OpenAI · 무작위 배정</span></div>
+      <div class="arena-field"><label for="arenaModel${number}">OpenAI 모델 ID</label><input class="arena-input mono" id="arenaModel${number}" value="${esc(model)}"></div>
+      <div class="arena-model-price" id="arenaPrice${number}">${esc(priceText)} <span>텍스트 토큰 기준</span></div>
+      <details class="arena-advanced">
+        <summary>고급 연결 설정 · 다른 제공자는 나중에 사용</summary>
+        <div class="arena-field"><label for="arenaProvider${number}">제공자</label>
+          <select class="arena-select" id="arenaProvider${number}">
+            ${Object.entries(PROVIDERS).map(([key, value]) => `<option value="${key}"${key === 'openai' ? ' selected' : ''}>${esc(value.label)}</option>`).join('')}
+          </select></div>
+        <div class="arena-field"><label for="arenaEndpoint${number}">호출 URL 또는 전용 Worker <span style="font-weight:400">(선택)</span></label>
+          <input class="arena-input mono" id="arenaEndpoint${number}" placeholder="비우면 상단 OpenAI 설정 사용"></div>
+        <div class="arena-field"><label for="arenaKey${number}">직접 API 키 <span style="font-weight:400">(선택)</span></label>
+          <input class="arena-input mono" type="password" id="arenaKey${number}" autocomplete="off" placeholder="Worker 사용 시 비워두기"></div>
+        <div class="arena-field"><label for="arenaToken${number}">Worker 접근 토큰 <span style="font-weight:400">(선택)</span></label>
+          <input class="arena-input mono" type="password" id="arenaToken${number}" autocomplete="off"></div>
+        <div class="arena-secret-note">API 키와 접근 토큰은 연구기록·CSV에 저장하지 않습니다. OpenAI는 모두 비워두면 상단의 기존 OpenAI 설정을 사용합니다.</div>
+      </details>
     </div>`;
   }
 
   function rootMarkup() {
     return `<div class="arena-shell">
       <section class="arena-hero">
-        <div class="arena-eyebrow">KCSI Model Arena · Blind Evaluation</div>
-        <h1>AI 모델 비교 연구</h1>
-        <p>같은 알약 사진과 같은 프롬프트를 두 모델에 동시에 보내고, 모델명을 숨긴 상태에서 결과를 채점합니다. 투표를 마친 뒤에만 실제 모델이 공개됩니다.</p>
+        <div class="arena-eyebrow">KCSI OpenAI Practice Arena · Blind Evaluation</div>
+        <h1>OpenAI 저비용 모델 비교 연습</h1>
+        <p>기본값은 GPT-5.6 Luna와 GPT-5 mini입니다. 같은 알약 사진과 같은 프롬프트를 두 모델에 보내고, 모델명을 숨긴 상태에서 결과를 채점합니다.</p>
+        <div class="arena-cost-notice"><b>💳 비용 안내</b><span>비교 1회는 모델별 1회씩, 총 2회의 API 호출입니다. 기본 연습 모드는 사진을 <code>detail: low</code>로 전송하고 출력을 제한합니다. 이미지 입력도 토큰으로 과금되며 실제 비용은 사진 수·크기·응답 길이에 따라 달라집니다.</span></div>
         <div class="arena-privacy">🔐 실제 사건자료는 성명·주민번호·사건번호 등 식별정보를 제거한 뒤 사용하세요. 원본 이미지는 브라우저 연구기록에 저장되지 않습니다.</div>
       </section>
       <div class="arena-nav"><button class="active" data-arena-view="experiment">새 비교평가</button><button data-arena-view="dashboard">누적 연구결과</button></div>
@@ -405,14 +429,15 @@
         <section class="arena-card">
           <div class="arena-card-h"><div><h2><span class="arena-step">2</span>동일 이미지 등록</h2><p>앞면은 필수, 뒷면은 선택입니다. 두 모델에 완전히 같은 파일이 전송됩니다.</p></div></div>
           <div class="arena-images">
-            <label class="arena-upload" id="arenaFrontZone"><span class="arena-up-label">앞면 · 필수</span><span class="arena-up-ph">눌러서 앞면 사진 선택<br><small>단색 배경 · 각인이 크게 보이게</small></span><img alt="앞면 미리보기" hidden><button type="button" class="arena-up-clear" aria-label="앞면 삭제">×</button><input type="file" id="arenaFrontFile" accept="image/*"></label>
-            <label class="arena-upload" id="arenaBackZone"><span class="arena-up-label">뒷면 · 선택</span><span class="arena-up-ph">눌러서 뒷면 사진 선택<br><small>같은 알약을 뒤집어 촬영</small></span><img alt="뒷면 미리보기" hidden><button type="button" class="arena-up-clear" aria-label="뒷면 삭제">×</button><input type="file" id="arenaBackFile" accept="image/*"></label>
+            <div class="arena-upload" id="arenaFrontZone"><span class="arena-up-label">앞면 · 필수</span><span class="arena-up-ph">각인이 화면에 크게 보이도록 준비하세요.<br><small>JPG · PNG · WEBP 등 사진 파일</small></span><div class="arena-upload-actions"><label for="arenaFrontFile">📁 사진 선택</label><label for="arenaFrontFileCam">📷 카메라 촬영</label></div><img alt="앞면 미리보기" hidden><span class="arena-up-ready">✓ 앞면 등록 완료</span><button type="button" class="arena-up-clear" aria-label="앞면 삭제">×</button><input class="arena-file-input" type="file" id="arenaFrontFile" accept="image/*"><input class="arena-file-input" type="file" id="arenaFrontFileCam" accept="image/*" capture="environment"></div>
+            <div class="arena-upload" id="arenaBackZone"><span class="arena-up-label">뒷면 · 선택</span><span class="arena-up-ph">같은 알약을 뒤집어 촬영하세요.<br><small>없으면 앞면만으로도 연습 가능</small></span><div class="arena-upload-actions"><label for="arenaBackFile">📁 사진 선택</label><label for="arenaBackFileCam">📷 카메라 촬영</label></div><img alt="뒷면 미리보기" hidden><span class="arena-up-ready">✓ 뒷면 등록 완료</span><button type="button" class="arena-up-clear" aria-label="뒷면 삭제">×</button><input class="arena-file-input" type="file" id="arenaBackFile" accept="image/*"><input class="arena-file-input" type="file" id="arenaBackFileCam" accept="image/*" capture="environment"></div>
           </div>
         </section>
 
         <section class="arena-card" id="arenaSetupCard">
-          <div class="arena-card-h"><div><h2><span class="arena-step">3</span>비교 모델 설정</h2><p>후보 1·2는 실행할 때 무작위로 모델 A·B에 배정됩니다.</p></div></div>
-          <div class="arena-models">${modelForm(1, 'openai')}${modelForm(2, 'gemini')}</div>
+          <div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 설정</h2><p>저비용 기본 조합이 미리 설정되어 있으며, 실행 시 모델 A·B에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div>
+          <div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">연습용 · 이미지 low · 최대 출력 1,200 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>저비용 모드는 화면 흐름을 익히기 위한 설정입니다. 작은 각인 판독 정확도를 평가할 때는 정밀 비교를 선택하세요.</p></div>
+          <div class="arena-models">${modelForm(1, DEFAULT_OPENAI_MODELS[0], '입력 $0.20 · 출력 $1.20 / 1M')}${modelForm(2, DEFAULT_OPENAI_MODELS[1], '입력 $0.25 · 출력 $2.00 / 1M')}</div>
           <div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 채점과 투표가 끝날 때까지 A/B의 실제 모델은 표시되지 않습니다.</div>
           <label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>등록 이미지에 개인 식별정보가 없고, 연구 목적의 외부 AI API 전송 기준을 확인했습니다.</span></label>
           <button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 동일 조건으로 블라인드 비교 시작</button>
@@ -486,9 +511,27 @@
       const providerEl = document.getElementById(`arenaProvider${number}`);
       providerEl.addEventListener('change', () => {
         const modelEl = document.getElementById(`arenaModel${number}`);
-        modelEl.value = (PROVIDERS[providerEl.value] || PROVIDERS.custom).model;
+        const provider = PROVIDERS[providerEl.value] || PROVIDERS.custom;
+        modelEl.value = providerEl.value === 'openai' ? DEFAULT_OPENAI_MODELS[number - 1] : provider.model;
+        document.getElementById(`arenaProviderBadge${number}`).textContent = `${provider.label} · 무작위 배정`;
+        document.getElementById(`arenaPrice${number}`).hidden = providerEl.value !== 'openai';
       });
     });
+    document.getElementById('arenaOpenAiPreset').addEventListener('click', () => {
+      [1, 2].forEach(number => {
+        document.getElementById(`arenaProvider${number}`).value = 'openai';
+        document.getElementById(`arenaModel${number}`).value = DEFAULT_OPENAI_MODELS[number - 1];
+        document.getElementById(`arenaEndpoint${number}`).value = '';
+        document.getElementById(`arenaKey${number}`).value = '';
+        document.getElementById(`arenaToken${number}`).value = '';
+        document.getElementById(`arenaProviderBadge${number}`).textContent = 'OpenAI · 무작위 배정';
+        document.getElementById(`arenaPrice${number}`).hidden = false;
+      });
+      document.getElementById('arenaCostMode').value = 'practice';
+      syncCostHint();
+      setArenaStatus('OpenAI 저비용 연습 기본값을 복원했습니다');
+    });
+    document.getElementById('arenaCostMode').addEventListener('change', syncCostHint);
     bindImage('front'); bindImage('back');
     document.getElementById('arenaConsent').addEventListener('change', refreshRunButton);
     document.getElementById('arenaRun').addEventListener('click', runExperiment);
@@ -515,24 +558,34 @@
 
   function bindImage(side) {
     const cap = side[0].toUpperCase() + side.slice(1);
-    const input = document.getElementById(`arena${cap}File`);
+    const inputs = [document.getElementById(`arena${cap}File`), document.getElementById(`arena${cap}FileCam`)];
     const zone = document.getElementById(`arena${cap}Zone`);
     const image = zone.querySelector('img');
-    input.addEventListener('change', async () => {
+    const handleInput = async input => {
       if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
       try {
+        if (file.type && !file.type.startsWith('image/')) throw new Error('사진 파일을 선택하세요');
+        if (file.size > 30 * 1024 * 1024) throw new Error('30MB 이하 사진을 선택하세요');
         setArenaStatus('이미지 최적화 중...');
-        state.images[side] = await fileToDataUrl(input.files[0]);
+        state.images[side] = await fileToDataUrl(file);
         image.src = state.images[side]; image.hidden = false; zone.classList.add('has-image');
-        setArenaStatus(''); refreshRunButton();
+        setArenaStatus(`${side === 'front' ? '앞면' : '뒷면'} 사진 등록 완료 · 전송용으로 최적화했습니다`); refreshRunButton();
       } catch (error) { setArenaStatus(error.message, true); }
       input.value = '';
-    });
+    };
+    inputs.forEach(input => input.addEventListener('change', () => handleInput(input)));
     zone.querySelector('.arena-up-clear').addEventListener('click', event => {
       event.preventDefault(); event.stopPropagation();
       state.images[side] = ''; image.src = ''; image.hidden = true; zone.classList.remove('has-image');
+      inputs.forEach(input => { input.value = ''; });
       refreshRunButton();
     });
+  }
+
+  function syncCostHint() {
+    const mode = COST_MODES[document.getElementById('arenaCostMode').value] || COST_MODES.practice;
+    document.getElementById('arenaCostHint').textContent = `${mode.label} · 이미지 ${mode.detail} · 최대 출력 ${mode.maxCompletionTokens.toLocaleString('ko-KR')} 토큰`;
   }
 
   function refreshRunButton() {
@@ -566,6 +619,8 @@
   async function runExperiment() {
     const first = readModelConfig(1), second = readModelConfig(2);
     try { validateConfigs(first, second); } catch (error) { return setArenaStatus(error.message, true); }
+    const costMode = document.getElementById('arenaCostMode').value;
+    const costConfig = COST_MODES[costMode] || COST_MODES.practice;
     const order = randomizedBlindOrder(first, second);
     const setup = document.getElementById('arenaSetupCard');
     setup.classList.add('arena-running');
@@ -581,6 +636,8 @@
       condition: {
         sides: state.images.back ? '앞면+뒷면' : '앞면만',
         clarity: document.getElementById('arenaClarity').value,
+        costMode,
+        costModeLabel: costConfig.label,
       },
       truth: {
         name: document.getElementById('arenaTruthName').value.trim(),
@@ -593,8 +650,8 @@
 
     const dbPromise = typeof root.ensurePillDb === 'function' ? root.ensurePillDb().catch(() => null) : Promise.resolve(null);
     const settled = await Promise.allSettled([
-      callCandidate(order.A, state.images.front, state.images.back),
-      callCandidate(order.B, state.images.front, state.images.back),
+      callCandidate(order.A, state.images.front, state.images.back, costMode),
+      callCandidate(order.B, state.images.front, state.images.back, costMode),
     ]);
     await dbPromise;
     ['A', 'B'].forEach((label, index) => {
@@ -705,6 +762,8 @@
     ['Front','Back'].forEach(cap => {
       const zone = document.getElementById(`arena${cap}Zone`); const image = zone.querySelector('img');
       image.src = ''; image.hidden = true; zone.classList.remove('has-image');
+      document.getElementById(`arena${cap}File`).value = '';
+      document.getElementById(`arena${cap}FileCam`).value = '';
     });
     ['arenaCaseId','arenaTruthName','arenaTruthFront','arenaTruthBack'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('arenaConsent').checked = false;
@@ -739,7 +798,7 @@
     document.getElementById('arenaHistory').innerHTML = state.runs.length ? [...state.runs].reverse().slice(0, 12).map(run => {
       const a = run.blindOrder.A, b = run.blindOrder.B;
       const winner = run.vote === 'tie' ? '동등' : `${run.vote} 우수`;
-      return `<div class="arena-history-item"><b>${esc(run.caseId)}</b> · ${esc(winner)}<div>${esc(a.model)} vs ${esc(b.model)}</div><div class="arena-history-meta">${esc(run.condition.sides)} · ${esc(run.condition.clarity)} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`;
+      return `<div class="arena-history-item"><b>${esc(run.caseId)}</b> · ${esc(winner)}<div>${esc(a.model)} vs ${esc(b.model)}</div><div class="arena-history-meta">${esc(run.condition.sides)} · ${esc(run.condition.clarity)} · ${esc(run.condition.costModeLabel || run.condition.costMode || '기존 설정')} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`;
     }).join('') : '<div class="arena-empty">최근 실험이 없습니다.</div>';
   }
 
