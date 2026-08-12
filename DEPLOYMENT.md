@@ -10,7 +10,7 @@
 git init -b main
 git add .
 git status
-git commit -m "feat: KCSI-MED v11.14"
+git commit -m "feat: KCSI-MED v12.0"
 git remote add origin https://github.com/growdaily860-cell/KCSI-MED-main.git
 git push -u origin main
 ```
@@ -44,7 +44,10 @@ Git 연동 후 `main` 브랜치에 새 커밋을 push하면 Vercel이 자동 배
 
 ## 4. 배포 후 점검
 
-- `/`가 정상적으로 열리고 화면에 `v11.14`가 표시되는지 확인
+- `/`가 정상적으로 열리고 화면에 `v12.0`이 표시되는지 확인
+- 상단 `현장 판독 / 모델 비교 연구` 탭 전환 확인
+- 연구 모드에서 투표 전 모델명 비공개, 투표 후 공개 확인
+- 연구 결과 CSV 다운로드 확인
 - `/pill_db.json`과 `/easy_db.json`이 HTTP 200으로 열리는지 확인
 - 단일 알약 및 여러 알약 사진의 업로드 버튼 확인
 - DB 후보가 자동 확정으로 표시되지 않는지 확인
@@ -62,3 +65,11 @@ AI 판독과 식약처 API 조회는 코드에 설정된 Cloudflare Worker에 �
 - Preview URL에서도 CORS 오류 없이 요청되는지
 
 Worker 설정이 없어도 내장 JSON DB 검색과 수동 비교 기능은 사용할 수 있습니다.
+
+### 연구 모드의 다중 모델 연결
+
+- OpenAI: 후보 설정을 모두 비우면 기존 KCSI OpenAI Worker를 사용합니다.
+- Gemini·Qwen: 제공자 API 키를 화면에 일시 입력하거나 제공자별 전용 Worker 주소를 입력합니다.
+- 전용 Worker는 브라우저에서 받은 OpenAI 호환 Chat Completions 요청을 해당 제공자 API로 전달하고, 응답에 CORS 헤더를 포함해야 합니다.
+- 기존 `kcsi-med-main.growdaily860.workers.dev`가 OpenAI 전용이면 Gemini·Qwen 요청을 그 주소로 보내지 마세요. 제공자 라우팅을 추가하거나 별도 Worker를 사용해야 합니다.
+- 운영·연구 배포에서는 API 키 직접 입력보다 Worker Secret, 허용 Origin, 접근 토큰, 요청량 제한을 적용한 프록시를 권장합니다.
