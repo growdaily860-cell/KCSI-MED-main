@@ -23,22 +23,6 @@
     openai: {
       label: 'OpenAI',
       model: DEFAULT_OPENAI_MODELS[0],
-      endpoint: 'https://api.openai.com/v1/chat/completions',
-    },
-    gemini: {
-      label: 'Google Gemini',
-      model: 'gemini-3.6-flash',
-      endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    },
-    qwen: {
-      label: 'Alibaba Qwen',
-      model: 'qwen3-vl-plus',
-      endpoint: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-    },
-    custom: {
-      label: 'OpenAI 호환 API',
-      model: '',
-      endpoint: '',
     },
   };
 
@@ -222,23 +206,18 @@
     throw new Error('응답 본문을 찾을 수 없습니다');
   }
 
-  function normalizeEndpoint(url) {
-    const value = safeText(url).trim().replace(/\/+$/, '');
-    if (!value) return '';
-    if (/\/chat\/completions$/i.test(value)) return value;
-    if (/\/(?:v1|openai)$/i.test(value)) return value + '/chat/completions';
-    return value;
-  }
-
   function friendlyCallError(error) {
     const message = safeText(error && error.message || error).trim();
+    if (/daily api limit|일일.*(?:한도|제한)/i.test(message)) {
+      return '오늘의 API 호출 한도에 도달했습니다. 한국시간 자정 이후 다시 사용할 수 있습니다.';
+    }
     if (/\b401\b|unauthori[sz]ed|access[_ -]?token|인증/i.test(message)) {
-      return 'Worker 인증 실패(401) · 현장 판독 상단의 프록시 접근 토큰을 다시 저장하세요.';
+      return '로그인 시간이 만료되었습니다(401) · 6자리 PIN으로 다시 로그인하세요.';
     }
     if (/\b403\b|forbidden/i.test(message)) {
       return 'Worker 접근 거부(403) · Cloudflare의 허용 주소와 접근 토큰 설정을 확인하세요.';
     }
-    if (/model.*(?:not found|does not exist|access|unsupported)|unsupported.*model|invalid.*model/i.test(message)) {
+    if (/model.*(?:not found|does not exist|access|unsupported|not allowed)|unsupported.*model|invalid.*model/i.test(message)) {
       return '모델 사용 권한 또는 모델 ID 오류 · 기본값 복원 후 다시 실행하세요.';
     }
     if (/\b429\b|rate.?limit|quota|billing|insufficient_quota/i.test(message)) {
@@ -257,12 +236,11 @@
   }
 
   function publicModelSnapshot(config) {
-    const provider = PROVIDERS[config.provider] || PROVIDERS.custom;
     return {
-      provider: config.provider,
-      providerLabel: provider.label,
+      provider: 'openai',
+      providerLabel: PROVIDERS.openai.label,
       model: config.model,
-      endpointType: config.endpoint ? 'custom_or_proxy' : (config.provider === 'openai' && !config.apiKey ? 'existing_kcsi_proxy' : 'provider_default'),
+      endpointType: 'authenticated_kcsi_worker',
     };
   }
 
@@ -287,20 +265,8 @@
   async function callCandidate(config, front, back, costMode) {
     const body = createRequestBody(config.model, front, back, costMode);
     const started = Date.now();
-    let response;
-    if (config.provider === 'openai' && !config.endpoint && !config.apiKey && typeof root.gptFetch === 'function') {
-      response = await root.gptFetch(body);
-    } else {
-      const provider = PROVIDERS[config.provider] || PROVIDERS.custom;
-      const isCustom = !!config.endpoint;
-      const endpoint = normalizeEndpoint(config.endpoint || provider.endpoint);
-      if (!endpoint) throw new Error('호출 URL을 입력하세요');
-      if (!isCustom && !config.apiKey) throw new Error(`${provider.label} API 키 또는 Worker 주소가 필요합니다`);
-      const headers = { 'Content-Type': 'application/json' };
-      if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`;
-      if (config.token) headers['X-Access-Token'] = config.token;
-      response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
-    }
+    if (typeof root.gptFetch !== 'function') throw new Error('KCSI Worker 연결을 찾지 못했습니다');
+    const response = await root.gptFetch(body);
     const latencyMs = Date.now() - started;
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -417,20 +383,7 @@
       <div class="arena-model-title"><span>비교 후보 ${number}</span><span id="arenaProviderBadge${number}">OpenAI · 무작위 배정</span></div>
       <div class="arena-field"><label for="arenaModel${number}">OpenAI 모델 ID</label><input class="arena-input mono" id="arenaModel${number}" value="${esc(model)}"></div>
       <div class="arena-model-price" id="arenaPrice${number}">${esc(priceText)} <span>텍스트 토큰 기준</span></div>
-      <details class="arena-advanced">
-        <summary>고급 연결 설정 · 다른 제공자는 나중에 사용</summary>
-        <div class="arena-field"><label for="arenaProvider${number}">제공자</label>
-          <select class="arena-select" id="arenaProvider${number}">
-            ${Object.entries(PROVIDERS).map(([key, value]) => `<option value="${key}"${key === 'openai' ? ' selected' : ''}>${esc(value.label)}</option>`).join('')}
-          </select></div>
-        <div class="arena-field"><label for="arenaEndpoint${number}">호출 URL 또는 전용 Worker <span style="font-weight:400">(선택)</span></label>
-          <input class="arena-input mono" id="arenaEndpoint${number}" placeholder="비우면 상단 OpenAI 설정 사용"></div>
-        <div class="arena-field"><label for="arenaKey${number}">직접 API 키 <span style="font-weight:400">(선택)</span></label>
-          <input class="arena-input mono" type="password" id="arenaKey${number}" autocomplete="off" placeholder="Worker 사용 시 비워두기"></div>
-        <div class="arena-field"><label for="arenaToken${number}">Worker 접근 토큰 <span style="font-weight:400">(선택)</span></label>
-          <input class="arena-input mono" type="password" id="arenaToken${number}" autocomplete="off"></div>
-        <div class="arena-secret-note">API 키와 접근 토큰은 연구기록·CSV에 저장하지 않습니다. OpenAI는 모두 비워두면 상단의 기존 OpenAI 설정을 사용합니다.</div>
-      </details>
+      <div class="arena-secret-note">🔐 로그인된 Cloudflare Worker로만 호출합니다. API 키나 긴 접근 토큰은 이 기기에 저장되지 않습니다.</div>
     </div>`;
   }
 
@@ -539,23 +492,9 @@
     }));
 
     document.querySelectorAll('[data-arena-view]').forEach(button => button.addEventListener('click', () => switchArenaView(button.dataset.arenaView)));
-    [1, 2].forEach(number => {
-      const providerEl = document.getElementById(`arenaProvider${number}`);
-      providerEl.addEventListener('change', () => {
-        const modelEl = document.getElementById(`arenaModel${number}`);
-        const provider = PROVIDERS[providerEl.value] || PROVIDERS.custom;
-        modelEl.value = providerEl.value === 'openai' ? DEFAULT_OPENAI_MODELS[number - 1] : provider.model;
-        document.getElementById(`arenaProviderBadge${number}`).textContent = `${provider.label} · 무작위 배정`;
-        document.getElementById(`arenaPrice${number}`).hidden = providerEl.value !== 'openai';
-      });
-    });
     document.getElementById('arenaOpenAiPreset').addEventListener('click', () => {
       [1, 2].forEach(number => {
-        document.getElementById(`arenaProvider${number}`).value = 'openai';
         document.getElementById(`arenaModel${number}`).value = DEFAULT_OPENAI_MODELS[number - 1];
-        document.getElementById(`arenaEndpoint${number}`).value = '';
-        document.getElementById(`arenaKey${number}`).value = '';
-        document.getElementById(`arenaToken${number}`).value = '';
         document.getElementById(`arenaProviderBadge${number}`).textContent = 'OpenAI · 무작위 배정';
         document.getElementById(`arenaPrice${number}`).hidden = false;
       });
@@ -627,17 +566,14 @@
 
   function readModelConfig(number) {
     return {
-      provider: document.getElementById(`arenaProvider${number}`).value,
+      provider: 'openai',
       model: document.getElementById(`arenaModel${number}`).value.trim(),
-      endpoint: document.getElementById(`arenaEndpoint${number}`).value.trim(),
-      apiKey: document.getElementById(`arenaKey${number}`).value.trim(),
-      token: document.getElementById(`arenaToken${number}`).value.trim(),
     };
   }
 
   function validateConfigs(first, second) {
     if (!first.model || !second.model) throw new Error('두 비교 후보의 모델 ID를 모두 입력하세요');
-    if (first.provider === second.provider && first.model === second.model && first.endpoint === second.endpoint) throw new Error('서로 다른 두 모델을 선택하세요');
+    if (first.model === second.model) throw new Error('서로 다른 두 모델을 선택하세요');
   }
 
   function setArenaStatus(message, error) {

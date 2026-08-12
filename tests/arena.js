@@ -28,8 +28,9 @@ assert.equal(researchBody.max_tokens, 2200);
 const gpt5Body = arena.createRequestBody('gpt-5-mini', 'data:image/jpeg;base64,front', '', 'practice');
 assert.equal(gpt5Body.max_completion_tokens, 1200);
 assert.equal(gpt5Body.max_tokens, undefined);
-assert(arena.friendlyCallError('Unauthorized (401)').includes('인증 실패'));
+assert(arena.friendlyCallError('Unauthorized (401)').includes('다시 로그인'));
 assert(arena.friendlyCallError('insufficient_quota (429)').includes('사용 한도'));
+assert(arena.friendlyCallError('Daily API limit reached (429)').includes('한국시간 자정'));
 assert(arena.friendlyCallError('model not found').includes('모델 사용 권한'));
 
 const runs = [{
@@ -53,7 +54,9 @@ assert(!csv.includes('apiKey') && !csv.includes('token'), 'CSV must not contain 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
-assert(/APP_VERSION = 'v12\.2'/.test(html));
+assert(/APP_VERSION = 'v12\.3'/.test(html));
+assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
+assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
 const css = fs.readFileSync('arena.css', 'utf8');
 assert(css.includes('#app.kcsi-research'));
 assert(css.includes('.arena-upload-actions'));
@@ -61,4 +64,4 @@ const arenaSource = fs.readFileSync('arena.js', 'utf8');
 assert(arenaSource.includes('arenaFrontFileCam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
 
-console.log('[arena] PASS — OpenAI low-cost defaults · photo upload · blind order · scoring · CSV safety');
+console.log('[arena] PASS — OpenAI low-cost defaults · photo upload · blind order · scoring · login-only secrets · CSV safety');

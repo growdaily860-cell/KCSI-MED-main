@@ -126,6 +126,20 @@ input[type=file]{display:none}
 .api-input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--bg);outline:none}
 .api-save{padding:9px 14px;border-radius:8px;border:none;background:var(--ink);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
 .api-save.saved{background:var(--ok)}
+.session-box{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 11px;border:1px solid #BBF7D0;border-radius:9px;background:#F0FDF4}
+.session-box b{display:block;font-size:12px;color:#166534}.session-box span{display:block;margin-top:3px;font-size:10.5px;line-height:1.45;color:#3F6212}
+.session-logout{flex:none;border:1px solid #D6D3D1;border-radius:8px;padding:8px 10px;background:#fff;color:#3F3F46;font:700 11px/1.2 inherit;cursor:pointer}
+
+/* 24시간 PIN 로그인 — 앱 데이터보다 위에서 전체 화면을 잠근다. */
+.auth-gate{position:fixed;inset:0;z-index:2500;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.auth-gate.show{display:flex}.auth-card{width:min(100%,390px);border-radius:20px;background:#fff;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.28)}
+.auth-mark{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:13px;background:#111827;color:#fff;font:800 15px/1 'IBM Plex Mono',monospace}
+.auth-card h1{margin:13px 0 5px;font-size:20px;line-height:1.35}.auth-card>p{font-size:12px;line-height:1.65;color:var(--soft)}
+.auth-pin{width:100%;margin-top:16px;border:1.5px solid #CBD5E1;border-radius:11px;padding:13px;text-align:center;font:700 22px/1 'IBM Plex Mono',monospace;letter-spacing:.28em;outline:none}
+.auth-pin:focus{border-color:#334155;box-shadow:0 0 0 4px #F1F5F9}.auth-login{width:100%;margin-top:10px;border:0;border-radius:11px;padding:14px;background:#111827;color:#fff;font:800 13px/1.2 inherit;cursor:pointer}
+.auth-login:disabled{opacity:.45}.auth-message{min-height:19px;margin-top:9px;text-align:center;font-size:11.5px;line-height:1.5;color:#991B1B}.auth-message.ok{color:#166534}
+.auth-install{width:100%;margin-top:8px;border:1px solid #CBD5E1;border-radius:11px;padding:11px;background:#fff;color:#334155;font:700 12px/1.2 inherit;cursor:pointer}.auth-install[hidden]{display:none}
+.auth-points{margin-top:14px;padding:11px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;font-size:10.5px;line-height:1.65;color:#475569}
 
 /* 결과 카드 */
 .results{display:flex;flex-direction:column;gap:12px;margin:8px 20px 0}
@@ -473,6 +487,18 @@ input[type=file]{display:none}
 </style>
 </head>
 <body>
+<div class="auth-gate show" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <form class="auth-card" id="authForm">
+    <span class="auth-mark">KCSI</span>
+    <h1 id="authTitle">KCSI Copilot 로그인</h1>
+    <p>등록된 6자리 PIN으로 로그인하세요. 로그인은 이 기기에서 24시간 유지됩니다.</p>
+    <input class="auth-pin" id="authPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="6자리 PIN" placeholder="••••••">
+    <button class="auth-login" id="authLogin" type="submit">로그인</button>
+    <button class="auth-install" id="authInstall" type="button" hidden>📲 이 기기에 앱 설치</button>
+    <div class="auth-message" id="authMessage" role="status" aria-live="polite">연결 상태 확인 중...</div>
+    <div class="auth-points">🔐 OpenAI 키와 서명용 비밀값은 Cloudflare에만 보관됩니다.<br>💳 기본 API 한도는 하루 40회이며 Worker에서 차단됩니다.<br>📱 로그인 후 홈 화면에 추가하면 앱처럼 사용할 수 있습니다.</div>
+  </form>
+</div>
 <div class="app" id="app">
   <header>
     <div class="brand">KCSI <b>Copilot</b> · 변사 현장 보조</div>
@@ -487,19 +513,11 @@ input[type=file]{display:none}
       <span class="chevron">▾</span>
     </div>
     <div class="api-body">
-      <div class="api-row">
-        <input class="api-input" type="password" id="gptInput" placeholder="sk-... (프록시 사용 시 불필요)" autocomplete="off">
-        <button class="api-save" id="gptSave" data-label="저장">저장</button>
+      <div class="session-box">
+        <div><b id="authSessionState">로그인 확인 중</b><span id="authSessionMeta">API 키와 세션 서명값은 Cloudflare에만 보관됩니다.</span></div>
+        <button class="session-logout" id="authLogout" type="button">로그아웃</button>
       </div>
-      <div class="api-row">
-        <input class="api-input" type="text" id="gptProxyInput" placeholder="GPT 프록시 주소 (선택 · https://...workers.dev)" autocomplete="off" spellcheck="false">
-        <button class="api-save" id="gptProxySave" data-label="적용">적용</button>
-      </div>
-      <div class="api-row">
-        <input class="api-input" type="password" id="gptTokenInput" placeholder="프록시 접근 토큰 (Worker에 설정한 경우만)" autocomplete="off">
-        <button class="api-save" id="gptTokenSave" data-label="저장">저장</button>
-      </div>
-      <div style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5">프록시 주소를 입력하면 OpenAI 키 없이 사용됩니다. 키는 Worker에만 저장되어 노출되지 않습니다.</div>
+      <div style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5">PIN 로그인 후 24시간 동안 현장 판독과 모델 비교가 자동 연결됩니다. 긴 접근 토큰을 기기마다 복사할 필요가 없습니다.</div>
     </div>
   </div>
 
@@ -518,10 +536,7 @@ input[type=file]{display:none}
         <input class="api-input" type="password" id="durInput" placeholder="공공데이터포털 인증키 (비상용)" autocomplete="off">
         <button class="api-save" id="durSave" data-label="저장">저장</button>
       </div>
-      <div class="api-row">
-        <input class="api-input" type="text" id="proxyInput" placeholder="Cloudflare Worker 주소 (https://...workers.dev)" autocomplete="off" spellcheck="false">
-        <button class="api-save" id="proxySave" data-label="적용">적용</button>
-      </div>
+      <div class="api-hint" style="margin-top:10px">배포판 전용 Cloudflare Worker가 자동 연결됩니다. 기기에서 주소나 접근 토큰을 입력할 필요가 없습니다.</div>
       <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:var(--soft);cursor:pointer">
         <input type="checkbox" id="debugToggle" style="width:16px;height:16px;cursor:pointer">
         <span>🔧 디버그 모드 — 식약처 API 응답 표시 (원인 진단용)</span>
@@ -844,7 +859,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.2';
+const APP_VERSION = 'v12.3';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
@@ -893,22 +908,13 @@ function checkForUpdate() {
     .catch(() => {});   // 네트워크 실패 시 무시 — 판독 자체를 막지 않는다
 }
 
-// ── 키 설정 ──
-// 하드코딩 기본값(HARDCODED_*)을 넣으면 앱 열자마자 적용됨.
-// localStorage에 저장된 값이 있으면 그 값이 우선(앱에서 키 변경 가능).
-// ⚠ 배포된 앱의 JS는 브라우저에서 열람 가능하므로, 앱 URL을 비공개로 유지하고
-//    GPT 키는 OpenAI 대시보드에서 사용 한도(usage limit)를 설정하세요.
-const HARDCODED_GPT_KEY = '';   // 예: 'sk-proj-...'  (프록시 사용 시 비워둠)
+// ── 로그인 세션 및 키 설정 ──
 const HARDCODED_DUR_KEY = '';   // 식약처 공공데이터포털 Encoding 인증키
 // ★ OpenAI·식약처 요청은 하나의 Cloudflare Worker를 공통 사용한다.
-//    실제 API 키는 Worker Secret에만 저장되어 브라우저에 노출되지 않는다.
+//    실제 API 키와 세션 서명용 비밀값은 Worker Secret에만 저장된다.
+//    브라우저에는 만료되는 24시간 로그인 세션만 보관한다.
 const KCSI_WORKER_PROXY = 'https://kcsi-med-main.growdaily860.workers.dev';
-const LEGACY_WORKER_PROXIES = new Set([
-  'https://kcsi-gpt.highzump.workers.dev',
-  'https://kcsi-proxy.highzump.workers.dev'
-]);
-const HARDCODED_GPT_PROXY = KCSI_WORKER_PROXY;
-const HARDCODED_GPT_TOKEN = '';  // (선택) Worker에 ACCESS_TOKEN을 설정했을 때만 입력
+const AUTH_STORE_KEY = 'kcsi_auth_session_v1';
 
 function loadKey(name) {
   try { return localStorage.getItem(name) || ''; } catch(e) { return ''; }
@@ -916,18 +922,174 @@ function loadKey(name) {
 function saveKey(name, val) {
   try { if (val) localStorage.setItem(name, val); else localStorage.removeItem(name); } catch(e) {}
 }
-function loadProxyKey(name, fallback) {
-  const saved = loadKey(name).trim().replace(/\/+$/, '');
-  if (!saved || LEGACY_WORKER_PROXIES.has(saved)) {
-    saveKey(name, fallback);
-    return fallback;
-  }
-  return saved;
-}
-let GPT_KEY   = loadKey('kcsi_gpt_key')   || HARDCODED_GPT_KEY;
 let DUR_KEY   = loadKey('kcsi_dur_key')   || HARDCODED_DUR_KEY;
-let GPT_PROXY = loadProxyKey('kcsi_gpt_proxy', HARDCODED_GPT_PROXY);
-let GPT_TOKEN = loadKey('kcsi_gpt_token') || HARDCODED_GPT_TOKEN;
+
+function readAuthSession() {
+  try {
+    const value = JSON.parse(localStorage.getItem(AUTH_STORE_KEY) || 'null');
+    return value && typeof value.token === 'string' && Number.isFinite(Number(value.expiresAt)) ? value : null;
+  } catch (_) { return null; }
+}
+let AUTH_SESSION = readAuthSession();
+
+function authSessionValid() {
+  return !!(AUTH_SESSION && AUTH_SESSION.token && Number(AUTH_SESSION.expiresAt) > Date.now() + 5000);
+}
+
+function saveAuthSession(value) {
+  AUTH_SESSION = value;
+  try { localStorage.setItem(AUTH_STORE_KEY, JSON.stringify(value)); } catch (_) {}
+}
+
+function clearAuthSession() {
+  AUTH_SESSION = null;
+  try { localStorage.removeItem(AUTH_STORE_KEY); } catch (_) {}
+}
+
+// 이전 판에서 저장했을 수 있는 장기 비밀값은 새 로그인형 배포판에서 즉시 폐기한다.
+try {
+  ['kcsi_gpt_key', 'kcsi_gpt_token', 'kcsi_gpt_proxy', 'kcsi_proxy_url'].forEach(key => localStorage.removeItem(key));
+} catch (_) {}
+
+function authHeaders(extra) {
+  return Object.assign({}, extra || {}, authSessionValid() ? { Authorization: `Bearer ${AUTH_SESSION.token}` } : {});
+}
+
+let PENDING_INSTALL_PROMPT = null;
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  PENDING_INSTALL_PROMPT = event;
+  const button = document.getElementById('authInstall');
+  if (button) button.hidden = false;
+});
+window.addEventListener('appinstalled', () => {
+  PENDING_INSTALL_PROMPT = null;
+  const button = document.getElementById('authInstall');
+  if (button) button.hidden = true;
+});
+
+function authErrorMessage(status, data) {
+  const raw = String(data && data.error || '');
+  if (status === 401) return /PIN/i.test(raw) ? 'PIN이 올바르지 않습니다.' : '로그인 시간이 만료되었습니다. 다시 로그인하세요.';
+  if (status === 429) return '로그인 시도가 너무 많습니다. 10분 후 다시 시도하세요.';
+  if (status === 503 && /LOGIN_PIN/i.test(raw)) return 'Cloudflare에 LOGIN_PIN 등록이 필요합니다.';
+  if (status === 503 && /ACCESS_TOKEN/i.test(raw)) return 'Cloudflare의 ACCESS_TOKEN 설정을 확인해주세요.';
+  return raw || `Worker 연결 오류 (${status})`;
+}
+
+function updateAuthUi(data) {
+  const state = document.getElementById('authSessionState');
+  const meta = document.getElementById('authSessionMeta');
+  const dot = document.getElementById('gptDot');
+  const valid = authSessionValid();
+  if (state) state.textContent = valid ? '✓ 로그인됨' : '로그인 필요';
+  if (dot) dot.classList.toggle('on', valid);
+  if (meta) {
+    if (!valid) meta.textContent = '6자리 PIN으로 로그인하면 24시간 유지됩니다.';
+    else {
+      const expires = new Date(Number(AUTH_SESSION.expiresAt)).toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      const limit = Number(data && data.limit);
+      const remaining = Number(data && data.remaining);
+      meta.textContent = Number.isFinite(limit) && Number.isFinite(remaining)
+        ? `오늘 API ${limit - remaining}/${limit}회 · ${remaining}회 남음 · ${expires}까지`
+        : `${expires}까지 로그인 유지`;
+    }
+  }
+  if (typeof checkReady === 'function') checkReady();
+}
+
+function showAuthGate(message) {
+  const gate = document.getElementById('authGate');
+  const status = document.getElementById('authMessage');
+  if (gate) gate.classList.add('show');
+  if (status) { status.textContent = message || '6자리 PIN을 입력하세요.'; status.classList.remove('error'); }
+  updateAuthUi();
+}
+
+function hideAuthGate() {
+  const gate = document.getElementById('authGate');
+  if (gate) gate.classList.remove('show');
+}
+
+function observeQuotaHeaders(response) {
+  if (!response || !response.headers || typeof response.headers.get !== 'function' || !authSessionValid()) return;
+  const limit = Number(response.headers.get('X-Daily-Limit'));
+  const remaining = Number(response.headers.get('X-Daily-Remaining'));
+  if (Number.isFinite(limit) && Number.isFinite(remaining)) updateAuthUi({ limit, remaining });
+}
+
+async function validateAuthSession() {
+  if (!authSessionValid()) {
+    clearAuthSession();
+    showAuthGate('6자리 PIN을 입력하세요.');
+    return false;
+  }
+  try {
+    const response = await fetch(`${KCSI_WORKER_PROXY}/auth/session`, { headers: authHeaders() });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.authenticated) {
+      clearAuthSession();
+      showAuthGate(authErrorMessage(response.status, data));
+      return false;
+    }
+    AUTH_SESSION.expiresAt = Number(data.expiresAt) || AUTH_SESSION.expiresAt;
+    saveAuthSession(AUTH_SESSION);
+    updateAuthUi(data);
+    hideAuthGate();
+    return true;
+  } catch (_) {
+    showAuthGate('Worker에 연결할 수 없습니다. 인터넷 연결을 확인하세요.');
+    return false;
+  }
+}
+
+async function initAuthGate() {
+  const form = document.getElementById('authForm');
+  const input = document.getElementById('authPin');
+  const button = document.getElementById('authLogin');
+  const message = document.getElementById('authMessage');
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const pin = input.value.replace(/\D/g, '').slice(0, 6);
+    input.value = pin;
+    message.classList.remove('error');
+    if (pin.length !== 6) { message.textContent = '6자리 숫자를 입력하세요.'; message.classList.add('error'); return; }
+    button.disabled = true;
+    button.textContent = '로그인 중...';
+    message.textContent = 'Cloudflare에서 확인 중...';
+    try {
+      const response = await fetch(`${KCSI_WORKER_PROXY}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ pin }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.token) throw Object.assign(new Error(authErrorMessage(response.status, data)), { status: response.status });
+      saveAuthSession({ token:data.token, expiresAt:Number(data.expiresAt) });
+      input.value = '';
+      updateAuthUi(data);
+      hideAuthGate();
+      setStatus('로그인 완료 · 이 기기에서 24시간 유지됩니다');
+    } catch (error) {
+      message.textContent = error.message || '로그인에 실패했습니다.';
+      message.classList.add('error');
+    } finally {
+      button.disabled = false;
+      button.textContent = '로그인';
+    }
+  });
+  input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, '').slice(0, 6); });
+  document.getElementById('authLogout').addEventListener('click', () => {
+    clearAuthSession();
+    showAuthGate('로그아웃되었습니다. 다시 사용하려면 PIN을 입력하세요.');
+  });
+  document.getElementById('authInstall').addEventListener('click', async () => {
+    if (!PENDING_INSTALL_PROMPT) return;
+    PENDING_INSTALL_PROMPT.prompt();
+    await PENDING_INSTALL_PROMPT.userChoice.catch(() => null);
+    PENDING_INSTALL_PROMPT = null;
+    document.getElementById('authInstall').hidden = true;
+  });
+  await validateAuthSession();
+}
 
 // ── DOM ──
 const app       = document.getElementById('app');
@@ -974,7 +1136,8 @@ function markUnsaved(btn) {
   if (btn.dataset.label) btn.textContent = btn.dataset.label;
   btn.classList.remove('saved');
 }
-initPanel('gptHeader','gptDot','gptInput','gptSave', ()=>GPT_KEY, v=>{ GPT_KEY=v; saveKey('kcsi_gpt_key', v); });
+document.getElementById('gptHeader').addEventListener('click', () =>
+  document.getElementById('gptPanel').classList.toggle('open'));
 initPanel('durHeader','durDot','durInput','durSave', ()=>DUR_KEY, v=>{ DUR_KEY=v; saveKey('kcsi_dur_key', v); });
 // 식약처 API 준비 여부는 더 이상 '조사관이 인증키를 넣었는가'로 판단하지 않는다.
 // 프록시 주소는 하드코딩 기본값(DEFAULT_PROXY)이 있어 항상 설정돼 있고, 인증키는
@@ -1575,7 +1738,7 @@ window.refreshRx    = bindMultiGrid({ gridId:'rxGrid',    countId:'rxCount',    
 
 function checkReady() {
   if (window.refreshSecCnt) window.refreshSecCnt();   // 접힌 구역의 '등록 수' 뱃지 동기화
-  const hasGpt = !!GPT_KEY || !!GPT_PROXY;   // 프록시만 있어도 사용 가능
+  const hasGpt = authSessionValid();
   analyzeBtn.disabled = !hasGpt || !img.front;               // 그룹 알약 판독 — 알약 앞면 필요
   const rxBtn = document.getElementById('rxAnalyzeBtn');
   if (rxBtn) rxBtn.disabled = !hasGpt || !img.rxPages.length; // 의료 기록 판독 — 처방전·기록 필요
@@ -1678,22 +1841,16 @@ const DUR_BASE = 'https://apis.data.go.kr/1471000/DURPrdlstInfoService03';
 
 // ★ 식약처 공공 API도 위의 공통 Cloudflare Worker를 기본값으로 사용한다.
 //   기존 버전의 Worker 주소가 localStorage에 남아 있으면 새 주소로 자동 이전한다.
-const DEFAULT_PROXY = KCSI_WORKER_PROXY;
-let MY_PROXY = loadProxyKey('kcsi_proxy_url', DEFAULT_PROXY);
+const MY_PROXY = KCSI_WORKER_PROXY;
 
-// CORS 프록시 목록 — 앞에서부터 시도하고 실패하면 다음 프록시로 전환.
-// 1순위는 본인 Worker(MY_PROXY). 그 다음은 공개 프록시(불안정, 최후 수단).
+// 식약처 요청도 로그인된 전용 Worker만 사용한다. 공개 프록시 폴백은
+// 로그인 우회와 데이터 유출 가능성을 만들므로 로그인형 배포판에서 제거했다.
 function buildProxyList() {
   const list = [];
   if (MY_PROXY) {
     const base = MY_PROXY.replace(/\/$/, '');
-    list.push({ name: 'my-worker', wrap: u => `${base}/?url=${encodeURIComponent(u)}` });
+    list.push({ name: 'my-worker', authenticated: true, wrap: u => `${base}/?url=${encodeURIComponent(u)}` });
   }
-  list.push(
-    { name: 'codetabs',    wrap: u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u) },
-    { name: 'allorigins',  wrap: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
-    { name: 'corsproxy.io',wrap: u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
-  );
   return list;
 }
 let PROXIES = buildProxyList();
@@ -1717,6 +1874,10 @@ let debugLogs = [];
 
 // 프록시를 순차 시도하며 식약처 API 호출. 한 프록시가 실패하면 다음 프록시로 폴백.
 async function fetchJ(url, timeout=8000) {
+  if (!authSessionValid()) {
+    showAuthGate('식약처 대조를 사용하려면 다시 로그인하세요.');
+    throw new Error('로그인 세션이 필요합니다 (401)');
+  }
   let lastErr = null;
   // 현재 성공 프록시부터 시작해 전체를 한 바퀴 순회
   for (let n = 0; n < PROXIES.length; n++) {
@@ -1728,12 +1889,22 @@ async function fetchJ(url, timeout=8000) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeout);
     try {
-      const res = await fetch(proxy.wrap(url), { signal: ctrl.signal });
+      const res = await fetch(proxy.wrap(url), {
+        signal: ctrl.signal,
+        headers: proxy.authenticated ? authHeaders() : undefined,
+      });
       logEntry.status = res.status;
       logEntry.ms = Date.now() - t0;
       const txt = await res.text().catch(() => '');
       logEntry.bodyPreview = txt.slice(0, 300);
 
+      if (proxy.authenticated && res.status === 401) {
+        clearAuthSession();
+        showAuthGate('로그인 시간이 만료되었습니다. 다시 로그인하세요.');
+        const authError = new Error('로그인 세션 만료 (401)');
+        authError.authRequired = true;
+        throw authError;
+      }
       if (!res.ok) {
         if (DEBUG_ON) debugLogs.push(logEntry);
         lastErr = new Error('HTTP ' + res.status);
@@ -1752,6 +1923,7 @@ async function fetchJ(url, timeout=8000) {
       logEntry.error = (e && e.name === 'AbortError') ? ('타임아웃 ' + timeout + 'ms') : e.message;
       logEntry.ms = Date.now() - t0;
       if (DEBUG_ON) debugLogs.push(logEntry);
+      if (e && e.authRequired) throw e;
       lastErr = (e && e.name === 'AbortError') ? new Error('타임아웃 ' + timeout + 'ms') : e;
       continue; // 다음 프록시 시도
     } finally {
@@ -2577,21 +2749,26 @@ async function searchDurByName(drugName) {
 }
 
 // ── OpenAI 호출 게이트웨이 ──
-// GPT_PROXY(Cloudflare Worker)가 설정되면 프록시 경유 — 키가 브라우저에 노출되지 않는다.
-// 미설정 시 사용자가 입력/저장한 GPT_KEY로 api.openai.com 직접 호출(기존 방식, 하위호환).
-// 모든 OpenAI 호출은 이 함수를 거친다.
+// 모든 호출은 로그인된 Cloudflare Worker를 거친다. OpenAI 키와 장기 접근 토큰을
+// 브라우저에 저장하거나 api.openai.com으로 직접 전송하는 경로는 두지 않는다.
 async function gptFetch(body) {
-  if (GPT_PROXY) {
-    const h = { 'Content-Type': 'application/json' };
-    if (GPT_TOKEN) h['X-Access-Token'] = GPT_TOKEN;   // Worker가 토큰을 요구할 때만
-    return fetch(GPT_PROXY.replace(/\/+$/, ''), { method: 'POST', headers: h, body: JSON.stringify(body) });
+  if (!authSessionValid()) {
+    showAuthGate('AI 판독을 사용하려면 다시 로그인하세요.');
+    return new Response(JSON.stringify({ error:'Session expired or unauthorized' }), {
+      status:401, headers:{ 'Content-Type':'application/json' },
+    });
   }
-  // 프록시 미설정 → 사용자 키로 OpenAI 직접 호출 (이 지점만 유일하게 api.openai.com 직결)
-  return fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch(`${KCSI_WORKER_PROXY}/openai`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GPT_KEY}` },
-    body: JSON.stringify(body)
+    headers: authHeaders({ 'Content-Type':'application/json' }),
+    body: JSON.stringify(body),
   });
+  observeQuotaHeaders(response);
+  if (response.status === 401) {
+    clearAuthSession();
+    showAuthGate('로그인 시간이 만료되었습니다. 다시 로그인하세요.');
+  }
+  return response;
 }
 
 // (아래 searchWeb 함수 참조)
@@ -5061,62 +5238,9 @@ document.getElementById('debugToggle').addEventListener('change', (e) => {
   DEBUG_ON = e.target.checked;
 });
 
-// Cloudflare Worker 프록시 주소 적용
-(function initProxyInput(){
-  const input = document.getElementById('proxyInput');
-  const btn = document.getElementById('proxySave');
-  if (MY_PROXY) { input.value = MY_PROXY; markSaved(btn); }
-  btn.addEventListener('click', () => {
-    MY_PROXY = input.value.trim();
-    saveKey('kcsi_proxy_url', MY_PROXY);
-    PROXIES = buildProxyList();   // 프록시 목록 재구성
-    proxyIdx = 0;                  // 우선순위 초기화 (Worker부터)
-    // 패널은 닫지 않음. 저장됨 상태 유지.
-    if (MY_PROXY) markSaved(btn); else markUnsaved(btn);
-    setStatus(MY_PROXY ? 'Worker 프록시 적용됨' : '공개 프록시로 전환됨');
-  });
-  input.addEventListener('input', () => markUnsaved(btn));
-})();
-
-// ── GPT 프록시/토큰 입력 초기화 ──
-// GPT 상태 점: 키 또는 프록시 중 하나라도 있으면 점등
-function refreshGptDot() {
-  const dot = document.getElementById('gptDot');
-  if (dot) dot.classList.toggle('on', !!(GPT_KEY || GPT_PROXY));
-}
-// 키 저장 버튼 클릭 후에도 점을 프록시 포함 상태로 다시 반영 (initPanel 핸들러 뒤에 실행됨)
-document.getElementById('gptSave').addEventListener('click', refreshGptDot);
-
-(function initGptProxyInput(){
-  const input = document.getElementById('gptProxyInput');
-  const btn = document.getElementById('gptProxySave');
-  if (GPT_PROXY) { input.value = GPT_PROXY; markSaved(btn); }
-  btn.addEventListener('click', () => {
-    GPT_PROXY = input.value.trim();
-    saveKey('kcsi_gpt_proxy', GPT_PROXY);
-    if (GPT_PROXY) markSaved(btn); else markUnsaved(btn);
-    setStatus(GPT_PROXY ? 'GPT 프록시 적용됨 (키 입력 불필요)' : 'GPT 프록시 해제 — 직접 키 사용');
-    refreshGptDot();
-    checkReady();
-  });
-  input.addEventListener('input', () => markUnsaved(btn));
-})();
-
-(function initGptTokenInput(){
-  const input = document.getElementById('gptTokenInput');
-  const btn = document.getElementById('gptTokenSave');
-  if (GPT_TOKEN) { input.value = GPT_TOKEN; markSaved(btn); }
-  btn.addEventListener('click', () => {
-    GPT_TOKEN = input.value.trim();
-    saveKey('kcsi_gpt_token', GPT_TOKEN);
-    if (GPT_TOKEN) markSaved(btn); else markUnsaved(btn);
-  });
-  input.addEventListener('input', () => markUnsaved(btn));
-})();
-
-refreshGptDot();
 resetBtn.addEventListener('click', resetState);
 checkReady();
+initAuthGate();
 
 // ── 구역 열기/접기 ──
 // 한 알 모드의 [입력] 패턴을 그룹·의료기록에도 그대로 적용한다.
