@@ -1,6 +1,6 @@
 {
   "name": "kcsi-med",
-  "version": "12.1.0",
+  "version": "12.2.0",
   "description": "현장 의약품 식별 및 법의학 검토 보조 도구",
   "private": true,
   "repository": {
