@@ -483,7 +483,7 @@ input[type=file]{display:none}
   <!-- GPT API 패널 -->
   <div class="api-panel" id="gptPanel">
     <div class="api-header" id="gptHeader">
-      <div class="left"><div class="dot" id="gptDot"></div><span>GPT-4o API</span></div>
+      <div class="left"><div class="dot" id="gptDot"></div><span>OpenAI API</span></div>
       <span class="chevron">▾</span>
     </div>
     <div class="api-body">
@@ -844,7 +844,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.0';
+const APP_VERSION = 'v12.1';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
