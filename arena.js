@@ -4,7 +4,9 @@
   const STORE_KEY = 'kcsi_arena_runs_v1';
   const MAX_RUNS = 300;
   const PROMPT_VERSION = 'kcsi-pill-arena-v2';
-  const DEFAULT_OPENAI_MODELS = ['gpt-5.6-luna', 'gpt-5-mini'];
+  // Keep the practice preset compatible with the existing KCSI Chat Completions
+  // Worker while still comparing two inexpensive, vision-capable OpenAI models.
+  const DEFAULT_OPENAI_MODELS = ['gpt-4o-mini', 'gpt-4.1-mini'];
   const COST_MODES = {
     practice: {
       label: '저비용 연습',
@@ -228,6 +230,32 @@
     return value;
   }
 
+  function friendlyCallError(error) {
+    const message = safeText(error && error.message || error).trim();
+    if (/\b401\b|unauthori[sz]ed|access[_ -]?token|인증/i.test(message)) {
+      return 'Worker 인증 실패(401) · 현장 판독 상단의 프록시 접근 토큰을 다시 저장하세요.';
+    }
+    if (/\b403\b|forbidden/i.test(message)) {
+      return 'Worker 접근 거부(403) · Cloudflare의 허용 주소와 접근 토큰 설정을 확인하세요.';
+    }
+    if (/model.*(?:not found|does not exist|access|unsupported)|unsupported.*model|invalid.*model/i.test(message)) {
+      return '모델 사용 권한 또는 모델 ID 오류 · 기본값 복원 후 다시 실행하세요.';
+    }
+    if (/\b429\b|rate.?limit|quota|billing|insufficient_quota/i.test(message)) {
+      return 'OpenAI 사용 한도 초과(429) · API 결제 상태와 사용 한도를 확인하세요.';
+    }
+    if (/failed to fetch|network|load failed|cors/i.test(message)) {
+      return 'Worker 연결 실패 · 인터넷 연결과 Cloudflare Worker 주소를 확인하세요.';
+    }
+    if (/json|응답 본문|unexpected end|empty response/i.test(message)) {
+      return '모델 응답 형식 오류 · 같은 사진으로 한 번 더 시도하세요.';
+    }
+    if (/\b5\d\d\b|internal server|bad gateway|service unavailable/i.test(message)) {
+      return 'Worker 또는 OpenAI의 일시적 서버 오류 · 잠시 후 다시 시도하세요.';
+    }
+    return message ? `호출 오류 · ${message.slice(0, 160)}` : '호출 오류 · 원인을 확인하지 못했습니다.';
+  }
+
   function publicModelSnapshot(config) {
     const provider = PROVIDERS[config.provider] || PROVIDERS.custom;
     return {
@@ -275,7 +303,11 @@
     }
     const latencyMs = Date.now() - started;
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload && payload.error && payload.error.message || `API 오류 ${response.status}`);
+    if (!response.ok) {
+      const apiError = payload && payload.error;
+      const apiMessage = typeof apiError === 'string' ? apiError : apiError && apiError.message;
+      throw new Error(apiMessage ? `${apiMessage} (${response.status})` : `API 오류 ${response.status}`);
+    }
     const raw = extractAssistantContent(payload);
     return { raw, parsed: parseModelOutput(raw), latencyMs };
   }
@@ -365,7 +397,7 @@
 
   const core = {
     PROVIDERS, PROMPT_VERSION, DEFAULT_OPENAI_MODELS, COST_MODES, createRequestBody,
-    parseModelOutput, accuracyFromVerdict, computeTotal,
+    parseModelOutput, accuracyFromVerdict, computeTotal, friendlyCallError,
     summarizeRuns, buildCsv, randomizedBlindOrder, normalizeDrugName, suggestedVerdict,
     makePrompt, dbCrossCheck,
   };
@@ -407,7 +439,7 @@
       <section class="arena-hero">
         <div class="arena-eyebrow">KCSI OpenAI Practice Arena · Blind Evaluation</div>
         <h1>OpenAI 저비용 모델 비교 연습</h1>
-        <p>기본값은 GPT-5.6 Luna와 GPT-5 mini입니다. 같은 알약 사진과 같은 프롬프트를 두 모델에 보내고, 모델명을 숨긴 상태에서 결과를 채점합니다.</p>
+        <p>기본값은 GPT-4o mini와 GPT-4.1 mini입니다. 기존 KCSI Worker에서 안정적으로 쓸 수 있는 저비용 이미지 모델에 같은 사진과 같은 프롬프트를 보내고, 모델명을 숨긴 상태에서 결과를 채점합니다.</p>
         <div class="arena-cost-notice"><b>💳 비용 안내</b><span>비교 1회는 모델별 1회씩, 총 2회의 API 호출입니다. 기본 연습 모드는 사진을 <code>detail: low</code>로 전송하고 출력을 제한합니다. 이미지 입력도 토큰으로 과금되며 실제 비용은 사진 수·크기·응답 길이에 따라 달라집니다.</span></div>
         <div class="arena-privacy">🔐 실제 사건자료는 성명·주민번호·사건번호 등 식별정보를 제거한 뒤 사용하세요. 원본 이미지는 브라우저 연구기록에 저장되지 않습니다.</div>
       </section>
@@ -437,7 +469,7 @@
         <section class="arena-card" id="arenaSetupCard">
           <div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 설정</h2><p>저비용 기본 조합이 미리 설정되어 있으며, 실행 시 모델 A·B에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div>
           <div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">연습용 · 이미지 low · 최대 출력 1,200 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>저비용 모드는 화면 흐름을 익히기 위한 설정입니다. 작은 각인 판독 정확도를 평가할 때는 정밀 비교를 선택하세요.</p></div>
-          <div class="arena-models">${modelForm(1, DEFAULT_OPENAI_MODELS[0], '입력 $0.20 · 출력 $1.20 / 1M')}${modelForm(2, DEFAULT_OPENAI_MODELS[1], '입력 $0.25 · 출력 $2.00 / 1M')}</div>
+          <div class="arena-models">${modelForm(1, DEFAULT_OPENAI_MODELS[0], '입력 $0.15 · 출력 $0.60 / 1M')}${modelForm(2, DEFAULT_OPENAI_MODELS[1], '입력 $0.40 · 출력 $1.60 / 1M')}</div>
           <div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 채점과 투표가 끝날 때까지 A/B의 실제 모델은 표시되지 않습니다.</div>
           <label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>등록 이미지에 개인 식별정보가 없고, 연구 목적의 외부 AI API 전송 기준을 확인했습니다.</span></label>
           <button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 동일 조건으로 블라인드 비교 시작</button>
@@ -623,6 +655,11 @@
     const costConfig = COST_MODES[costMode] || COST_MODES.practice;
     const order = randomizedBlindOrder(first, second);
     const setup = document.getElementById('arenaSetupCard');
+    const resultsElement = document.getElementById('arenaResults');
+    resultsElement.classList.remove('show', 'arena-all-failed');
+    document.getElementById('arenaReveal').classList.remove('show');
+    document.getElementById('arenaReveal').innerHTML = '';
+    document.getElementById('arenaPostActions').hidden = true;
     setup.classList.add('arena-running');
     document.getElementById('arenaRun').disabled = true;
     setArenaStatus('모델 A·B에 동일 이미지와 동일 프롬프트를 병렬 전송 중...');
@@ -663,13 +700,24 @@
       }
     });
     renderComparison();
-    setArenaStatus('응답 완료 · 모델명을 보지 말고 아래 결과를 먼저 채점하세요');
-    document.getElementById('arenaResults').classList.add('show');
-    setTimeout(() => document.getElementById('arenaResults').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    const successCount = settled.filter(item => item.status === 'fulfilled').length;
+    resultsElement.classList.add('show');
+    if (!successCount) {
+      resultsElement.classList.add('arena-all-failed');
+      setArenaStatus('두 모델 호출 실패 · 아래 연결 진단을 확인한 뒤 다시 시도하세요', true);
+      setup.classList.remove('arena-running');
+      state.current = null;
+      refreshRunButton();
+    } else if (successCount === 1) {
+      setArenaStatus('한 모델만 응답했습니다 · 실패 원인을 확인하거나 응답한 결과를 채점하세요', true);
+    } else {
+      setArenaStatus('응답 완료 · 모델명을 보지 말고 아래 결과를 먼저 채점하세요');
+    }
+    setTimeout(() => resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
 
   function resultHtml(label, result) {
-    if (result.error) return `<article class="arena-output"><div class="arena-output-head"><span>모델 ${label}</span><span>IDENTITY HIDDEN</span></div><div class="arena-error">이 모델의 호출이 완료되지 않았습니다.<br>모델명과 상세 오류는 투표 후 공개됩니다.</div></article>`;
+    if (result.error) return `<article class="arena-output"><div class="arena-output-head"><span>모델 ${label}</span><span>IDENTITY HIDDEN</span></div><div class="arena-error"><b>호출 실패</b><span>${esc(friendlyCallError(result.error))}</span></div></article>`;
     const p = result.parsed || {};
     const db = result.db || {};
     const dbClass = db.matched ? (db.confidence === 'high' ? 'ok' : '') : 'warn';
@@ -768,7 +816,7 @@
     ['arenaCaseId','arenaTruthName','arenaTruthFront','arenaTruthBack'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('arenaConsent').checked = false;
     document.getElementById('arenaSetupCard').classList.remove('arena-running');
-    document.getElementById('arenaResults').classList.remove('show');
+    document.getElementById('arenaResults').classList.remove('show', 'arena-all-failed');
     document.getElementById('arenaReveal').classList.remove('show');
     document.getElementById('arenaReveal').innerHTML = '';
     document.getElementById('arenaPostActions').hidden = true;
