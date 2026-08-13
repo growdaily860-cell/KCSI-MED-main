@@ -1,5 +1,5 @@
 // KCSI-MED Cloudflare Worker
-// Secrets: OPENAI_API_KEY, DATA_GO_KR_KEY, ACCESS_TOKEN, LOGIN_PIN
+// Secrets: OPENAI_API_KEY, DATA_GO_KR_KEY, ACCESS_TOKEN, LOGIN_PIN, REFILL_PIN
 // ACCESS_TOKEN is used only as the HMAC signing secret for 24-hour sessions.
 
 const SESSION_SECONDS = 24 * 60 * 60;
@@ -7,8 +7,10 @@ const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_ATTEMPTS_PER_WINDOW = 5;
 const GLOBAL_LOGIN_ATTEMPTS_PER_WINDOW = 30;
 const DEFAULT_DAILY_OPENAI_LIMIT = 40;
+const QUOTA_REFILL_AMOUNT = 200;
+const QUOTA_REFILL_DAILY_MAX = 2;
 const MAX_BODY_BYTES = 12 * 1024 * 1024;
-const WORKER_VERSION = 'v12.4';
+const WORKER_VERSION = 'v12.6';
 const ALLOWED_MODELS = new Set([
   'gpt-4o',
   'gpt-4o-mini',
@@ -96,7 +98,7 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Expose-Headers': 'X-Daily-Limit,X-Daily-Remaining,X-Session-Expires-At,X-KCSI-Worker-Version',
+    'Access-Control-Expose-Headers': 'X-Daily-Limit,X-Daily-Remaining,X-Refill-Amount,X-Refill-Count,X-Refill-Max,X-Session-Expires-At,X-KCSI-Worker-Version',
     'X-KCSI-Worker-Version': WORKER_VERSION,
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -113,6 +115,14 @@ function jsonResponse(data, status, origin, extraHeaders = {}) {
 function dailyLimit(env) {
   const value = Number(env.DAILY_OPENAI_LIMIT || DEFAULT_DAILY_OPENAI_LIMIT);
   return Number.isInteger(value) && value > 0 && value <= 1000 ? value : DEFAULT_DAILY_OPENAI_LIMIT;
+}
+
+function quotaPolicy(env) {
+  return {
+    baseLimit: dailyLimit(env),
+    refillAmount: QUOTA_REFILL_AMOUNT,
+    refillMax: QUOTA_REFILL_DAILY_MAX,
+  };
 }
 
 function kstDay(nowMs = Date.now()) {
@@ -176,7 +186,7 @@ async function handleLogin(request, env, origin) {
   const payload = { v: 1, sub: 'owner', iat: now, exp: now + SESSION_SECONDS, jti: crypto.randomUUID() };
   const token = await signSession(payload, env.ACCESS_TOKEN);
   const stats = await quotaRequest(env, {
-    action: 'stats', subject: payload.sub, day: kstDay(), limit: dailyLimit(env),
+    action: 'stats', subject: payload.sub, day: kstDay(), ...quotaPolicy(env),
   });
   return jsonResponse({ token, expiresAt: payload.exp * 1000, ...stats }, 200, origin, {
     'X-Session-Expires-At': String(payload.exp * 1000),
@@ -185,7 +195,7 @@ async function handleLogin(request, env, origin) {
 
 async function handleSession(request, env, origin, session) {
   const stats = await quotaRequest(env, {
-    action: 'stats', subject: session.sub, day: kstDay(), limit: dailyLimit(env),
+    action: 'stats', subject: session.sub, day: kstDay(), ...quotaPolicy(env),
   });
   return jsonResponse({ authenticated: true, expiresAt: session.exp * 1000, ...stats }, 200, origin, {
     'X-Session-Expires-At': String(session.exp * 1000),
@@ -194,14 +204,51 @@ async function handleSession(request, env, origin, session) {
 
 async function consumeOpenAiQuota(env, session) {
   return quotaRequest(env, {
-    action: 'consume', subject: session.sub, day: kstDay(), limit: dailyLimit(env),
+    action: 'consume', subject: session.sub, day: kstDay(), ...quotaPolicy(env),
   });
+}
+
+async function handleRefill(request, env, origin, session) {
+  if (!env.REFILL_PIN || !/^\d{6}$/.test(String(env.REFILL_PIN))) {
+    return jsonResponse({ error: 'REFILL_PIN secret is not configured', code: 'refill_pin_not_configured' }, 503, origin);
+  }
+  if (String(env.REFILL_PIN) === String(env.LOGIN_PIN || '')) {
+    return jsonResponse({ error: 'REFILL_PIN must differ from LOGIN_PIN', code: 'refill_pin_not_distinct' }, 503, origin);
+  }
+  const text = await request.text();
+  if (text.length > 1024) return jsonResponse({ error: 'Request too large' }, 413, origin);
+  let body;
+  try { body = JSON.parse(text); } catch (_) { return jsonResponse({ error: 'Invalid JSON' }, 400, origin); }
+  const actor = await fingerprint(request, env.ACCESS_TOKEN);
+  const attempt = await quotaRequest(env, {
+    action: 'refill-attempt', actor, now: Date.now(), windowMs: LOGIN_WINDOW_MS,
+    actorLimit: LOGIN_ATTEMPTS_PER_WINDOW, globalLimit: GLOBAL_LOGIN_ATTEMPTS_PER_WINDOW,
+  });
+  if (!attempt.allowed) {
+    return jsonResponse({ error: 'Too many refill attempts', code: 'refill_attempts_exceeded', retryAfter: attempt.retryAfter }, 429, origin, {
+      'Retry-After': String(Math.max(1, Math.ceil((attempt.retryAfter || 60_000) / 1000))),
+    });
+  }
+  if (!(await securePinMatches(body && body.pin, env.REFILL_PIN, env.ACCESS_TOKEN))) {
+    return jsonResponse({ error: '충전 PIN이 올바르지 않습니다', code: 'invalid_refill_pin' }, 401, origin);
+  }
+  await quotaRequest(env, { action: 'refill-success', actor });
+  const quota = await quotaRequest(env, {
+    action: 'refill', subject: session.sub, day: kstDay(), ...quotaPolicy(env),
+  });
+  if (!quota.allowed) {
+    return jsonResponse({ error: 'Daily refill limit reached', code: 'daily_refill_limit_reached', ...quota }, 429, origin, quotaHeaders(quota));
+  }
+  return jsonResponse({ ok: true, added: QUOTA_REFILL_AMOUNT, ...quota }, 200, origin, quotaHeaders(quota));
 }
 
 function quotaHeaders(quota) {
   return {
     'X-Daily-Limit': String(quota.limit),
     'X-Daily-Remaining': String(quota.remaining),
+    'X-Refill-Amount': String(quota.refillAmount),
+    'X-Refill-Count': String(quota.refillCount),
+    'X-Refill-Max': String(quota.refillMax),
   };
 }
 
@@ -267,7 +314,7 @@ export class AuthQuota {
     let body;
     try { body = await request.json(); } catch (_) { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
     const result = await this.storage.transaction(async txn => {
-      if (body.action === 'login-attempt') {
+      if (body.action === 'login-attempt' || body.action === 'refill-attempt') {
         const now = Number(body.now) || Date.now();
         const windowMs = Number(body.windowMs) || LOGIN_WINDOW_MS;
         const update = async (key, limit) => {
@@ -277,22 +324,45 @@ export class AuthQuota {
           await txn.put(key, record);
           return { allowed: record.count <= limit, retryAfter: Math.max(0, record.startedAt + windowMs - now) };
         };
-        const actor = await update(`login:actor:${body.actor}`, Number(body.actorLimit) || LOGIN_ATTEMPTS_PER_WINDOW);
-        const global = await update('login:global', Number(body.globalLimit) || GLOBAL_LOGIN_ATTEMPTS_PER_WINDOW);
+        const prefix = body.action === 'refill-attempt' ? 'refill-attempt' : 'login';
+        const actor = await update(`${prefix}:actor:${body.actor}`, Number(body.actorLimit) || LOGIN_ATTEMPTS_PER_WINDOW);
+        const global = await update(`${prefix}:global`, Number(body.globalLimit) || GLOBAL_LOGIN_ATTEMPTS_PER_WINDOW);
         return { allowed: actor.allowed && global.allowed, retryAfter: Math.max(actor.retryAfter, global.retryAfter) };
       }
-      if (body.action === 'login-success') {
-        await txn.delete(`login:actor:${body.actor}`);
+      if (body.action === 'login-success' || body.action === 'refill-success') {
+        const prefix = body.action === 'refill-success' ? 'refill-attempt' : 'login';
+        await txn.delete(`${prefix}:actor:${body.actor}`);
         return { ok: true };
       }
-      const limit = Math.max(1, Number(body.limit) || DEFAULT_DAILY_OPENAI_LIMIT);
-      const key = `usage:${body.day}:${body.subject}`;
-      const used = Number(await txn.get(key) || 0);
-      if (body.action === 'stats') return { limit, used, remaining: Math.max(0, limit - used) };
+      const baseLimit = Math.max(1, Number(body.baseLimit || body.limit) || DEFAULT_DAILY_OPENAI_LIMIT);
+      const refillAmount = Math.max(1, Number(body.refillAmount) || QUOTA_REFILL_AMOUNT);
+      const refillMax = Math.max(0, Number(body.refillMax) || QUOTA_REFILL_DAILY_MAX);
+      const usageKey = `usage:${body.day}:${body.subject}`;
+      const refillKey = `refill:${body.day}:${body.subject}`;
+      const used = Number(await txn.get(usageKey) || 0);
+      const refillCount = Number(await txn.get(refillKey) || 0);
+      const stats = count => {
+        const normalizedCount = Math.max(0, Math.min(refillMax, Number(count) || 0));
+        const bonus = normalizedCount * refillAmount;
+        const limit = baseLimit + bonus;
+        return {
+          baseLimit, bonus, limit, used, remaining: Math.max(0, limit - used),
+          refillAmount, refillCount: normalizedCount, refillMax,
+          refillRemaining: Math.max(0, refillMax - normalizedCount),
+        };
+      };
+      if (body.action === 'stats') return stats(refillCount);
+      if (body.action === 'refill') {
+        if (refillCount >= refillMax) return { allowed: false, ...stats(refillCount) };
+        const nextCount = refillCount + 1;
+        await txn.put(refillKey, nextCount);
+        return { allowed: true, added: refillAmount, ...stats(nextCount) };
+      }
       if (body.action === 'consume') {
-        if (used >= limit) return { allowed: false, limit, used, remaining: 0 };
-        await txn.put(key, used + 1);
-        return { allowed: true, limit, used: used + 1, remaining: Math.max(0, limit - used - 1) };
+        const before = stats(refillCount);
+        if (used >= before.limit) return { allowed: false, ...before, remaining: 0 };
+        await txn.put(usageKey, used + 1);
+        return { allowed: true, ...before, used: used + 1, remaining: Math.max(0, before.limit - used - 1) };
       }
       return { error: 'Unknown action' };
     });
@@ -316,6 +386,7 @@ export default {
       const session = await authenticate(request, env);
       if (!session) return jsonResponse({ error: 'Session expired or unauthorized' }, 401, origin);
       if (url.pathname === '/auth/session' && request.method === 'GET') return handleSession(request, env, origin, session);
+      if (url.pathname === '/auth/refill' && request.method === 'POST') return handleRefill(request, env, origin, session);
       if (url.pathname === '/auth/logout' && request.method === 'POST') return jsonResponse({ ok: true }, 200, origin);
       if (request.method === 'GET' && url.searchParams.has('url')) return handleGovernmentProxy(request, env, origin);
       if (request.method === 'POST' && (url.pathname === '/' || url.pathname === '/openai')) {
@@ -329,4 +400,7 @@ export default {
   },
 };
 
-export const __test = { signSession, verifySession, securePinMatches, kstDay, ALLOWED_MODELS, WORKER_VERSION };
+export const __test = {
+  signSession, verifySession, securePinMatches, kstDay, quotaPolicy,
+  ALLOWED_MODELS, WORKER_VERSION, QUOTA_REFILL_AMOUNT, QUOTA_REFILL_DAILY_MAX,
+};

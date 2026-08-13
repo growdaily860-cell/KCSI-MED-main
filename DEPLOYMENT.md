@@ -54,6 +54,7 @@ Cloudflare Dashboard에서 `Workers & Pages → kcsi-med-main → Settings → V
 | `DATA_GO_KR_KEY` | Secret | 식약처 공공 API 호출 |
 | `ACCESS_TOKEN` | Secret, 24자 이상 임의 문자열 | 24시간 로그인 세션 서명 |
 | `LOGIN_PIN` | Secret, 숫자 6자리 | 휴대폰·태블릿 로그인 PIN |
+| `REFILL_PIN` | Secret, 숫자 6자리 | 200회 추가 충전 PIN, `LOGIN_PIN`과 다른 값 |
 
 Text 변수는 다음처럼 설정합니다.
 
@@ -62,7 +63,7 @@ Text 변수는 다음처럼 설정합니다.
 | `ALLOWED_ORIGINS` | `https://kcsi-med-main.vercel.app,http://127.0.0.1:8765` | 허용 사이트 |
 | `DAILY_OPENAI_LIMIT` | `40` | 하루 OpenAI 호출 횟수(선택, 기본 40) |
 
-`ACCESS_TOKEN`은 더 이상 휴대폰에 복사하는 토큰이 아니라 서버 내부의 세션 서명 비밀값입니다. 기존 값이 24자 이상이면 그대로 유지해도 됩니다. `LOGIN_PIN`은 기억할 수 있는 6자리로 새로 정하되 생일·전화번호 뒷자리처럼 추측하기 쉬운 값은 피하세요.
+`ACCESS_TOKEN`은 더 이상 휴대폰에 복사하는 토큰이 아니라 서버 내부의 세션 서명 비밀값입니다. 기존 값이 24자 이상이면 그대로 유지해도 됩니다. `LOGIN_PIN`과 `REFILL_PIN`은 서로 다른 6자리로 정하고, 생일·전화번호 뒷자리처럼 추측하기 쉬운 값은 피하세요. 충전은 200회씩 한국시간 하루 최대 2회이며, 사용 횟수를 초기화하지 않고 당일 총한도를 최대 440회까지 늘립니다.
 
 이 저장소의 `wrangler.jsonc`는 정확한 일일 사용량을 저장하는 `AUTH_QUOTA` Durable Object를 함께 만듭니다. Cloudflare Git 연결의 배포 명령은 다음과 같이 설정합니다.
 
@@ -81,12 +82,13 @@ npx wrangler deploy
 
 ## 5. 배포 후 점검
 
-- `/`가 정상적으로 열리고 화면에 `v12.4`가 표시되는지 확인
-- `https://kcsi-med-main.growdaily860.workers.dev/health`에서 Worker `v12.4`가 표시되는지 확인
+- `/`가 정상적으로 열리고 화면에 `v12.6`이 표시되는지 확인
+- `https://kcsi-med-main.growdaily860.workers.dev/health`에서 Worker `v12.6`이 표시되는지 확인
 - 로그인 화면에서 잘못된 PIN이 거부되는지 확인
 - 올바른 PIN으로 로그인한 뒤 새로고침해도 로그인 상태가 유지되는지 확인
 - 다른 브라우저에서는 다시 PIN을 요구하는지 확인
 - OpenAI API 패널에 오늘 사용량과 남은 횟수가 표시되는지 확인
+- 잘못된 충전 PIN은 거부되고, 올바른 PIN으로 `40 → 240 → 440`회가 된 뒤 세 번째 충전이 차단되는지 확인
 - 상단 `현장 판독 / 모델 비교 연구` 탭 전환 확인
 - 연구 모드에서 사진 10장 일괄 선택과 5개 앞·뒷면 쌍 자동 배치 확인
 - GPT-4o 이상 4개 모델이 A–D에 배정되고 투표 전 비공개, 투표 후 공개되는지 확인
@@ -104,7 +106,7 @@ AI 판독과 식약처 API 조회는 코드에 설정된 Cloudflare Worker에 �
 
 - Worker의 허용 Origin에 배포 도메인이 포함되어 있는지
 - OpenAI 및 공공데이터 인증키가 Worker Secret으로 등록되어 있는지
-- `LOGIN_PIN`과 24자 이상 `ACCESS_TOKEN`이 Secret으로 등록되어 있는지
+- 서로 다른 `LOGIN_PIN`·`REFILL_PIN`과 24자 이상 `ACCESS_TOKEN`이 Secret으로 등록되어 있는지
 - `AUTH_QUOTA` Durable Object binding이 배포되어 있는지
 - 미로그인 요청이 HTTP 401로 차단되는지
 - 일일 사용량 제한이 적용되어 있는지

@@ -130,6 +130,13 @@ input[type=file]{display:none}
 .session-box{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 11px;border:1px solid #BBF7D0;border-radius:9px;background:#F0FDF4}
 .session-box b{display:block;font-size:12px;color:#166534}.session-box span{display:block;margin-top:3px;font-size:10.5px;line-height:1.45;color:#3F6212}
 .session-logout{flex:none;border:1px solid #D6D3D1;border-radius:8px;padding:8px 10px;background:#fff;color:#3F3F46;font:700 11px/1.2 inherit;cursor:pointer}
+.quota-refill{margin-top:10px;padding:11px;border:1px solid #F5D08A;border-radius:9px;background:#FFFBEB}
+.quota-refill-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.quota-refill-head b{font-size:12px;color:#854D0E}.quota-refill-head span{font-size:10.5px;color:#A16207}
+.quota-refill-row{display:flex;gap:8px}.quota-refill-input{min-width:0;flex:1;border:1px solid #E7C66B;border-radius:8px;padding:10px 11px;background:#fff;text-align:center;font:700 15px/1 'IBM Plex Mono',monospace;letter-spacing:.18em;outline:none}
+.quota-refill-input:focus{border-color:#CA8A04;box-shadow:0 0 0 3px #FEF3C7}.quota-refill-button{flex:none;border:0;border-radius:8px;padding:10px 13px;background:#854D0E;color:#fff;font:800 11.5px/1.2 inherit;white-space:nowrap;cursor:pointer}
+.quota-refill-button:disabled,.quota-refill-input:disabled{opacity:.45;cursor:default}.quota-refill-message{min-height:17px;margin-top:7px;font-size:10.5px;line-height:1.45;color:#92400E}.quota-refill-message.ok{color:#166534}.quota-refill-message.error{color:#991B1B}
+@media(max-width:360px){.quota-refill-row{flex-direction:column}.quota-refill-button{width:100%}}
 
 /* 24시간 PIN 로그인 — 앱 데이터보다 위에서 전체 화면을 잠근다. */
 .auth-gate{position:fixed;inset:0;z-index:2500;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -497,7 +504,7 @@ input[type=file]{display:none}
     <button class="auth-login" id="authLogin" type="submit">로그인</button>
     <button class="auth-install" id="authInstall" type="button" hidden>📲 이 기기에 앱 설치</button>
     <div class="auth-message" id="authMessage" role="status" aria-live="polite">연결 상태 확인 중...</div>
-    <div class="auth-points">🔐 OpenAI 키와 서명용 비밀값은 Cloudflare에만 보관됩니다.<br>💳 기본 API 한도는 하루 40회이며 Worker에서 차단됩니다.<br>📱 로그인 후 홈 화면에 추가하면 앱처럼 사용할 수 있습니다.</div>
+    <div class="auth-points">🔐 OpenAI 키와 서명용 비밀값은 Cloudflare에만 보관됩니다.<br>💳 기본 API 한도는 하루 40회이며, 별도 충전 PIN으로 200회씩 하루 2회 추가할 수 있습니다.<br>📱 로그인 후 홈 화면에 추가하면 앱처럼 사용할 수 있습니다.</div>
   </form>
 </div>
 <div class="app" id="app">
@@ -518,6 +525,14 @@ input[type=file]{display:none}
         <div><b id="authSessionState">로그인 확인 중</b><span id="authSessionMeta">API 키와 세션 서명값은 Cloudflare에만 보관됩니다.</span></div>
         <button class="session-logout" id="authLogout" type="button">로그아웃</button>
       </div>
+      <form class="quota-refill" id="quotaRefillForm">
+        <div class="quota-refill-head"><b>추가 한도 충전</b><span id="quotaRefillState">오늘 2회 가능</span></div>
+        <div class="quota-refill-row">
+          <input class="quota-refill-input" id="quotaRefillPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="6자리 충전 PIN" placeholder="충전 PIN 6자리">
+          <button class="quota-refill-button" id="quotaRefillBtn" type="submit">+200회 충전</button>
+        </div>
+        <div class="quota-refill-message" id="quotaRefillMessage" role="status" aria-live="polite">기존 사용량은 유지되고 오늘 한도만 200회 늘어납니다.</div>
+      </form>
       <div style="font-size:11px;color:var(--soft);margin-top:10px;line-height:1.5">PIN 로그인 후 24시간 동안 현장 판독과 모델 비교가 자동 연결됩니다. 긴 접근 토큰을 기기마다 복사할 필요가 없습니다.</div>
     </div>
   </div>
@@ -892,7 +907,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.5';
+const APP_VERSION = 'v12.6';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
@@ -964,6 +979,7 @@ function readAuthSession() {
   } catch (_) { return null; }
 }
 let AUTH_SESSION = readAuthSession();
+let QUOTA_STATE = null;
 
 function authSessionValid() {
   return !!(AUTH_SESSION && AUTH_SESSION.token && Number(AUTH_SESSION.expiresAt) > Date.now() + 5000);
@@ -976,6 +992,7 @@ function saveAuthSession(value) {
 
 function clearAuthSession() {
   AUTH_SESSION = null;
+  QUOTA_STATE = null;
   try { localStorage.removeItem(AUTH_STORE_KEY); } catch (_) {}
 }
 
@@ -1010,24 +1027,56 @@ function authErrorMessage(status, data) {
   return raw || `Worker 연결 오류 (${status})`;
 }
 
+function refillErrorMessage(status, data) {
+  const code = String(data && data.code || '');
+  const raw = String(data && data.error || '');
+  if (code === 'invalid_refill_pin') return '충전 PIN이 올바르지 않습니다.';
+  if (code === 'daily_refill_limit_reached') return '오늘 충전 2회를 모두 사용했습니다. 한국시간 자정에 다시 가능합니다.';
+  if (code === 'refill_attempts_exceeded') return '충전 PIN 시도가 너무 많습니다. 10분 후 다시 시도하세요.';
+  if (status === 401) return '로그인 시간이 만료되었습니다. 다시 로그인하세요.';
+  if (status === 503 && /REFILL_PIN/i.test(raw)) return 'Cloudflare에 별도 REFILL_PIN 등록이 필요합니다.';
+  return raw || `한도 충전 오류 (${status})`;
+}
+
 function updateAuthUi(data) {
   const state = document.getElementById('authSessionState');
   const meta = document.getElementById('authSessionMeta');
   const dot = document.getElementById('gptDot');
   const valid = authSessionValid();
+  if (data && typeof data === 'object') {
+    const next = { ...(QUOTA_STATE || {}) };
+    ['baseLimit','bonus','limit','used','remaining','refillAmount','refillCount','refillMax','refillRemaining'].forEach(key => {
+      const value = Number(data[key]);
+      if (Number.isFinite(value)) next[key] = value;
+    });
+    QUOTA_STATE = next;
+  }
   if (state) state.textContent = valid ? '✓ 로그인됨' : '로그인 필요';
   if (dot) dot.classList.toggle('on', valid);
   if (meta) {
     if (!valid) meta.textContent = '6자리 PIN으로 로그인하면 24시간 유지됩니다.';
     else {
       const expires = new Date(Number(AUTH_SESSION.expiresAt)).toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      const limit = Number(data && data.limit);
-      const remaining = Number(data && data.remaining);
+      const limit = QUOTA_STATE ? Number(QUOTA_STATE.limit) : NaN;
+      const remaining = QUOTA_STATE ? Number(QUOTA_STATE.remaining) : NaN;
       meta.textContent = Number.isFinite(limit) && Number.isFinite(remaining)
         ? `오늘 API ${limit - remaining}/${limit}회 · ${remaining}회 남음 · ${expires}까지`
         : `${expires}까지 로그인 유지`;
     }
   }
+  const refillState = document.getElementById('quotaRefillState');
+  const refillInput = document.getElementById('quotaRefillPin');
+  const refillButton = document.getElementById('quotaRefillBtn');
+  const refillCount = QUOTA_STATE ? Number(QUOTA_STATE.refillCount) : NaN;
+  const refillMax = QUOTA_STATE ? Number(QUOTA_STATE.refillMax) : NaN;
+  const refillRemaining = QUOTA_STATE ? Number(QUOTA_STATE.refillRemaining) : NaN;
+  const knownRefill = Number.isFinite(refillCount) && Number.isFinite(refillMax);
+  if (refillState) refillState.textContent = knownRefill
+    ? `오늘 ${refillCount}/${refillMax}회 사용 · ${Math.max(0, Number.isFinite(refillRemaining) ? refillRemaining : refillMax - refillCount)}회 남음`
+    : (valid ? '충전 횟수 확인 중' : '로그인 후 사용 가능');
+  const refillDisabled = !valid || (knownRefill && refillCount >= refillMax);
+  if (refillInput) refillInput.disabled = refillDisabled;
+  if (refillButton && refillButton.dataset.busy !== 'true') refillButton.disabled = refillDisabled;
   if (typeof checkReady === 'function') checkReady();
 }
 
@@ -1046,9 +1095,21 @@ function hideAuthGate() {
 
 function observeQuotaHeaders(response) {
   if (!response || !response.headers || typeof response.headers.get !== 'function' || !authSessionValid()) return;
-  const limit = Number(response.headers.get('X-Daily-Limit'));
-  const remaining = Number(response.headers.get('X-Daily-Remaining'));
-  if (Number.isFinite(limit) && Number.isFinite(remaining)) updateAuthUi({ limit, remaining });
+  const headerNumber = name => {
+    const raw = response.headers.get(name);
+    return raw === null || raw === '' ? NaN : Number(raw);
+  };
+  const data = {
+    limit: headerNumber('X-Daily-Limit'),
+    remaining: headerNumber('X-Daily-Remaining'),
+    refillAmount: headerNumber('X-Refill-Amount'),
+    refillCount: headerNumber('X-Refill-Count'),
+    refillMax: headerNumber('X-Refill-Max'),
+  };
+  if (Number.isFinite(data.refillCount) && Number.isFinite(data.refillMax)) {
+    data.refillRemaining = Math.max(0, data.refillMax - data.refillCount);
+  }
+  if (Number.isFinite(data.limit) && Number.isFinite(data.remaining)) updateAuthUi(data);
 }
 
 async function validateAuthSession() {
@@ -1110,6 +1171,48 @@ async function initAuthGate() {
     }
   });
   input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, '').slice(0, 6); });
+  const refillForm = document.getElementById('quotaRefillForm');
+  const refillInput = document.getElementById('quotaRefillPin');
+  const refillButton = document.getElementById('quotaRefillBtn');
+  const refillMessage = document.getElementById('quotaRefillMessage');
+  refillInput.addEventListener('input', () => { refillInput.value = refillInput.value.replace(/\D/g, '').slice(0, 6); });
+  refillForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const pin = refillInput.value.replace(/\D/g, '').slice(0, 6);
+    refillInput.value = pin;
+    refillMessage.className = 'quota-refill-message';
+    if (!authSessionValid()) { clearAuthSession(); showAuthGate('로그인 후 한도를 충전할 수 있습니다.'); return; }
+    if (pin.length !== 6) { refillMessage.textContent = '충전 PIN 숫자 6자리를 입력하세요.'; refillMessage.classList.add('error'); return; }
+    refillButton.dataset.busy = 'true';
+    refillButton.disabled = true;
+    refillButton.textContent = '충전 중...';
+    refillMessage.textContent = 'Cloudflare에서 충전 가능 횟수를 확인 중입니다.';
+    try {
+      const response = await fetch(`${KCSI_WORKER_PROXY}/auth/refill`, {
+        method: 'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ pin }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401 && data.code !== 'invalid_refill_pin') {
+          clearAuthSession();
+          showAuthGate('로그인 시간이 만료되었습니다. 다시 로그인하세요.');
+        }
+        throw new Error(refillErrorMessage(response.status, data));
+      }
+      refillInput.value = '';
+      updateAuthUi(data);
+      refillMessage.textContent = `200회 충전 완료 · 오늘 총 ${data.limit}회 한도입니다.`;
+      refillMessage.classList.add('ok');
+      setStatus(`API 한도 200회 충전 완료 · 오늘 ${data.remaining}회 남음`);
+    } catch (error) {
+      refillMessage.textContent = error.message || '한도 충전에 실패했습니다.';
+      refillMessage.classList.add('error');
+    } finally {
+      refillButton.dataset.busy = 'false';
+      refillButton.textContent = '+200회 충전';
+      updateAuthUi();
+    }
+  });
   document.getElementById('authLogout').addEventListener('click', () => {
     clearAuthSession();
     showAuthGate('로그아웃되었습니다. 다시 사용하려면 PIN을 입력하세요.');
@@ -3009,8 +3112,15 @@ JSON 형식: {"found":true,"itemName":"제품명","entpName":"제조사","ingred
     return json.found ? { ...json, isWeb: true } : null;
   } catch { return null; }
 }
-
-
+async function gptResponseError(response, fallback) {
+  const data = await response.json().catch(() => ({}));
+  const raw = typeof data.error === 'string' ? data.error : String(data.error && data.error.message || '');
+  if (response.status === 429 && /Daily API limit/i.test(raw)) {
+    return '오늘 API 한도를 모두 사용했습니다. OpenAI API 패널에서 충전 PIN으로 200회를 추가하세요.';
+  }
+  if (response.status === 401) return '로그인 시간이 만료되었습니다. 다시 로그인하세요.';
+  return raw || `${fallback} (${response.status})`;
+}
 
 // GPT Vision — 외형 관찰 (pills 배열, 앞/뒷면 다중 알약 지원)
 // 판독 대상 사진을 인자로 받는다. 기본값은 전역 img이므로 그룹 판독 호출부는 종전과 동일.
@@ -3067,7 +3177,7 @@ JSON으로만 (mark_front_alts·mark_back_alts는 대체 판독 배열, 확실�
   const res = await gptFetch({ model:'gpt-4o', response_format:{type:'json_object'}, temperature:0.1, max_tokens:3000,
       messages:[{ role:'user', content }]
     });
-  if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||'GPT 오류 '+res.status); }
+  if (!res.ok) throw new Error(await gptResponseError(res, 'GPT 판독 오류'));
   const data = await res.json();
   const parsed = JSON.parse(data.choices[0].message.content);
   return Array.isArray(parsed.pills) ? parsed.pills.map(p => normalizeVisionPill(p, !!back)) : [];
@@ -3123,7 +3233,7 @@ ${n > 1 ? `총 ${n}장의 서류 이미지가 제공됩니다. 같은 문서의 
   const res = await gptFetch({ model:'gpt-4o', response_format:{type:'json_object'}, temperature:0.1, max_tokens:3500,
       messages:[{ role:'user', content }]
     });
-  if (!res.ok) throw new Error('GPT OCR 오류');
+  if (!res.ok) throw new Error(await gptResponseError(res, 'GPT OCR 오류'));
   const data = await res.json();
   const parsed = JSON.parse(data.choices[0].message.content);
   // 모델이 남은 식별정보를 출력하더라도 화면·리포트에 저장하기 전에 한 번 더 텍스트 마스킹한다.
