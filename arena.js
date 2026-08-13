@@ -628,6 +628,8 @@
     document.getElementById('arenaCompare').innerHTML = MODEL_LABELS.map(label => resultHtml(label, state.current.results[label])).join('');
     MODEL_LABELS.forEach(label => {
       const result = state.current.results[label];
+      const voteButton = document.querySelector(`[data-vote="${label}"]`);
+      if (voteButton) voteButton.disabled = !!result.error;
       for (let index = 0; index < CASE_COUNT; index += 1) {
         const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
         select.value = result.error ? '' : suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
