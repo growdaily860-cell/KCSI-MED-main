@@ -19,6 +19,7 @@
 <link rel="apple-touch-icon" href="med-icon-180.png">
 <link rel="manifest" href="med-manifest.json">
 <link rel="stylesheet" href="arena.css">
+<link rel="stylesheet" href="deidentify.css">
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -703,16 +704,19 @@ input[type=file]{display:none}
       <span class="extra-count mono" id="rxCount"></span>
     </div>
     <div class="privacy-warn">
-      🔒 <b>개인정보 유의</b> — 촬영·업로드 전 성명·주민번호·연락처 등 <b>개인 식별 정보 마스킹</b>
+      🔒 <b>자동 비식별화</b> — 원본은 서버로 보내지 않습니다. 브라우저에서 성명·주민번호·생년월일·주소·전화번호·환자번호를 먼저 가린 뒤, 직접 확인한 사본만 판독합니다.
+    </div>
+    <div class="deid-flow" id="rxPrivacyStatus" role="status" aria-live="polite">
+      <div class="deid-safe"><span><b>기기 안에서만 처리</b><br>자동 가림 → 손가락으로 추가/삭제 → 최종 확인</span></div>
     </div>
     <div class="extra-grid" id="rxGrid"></div>
     <div class="grid-pick-row">
       <button class="grid-pick-btn" id="rxCamBtn">촬영</button>
       <button class="grid-pick-btn" id="rxGalBtn">갤러리</button>
     </div>
-    <div class="extra-tip" id="rxTip">처방전 · <b>복약안내서(약봉투) · 약통 라벨</b>도 판독 — 각인이 안 읽히는 알약의 가장 확실한 단서입니다 (최대 6장)</div>
+    <div class="extra-tip" id="rxTip">JPG · PNG · WEBP · HEIC · PDF 지원. 처방전 · <b>복약안내서(약봉투) · 약통 라벨</b>도 판독합니다 (PDF 각 쪽 포함 최대 6장).</div>
     <input type="file" accept="image/*" capture="environment" id="fileRxCam" aria-label="의료기록 촬영">
-    <input type="file" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" multiple id="fileRx" aria-label="의료기록 파일 선택">
+    <input type="file" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,application/pdf,.pdf" multiple id="fileRx" aria-label="의료기록 파일 선택">
   </div>
 
   <div class="capture-row" style="margin-top:8px">
@@ -799,6 +803,34 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- 의료기록 비식별화 검토 — 원본은 이 모달의 메모리에만 머물고 확정 후 폐기 -->
+<div class="deid-modal" id="deidModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="deidTitle">
+  <div class="deid-shell">
+    <div class="deid-head">
+      <div><div class="deid-title" id="deidTitle">비식별화 준비</div><div class="deid-sub" id="deidSub">원본은 서버로 전송하지 않습니다.</div></div>
+      <button class="deid-cancel" id="deidCancel" type="button">취소</button>
+    </div>
+    <div class="deid-stage">
+      <canvas class="deid-canvas" id="deidCanvas" width="1" height="1" aria-label="의료기록 비식별화 검토 화면"></canvas>
+      <div class="deid-loading" id="deidLoading">브라우저에서 개인정보 영역을 찾는 중입니다.</div>
+    </div>
+    <div class="deid-panel">
+      <div class="deid-summary" id="deidSummary"><strong>가림 상자 0개</strong></div>
+      <div class="deid-tools">
+        <button class="deid-tool on" id="deidDraw" type="button">손가락으로 추가</button>
+        <button class="deid-tool" id="deidErase" type="button">상자 탭해 삭제</button>
+        <button class="deid-tool" id="deidUndo" type="button">직전 추가 취소</button>
+      </div>
+      <div class="deid-help" id="deidHelp">빠진 개인정보가 있으면 손가락으로 드래그해 검은 상자를 추가하세요.</div>
+      <label class="deid-check"><input type="checkbox" id="deidConfirm"><span>성명·주민번호·생년월일·주소·연락처·각종 개인번호가 보이지 않는 것을 직접 확인했습니다.</span></label>
+      <div class="deid-actions">
+        <button class="deid-skip" id="deidSkip" type="button">등록하지 않기</button>
+        <button class="deid-apply" id="deidApply" type="button" disabled>비식별화 사본 사용</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 촬영 이미지 확대 뷰어 (핀치 줌) -->
 <div class="viewer" id="imgViewer">
   <button class="viewer-reset" id="viewerReset">원래대로</button>
@@ -808,6 +840,7 @@ input[type=file]{display:none}
 </div>
 
 <script src="arena.js"></script>
+<script src="deidentify.js"></script>
 <script>
 // ── 의약품 DB (pill_db.json 별도 파일, 비동기 로드) ──
 // index.html과 pill_db.json을 반드시 같은 폴더(리포 최상위)에 함께 배포할 것.
@@ -859,7 +892,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.4';
+const APP_VERSION = 'v12.5';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
@@ -1659,12 +1692,26 @@ function bindMultiGrid(cfg) {
   const fileCam = document.getElementById(cfg.camInputId);
   const fileGal = document.getElementById(cfg.galInputId);
   const MAX = cfg.max || 6;
+  const privacyStatus = document.getElementById('rxPrivacyStatus');
+  let privacyBusy = false;
+
+  function setPrivacyStatus(message, busy) {
+    privacyBusy = !!busy;
+    if (privacyStatus) {
+      privacyStatus.classList.toggle('busy', privacyBusy);
+      privacyStatus.innerHTML = privacyBusy
+        ? `<b>${message}</b><br>원본은 기기 밖으로 전송하거나 저장하지 않습니다.`
+        : `<div class="deid-safe"><span><b>${message}</b><br>비식별화된 사본만 판독·임시 복원에 사용됩니다.</span></div>`;
+    }
+    refresh();
+  }
 
   function refresh() {
     grid.querySelectorAll('.extra-thumb').forEach(el => el.remove());
     img[cfg.key].forEach((it, i) => {
       const div = document.createElement('div');
       div.className = 'extra-thumb';
+      if (it.redacted === true) div.classList.add('deidentified');
       const im = document.createElement('img');
       // 미리보기는 축소본으로. 종전엔 원본 base64(장당 ~800KB)를 DOM에 그대로 다시 넣어
       // 6장이면 판독용 배열 5MB + DOM 5MB가 동시에 상주했다. 촬영 버튼을 누르는 순간
@@ -1677,7 +1724,8 @@ function bindMultiGrid(cfg) {
       x.addEventListener('click', (e) => {
         e.stopPropagation();
         img[cfg.key].splice(i, 1);
-        refresh(); checkReady();
+        refresh(); checkReady(); saveDraft();
+        setPrivacyStatus(img[cfg.key].length ? `${img[cfg.key].length}장 비식별화 완료` : '기기 안에서만 처리', false);
       });
       div.appendChild(im); div.appendChild(x);
       grid.appendChild(div);
@@ -1685,53 +1733,77 @@ function bindMultiGrid(cfg) {
     const n = img[cfg.key].length;
     countEl.textContent = n ? `${n}/${MAX}장` : '';
     const full = n >= MAX;
-    camBtn.disabled = full; galBtn.disabled = full;
-    camBtn.style.opacity = galBtn.style.opacity = full ? '.4' : '1';
+    camBtn.disabled = full || privacyBusy; galBtn.disabled = full || privacyBusy;
+    camBtn.style.opacity = galBtn.style.opacity = (full || privacyBusy) ? '.4' : '1';
     if (n) empty.style.display = 'none';
   }
 
-  // 파일 input과 내장 카메라가 같은 처리 경로를 쓰도록 dataUrl 단계에서 합류시킨다.
-  function acceptDataUrl(srcUrl) {
-    if (img[cfg.key].length >= MAX) return;
-    shrinkForApi(srcUrl, (b64, type) => {
-      const page = { base64: b64, type };
+  function addReviewed(results) {
+    (results || []).forEach(result => {
+      if (!result || result.redacted !== true || !/^data:image\//.test(result.dataUrl || '') || img[cfg.key].length >= MAX) return;
+      const match = result.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!match) return;
+      const page = {
+        base64: match[2], type: match[1], redacted: true,
+        maskCount: Number(result.maskCount || 0), redactionKinds: result.kinds || [],
+      };
       img[cfg.key].push(page);
-      refresh(); checkReady();
-      try { shrinkForApi(`data:${type};base64,${b64}`, (tb, tt) => { page.thumb = `data:${tt};base64,${tb}`; refresh(); }, 260, false); }
-      catch (e) { console.warn('썸네일 생성 생략', e); }
-      setTimeout(saveDraft, 300);
-    }, 1900, false);
+      try {
+        shrinkForApi(result.dataUrl, (tb, tt) => { page.thumb = `data:${tt};base64,${tb}`; refresh(); }, 260, false);
+      } catch (e) { console.warn('썸네일 생성 생략', e); }
+    });
+    refresh(); checkReady(); saveDraft();
+    setPrivacyStatus(`${img[cfg.key].length}장 비식별화 완료`, false);
   }
 
-  function addFiles(files) {
-    const room = MAX - img[cfg.key].length;
-    [...files].slice(0, room).forEach(f => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // 서류도 동일하게 축소 전송 (최대 6장 → 원본이면 수십 MB가 되어 502 발생)
-        // 서류(처방전·진단서)는 대비 왜곡이 인쇄 글자 OCR을 해칠 수 있어 enhance=false (축소만)
-        const srcUrl = reader.result;
-        shrinkForApi(srcUrl, (b64, type) => {
-          const page = { base64: b64, type };
-          img[cfg.key].push(page);
-          refresh(); checkReady();
-          // 미리보기용 축소본(장당 ~15KB)은 뒤이어 붙인다. 실패해도 원본으로 폴백된다.
-          try { shrinkForApi(`data:${type};base64,${b64}`, (tb, tt) => { page.thumb = `data:${tt};base64,${tb}`; refresh(); }, 260, false); }
-          catch (e) { console.warn('썸네일 생성 생략', e); }
-        }, 1900, false);
-      };
-      reader.readAsDataURL(f);
-    });
+  async function runDeidentify(run) {
+    if (privacyBusy || img[cfg.key].length >= MAX) return;
+    setPrivacyStatus('로컬 비식별화 준비 중…', true);
+    errorBox.classList.remove('show');
+    try {
+      const results = await run(MAX - img[cfg.key].length);
+      addReviewed(results);
+    } catch (e) {
+      const cancelled = e && e.name === 'DeidentifyCancelled';
+      if (!cancelled) {
+        errorBox.textContent = '비식별화 오류: ' + (e?.message || '파일을 처리하지 못했습니다.');
+        errorBox.classList.add('show');
+      }
+      setPrivacyStatus(cancelled ? '등록 취소 · 원본 미저장' : '비식별화 실패 · 원본 미등록', false);
+    } finally {
+      privacyBusy = false;
+      refresh(); checkReady();
+    }
+  }
+
+  // 의료기록 원본은 shrinkForApi·img 배열보다 먼저 비식별화 검토를 거친다.
+  // 따라서 검토 전 원본은 Worker, GPT, IndexedDB 어느 곳에도 들어가지 않는다.
+  async function acceptDataUrl(srcUrl) {
+    let localOriginal = srcUrl;
+    await runDeidentify(room => window.KCSI_DEID.processDataUrls([localOriginal], {
+      maxPages: room,
+      onProgress: message => { if (privacyStatus) privacyStatus.innerHTML = `<b>${message}</b><br>브라우저 로컬 처리 중`; },
+    }));
+    localOriginal = '';
+  }
+
+  async function addFiles(files) {
+    const localFiles = Array.from(files || []);
+    await runDeidentify(room => window.KCSI_DEID.processFiles(localFiles, {
+      maxPages: room,
+      onProgress: message => { if (privacyStatus) privacyStatus.innerHTML = `<b>${message}</b><br>브라우저 로컬 처리 중`; },
+    }));
+    localFiles.length = 0;
   }
 
   camBtn.addEventListener('click', async () => {
     const r = await window.shootPhoto();          // 내장 카메라(앱 전환 없음)
     if (r === '__fallback__') { fileCam.click(); return; }
-    if (r) acceptDataUrl(r);
+    if (r) await acceptDataUrl(r);
   });
   galBtn.addEventListener('click', () => fileGal.click());
-  fileCam.addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
-  fileGal.addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
+  fileCam.addEventListener('change', async e => { const files = Array.from(e.target.files || []); e.target.value=''; await addFiles(files); });
+  fileGal.addEventListener('change', async e => { const files = Array.from(e.target.files || []); e.target.value=''; await addFiles(files); });
   return refresh;
 }
 window.refreshRx    = bindMultiGrid({ gridId:'rxGrid',    countId:'rxCount',    camBtnId:'rxCamBtn',    galBtnId:'rxGalBtn',    camInputId:'fileRxCam',    galInputId:'fileRx',    key:'rxPages', max:6 });
@@ -1741,7 +1813,8 @@ function checkReady() {
   const hasGpt = authSessionValid();
   analyzeBtn.disabled = !hasGpt || !img.front;               // 그룹 알약 판독 — 알약 앞면 필요
   const rxBtn = document.getElementById('rxAnalyzeBtn');
-  if (rxBtn) rxBtn.disabled = !hasGpt || !img.rxPages.length; // 의료 기록 판독 — 처방전·기록 필요
+  const safeRx = img.rxPages.length > 0 && img.rxPages.every(page => page && page.redacted === true);
+  if (rxBtn) rxBtn.disabled = !hasGpt || !safeRx;             // 비식별화 확인된 의료기록만 판독
 }
 
 // ── 이미지 확대 뷰어 (핀치 줌 + 드래그) ──
@@ -3002,9 +3075,17 @@ JSON으로만 (mark_front_alts·mark_back_alts는 대체 판독 배열, 확실�
 
 // GPT Vision — 처방전 OCR (다중 페이지 통합 판독)
 async function visionRx(pages) {
+  if (!pages.length || pages.some(page => !page || page.redacted !== true)) {
+    throw new Error('비식별화 확인을 마친 의료기록만 판독할 수 있습니다.');
+  }
   const n = pages.length;
   const content = [{ type:'text', text:`당신은 대한민국 처방전·진단서·의무기록 OCR 전문 시스템입니다.
 ${n > 1 ? `총 ${n}장의 서류 이미지가 제공됩니다. 같은 문서의 여러 페이지이거나 서로 다른 서류일 수 있습니다. 모든 페이지를 판독한 뒤 결과를 하나로 통합하고, 중복되는 KCD 코드·약물명은 한 번만 기재하세요.` : '이미지에서 읽을 수 있는 모든 텍스트를 판독하세요.'}
+
+[개인정보 보호 규칙 — 최우선]
+이미지는 사용자가 브라우저에서 비식별화를 검토한 사본입니다. 검은색 '비식별' 영역의 내용을 추론하거나 복원하지 마세요.
+혹시 남아 있는 성명·주민등록번호·외국인등록번호·생년월일·주소·전화번호·이메일·환자번호·병원등록번호·처방전번호가 보이더라도 응답에 그대로 기록하지 말고 반드시 '[비식별]'로 바꾸세요.
+의료 판단에 필요한 약물명·용량·용법·조제일·상병코드·진단·병력·검사결과는 보존하세요.
 
 [판독 대상]
 아래 어느 것이든 올 수 있습니다. 양식이 아니라 '읽히는 글자'를 기준으로 판단하세요.
@@ -3018,7 +3099,7 @@ ${n > 1 ? `총 ${n}장의 서류 이미지가 제공됩니다. 같은 문서의 
 현장에서 각인이 닳거나 읽히지 않는 알약이 많습니다. 이때 봉투·라벨에 인쇄된 약품명이
 가장 확실한 단서이므로, 표 형식이 아니어도 약품명이 보이면 반드시 drugs에 넣으세요.
  · 정식 서류 양식이 아니어도 됩니다. 봉투에 약 이름 한 줄만 있어도 추출하세요.
- · 조제일·약국명·환자명이 보이면 rawText에 남기세요(복용 시기 추정에 쓰입니다).
+ · 조제일·약국명은 raw_text에 남기되, 환자명 등 개인 식별 정보는 '[비식별]'로 바꾸세요.
  · PTP 은박 포장은 제품명이 반복 인쇄돼 있습니다. 같은 이름은 한 번만 기재하세요.
  · 봉투 표면이 구겨지거나 접혀 일부만 보이면, 확실한 글자만 적고 나머지는 uncertain에 넣으세요.
 
@@ -3044,7 +3125,14 @@ ${n > 1 ? `총 ${n}장의 서류 이미지가 제공됩니다. 같은 문서의 
     });
   if (!res.ok) throw new Error('GPT OCR 오류');
   const data = await res.json();
-  return JSON.parse(data.choices[0].message.content);
+  const parsed = JSON.parse(data.choices[0].message.content);
+  // 모델이 남은 식별정보를 출력하더라도 화면·리포트에 저장하기 전에 한 번 더 텍스트 마스킹한다.
+  if (window.KCSI_DEID) {
+    ['clinical','uncertain','raw_text'].forEach(key => {
+      if (typeof parsed[key] === 'string') parsed[key] = window.KCSI_DEID.sanitizeText(parsed[key]);
+    });
+  }
+  return parsed;
 }
 
 // ── GPT 역검증 — DB 매칭이 미확정(mid/sim)인 후보의 '등록 성상'을 사진과 재대조 ──
@@ -4181,11 +4269,10 @@ function buildReportText() {
     t += `※ 부검 여부의 최종 판단은 검안의·검시조사관·수사책임자의 협의 및 관련 법령·절차에 따름.\n\n`;
   }
 
-  // OCR 판독 원문 — 법의학 검증용(GPT가 실제로 무엇을 읽었는지 기록). 전체 저장.
-  // ⚠ 이 원문에는 성명·주민번호 등 개인정보가 포함될 수 있으므로 취급주의를 명시한다.
+  // OCR 판독 원문 — 비식별화 사본에서 읽은 텍스트만 저장한다.
   if (reportRawOcr) {
-    t += `${'='.repeat(40)}\n[OCR 판독 원문 전체] — 판독 검증용\n`;
-    t += `※ 개인정보(성명·주민번호 등)가 포함될 수 있음. 본 리포트는 대외비로 취급하고 관련 규정에 따라 보관·파기할 것.\n\n`;
+    t += `${'='.repeat(40)}\n[비식별화 OCR 판독 원문] — 판독 검증용\n`;
+    t += `※ 브라우저에서 비식별화 검토한 사본을 판독했으며 식별정보 패턴을 다시 마스킹함. 자동 탐지 누락 가능성이 있으므로 저장 전 재확인할 것.\n\n`;
     t += reportRawOcr + '\n\n';
   }
 
@@ -5186,6 +5273,7 @@ function setStatus(msg) {
 }
 
 function resetState() {
+  if (window.KCSI_DEID) window.KCSI_DEID.cancelActive();
   idbClear();                      // 초기화하면 저장된 촬영분도 함께 버린다
   if (window.collapseAllSections) window.collapseAllSections();   // 구역도 접어 기본 화면으로
   img = { front:null, back:null, rxPages: [] };
@@ -5331,10 +5419,12 @@ function saveDraft() {
   draftTimer = setTimeout(() => {
     try {
       const solo = (typeof window.soloSnapshot === 'function') ? window.soloSnapshot() : null;
-      const has = img.front || img.back || (img.rxPages && img.rxPages.length)
+      // 의료기록은 비식별화가 확인된 사본만 디스크에 쓴다. 원본·검토 전 페이지는 메모리에만 머문다.
+      const safeRxPages = (img.rxPages || []).filter(page => page && page.redacted === true);
+      const has = img.front || img.back || safeRxPages.length
                || (solo && (solo.curFront || solo.curBack || (solo.queue && solo.queue.length)));
       if (!has) { idbClear(); return; }
-      idbPut({ at: Date.now(), img: { front: img.front, back: img.back, rxPages: img.rxPages || [] }, solo })
+      idbPut({ at: Date.now(), img: { front: img.front, back: img.back, rxPages: safeRxPages }, solo })
         .catch(e => console.warn('초안 저장 실패', e));
     } catch (e) { console.warn('초안 저장 실패', e); }
   }, 400);
@@ -5361,10 +5451,15 @@ function addBootNote(html) {
     // 이전 사건 촬영분이 새 사건에 되살아나 증거 혼입이 된다. 30분이면 충분하다.
     if (Date.now() - (d.at || 0) > 30 * 60 * 1000) { idbClear(); return; }
     let n = 0;
+    let unsafeRxPurged = 0;
     if (d.img) {
       if (d.img.front) { img.front = d.img.front; n++; }
       if (d.img.back)  { img.back  = d.img.back;  n++; }
-      if (d.img.rxPages && d.img.rxPages.length) { img.rxPages = d.img.rxPages; n += d.img.rxPages.length; }
+      if (d.img.rxPages && d.img.rxPages.length) {
+        img.rxPages = d.img.rxPages.filter(page => page && page.redacted === true);
+        unsafeRxPurged = d.img.rxPages.length - img.rxPages.length;
+        n += img.rxPages.length;
+      }
     }
     if (d.solo && typeof window.soloRestore === 'function') {
       const before = n;
@@ -5372,6 +5467,11 @@ function addBootNote(html) {
       if (d.solo.curBack)  n++;
       n += (d.solo.queue || []).reduce((a, q) => a + (q.front ? 1 : 0) + (q.back ? 1 : 0), 0);
       if (n > before) window.soloRestore(d.solo);
+    }
+    // 이전 버전이 저장했던 비식별화 확인 전 의료기록은 복원하지 않고 즉시 저장소에서도 제거한다.
+    if (unsafeRxPurged) {
+      idbPut({ at: d.at, img: { front: d.img?.front || null, back: d.img?.back || null, rxPages: img.rxPages }, solo: d.solo || null }).catch(() => {});
+      addBootNote(`<b>확인되지 않은 의료기록 ${unsafeRxPurged}장을 삭제했습니다.</b><br>개인정보 보호를 위해 다시 등록해 비식별화 검토를 완료해 주세요.`);
     }
     if (!n) return;
     // 그룹 zone 썸네일 되살리기
