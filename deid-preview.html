@@ -47,7 +47,10 @@ document.getElementById('start').addEventListener('click', async () => {
   c.font = '34px Arial, sans-serif';
   ['환자명 홍길동','주민등록번호 860813-1234567','생년월일 1986-08-13','연락처 010-1234-5678','환자번호 PT-20260813','주소 서울특별시 마포구 월드컵로 123','', '약품명 타이레놀정 500mg','용법 1일 3회 3일분'].forEach((line,i)=>c.fillText(line,70,200+i*105));
   try {
-    const [result] = await KCSI_DEID.processDataUrls([canvas.toDataURL('image/png')], { onProgress: text => { status.textContent = text; } });
+    const [result] = await KCSI_DEID.processDataUrls([canvas.toDataURL('image/png')], {
+      onProgress: text => { status.textContent = text; },
+      onWords: words => { window.__deidSyntheticWords = words; },
+    });
     status.innerHTML = `<b id="pass">PASS · 비식별화 사본 생성</b><br>가림 상자 ${result.maskCount}개<img alt="비식별화 결과" src="${result.dataUrl}">`;
   } catch (error) { status.textContent = error.message; }
   button.disabled = false;
