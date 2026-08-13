@@ -502,6 +502,7 @@
         els.loading.textContent = message;
         if (options.onProgress) options.onProgress(message);
       });
+      if (options.onWords) options.onWords(words.map(word => ({ text: word.text, bbox: word.bbox, lineKey: word.lineKey })));
       boxes = boxesFromWords(words, canvas);
     } catch (error) {
       console.warn('로컬 OCR 실패 — 수동 검토로 전환', error);
