@@ -17,8 +17,9 @@
     { kind: '이메일', re: /\b[A-Z0-9._%+-]+\s*@\s*[A-Z0-9.-]+\.[A-Z]{2,}\b/gi },
     { kind: '생년월일', re: /\b(?:19|20)\d{2}\s*[./년-]\s*(?:0?[1-9]|1[0-2])\s*[./월-]\s*(?:0?[1-9]|[12]\d|3[01])\s*일?\b/g },
     { kind: '생년월일', re: /\b\d{2}\s*[./-]\s*(?:0?[1-9]|1[0-2])\s*[./-]\s*(?:0?[1-9]|[12]\d|3[01])\b/g },
-    { kind: '개인식별번호', re: /(?:환자|병원|차트|등록|접수|처방전)\s*(?:번\s*호|ID)\s*[:：]?\s*[A-Z0-9-]{3,}/gi },
+    { kind: '개인식별번호', re: /(?:환\s*자|병\s*원|차\s*트|등\s*록|접\s*수|처\s*방\s*전)\s*(?:번\s*[호흐]|I\s*D|N\s*[O0]\.?)\s*[:：]?\s*[A-Z0-9-]{3,}/gi },
     { kind: '성명', re: /(?:성\s*명|환\s*자\s*명|수\s*진\s*자|이\s*름|처방\s*받는\s*분)\s*[:：]?\s*[가-힣]{2,5}/g },
+    { kind: '주소', re: /(?:주\s*소|거\s*주\s*지|소\s*재\s*지)\s*[:：]?\s*[^\r\n]{2,80}/g },
     { kind: '주소', re: /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충[청북남]*|전[라북남]*|경[상북남]*|제주)[가-힣0-9\s-]{2,45}(?:로|길|동|읍|면|리|번지|아파트)\s*\d*[가-힣0-9-]*/g },
   ];
 
@@ -186,13 +187,17 @@
   }
 
   function normalizeWords(data) {
+    // Tesseract's flat `words` list can assign slightly different y-coordinates
+    // to words on the same printed line. Prefer its structural line data so a
+    // label such as "환자번호" stays attached to the value that follows it.
+    const fromBlocks = wordsFromBlocks(data.blocks);
+    if (fromBlocks.length) return fromBlocks;
     if (Array.isArray(data.words) && data.words.length) {
       return data.words.filter(w => w && w.bbox && String(w.text || '').trim()).map((w, i) => ({
         text: String(w.text).trim(), bbox: w.bbox, lineKey: `${Math.round(w.bbox.y0 / 12)}`, order: i,
       }));
     }
-    const fromBlocks = wordsFromBlocks(data.blocks);
-    return fromBlocks.length ? fromBlocks : wordsFromTsv(data.tsv);
+    return wordsFromTsv(data.tsv);
   }
 
   function buildLines(words) {
@@ -558,4 +563,3 @@
   root.KCSI_DEID = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
-
