@@ -47,6 +47,9 @@ const env = {
   AUTH_QUOTA:{ getByName:() => ({ fetch:(url, init) => quotaObject.fetch(new Request(url, init)) }) },
 };
 const originHeaders = { Origin:'https://kcsi-med-main.vercel.app', 'Content-Type':'application/json' };
+const health = await worker.fetch(new Request('https://worker.test/health'), env);
+assert.equal(health.status, 200);
+assert.deepEqual(await health.json(), { ok:true, service:'kcsi-med-main', version:'v12.4' });
 const login = await worker.fetch(new Request('https://worker.test/auth/login', {
   method:'POST', headers:originHeaders, body:JSON.stringify({ pin:'123456' }),
 }), env);
