@@ -234,6 +234,29 @@
     return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
   }
 
+  function recordIdNeighborBoxes(words, canvas) {
+    const out = [];
+    const items = (words || []).filter(word => word && word.bbox && String(word.text || '').trim());
+    items.forEach(label => {
+      const compact = String(label.text).replace(/[\s:：._-]/g, '').toUpperCase();
+      const isIdLabel = /^(?:환자|병원|차트|등록|접수|처방전)(?:번[호흐로]|ID|NO)$/.test(compact);
+      if (!isIdLabel) return;
+      const lb = label.bbox;
+      const lh = Math.max(1, lb.y1 - lb.y0);
+      const right = items.filter(word => {
+        if (word === label) return false;
+        const b = word.bbox;
+        const h = Math.max(1, b.y1 - b.y0);
+        const overlap = Math.min(lb.y1, b.y1) - Math.max(lb.y0, b.y0);
+        const sameVisualRow = overlap >= Math.min(lh, h) * 0.25
+          || Math.abs((lb.y0 + lb.y1) / 2 - (b.y0 + b.y1) / 2) <= Math.max(lh, h) * 0.65;
+        return sameVisualRow && b.x0 >= lb.x1 - 6 && b.x0 <= lb.x1 + canvas.width * 0.38;
+      }).sort((a, b) => a.bbox.x0 - b.bbox.x0).slice(0, 3);
+      if (right.length) out.push({ ...unionBoxes([lb, ...right.map(word => word.bbox)], canvas), kind: '개인식별번호', auto: true });
+    });
+    return out;
+  }
+
   function boxesFromWords(words, canvas) {
     const boxes = [];
     buildLines(words).forEach(line => {
@@ -243,6 +266,7 @@
         boxes.push({ ...unionBoxes(spans.map(span => span.bbox), canvas), kind: hit.kind, auto: true });
       });
     });
+    boxes.push(...recordIdNeighborBoxes(words, canvas));
     return dedupeBoxes(boxes);
   }
 
