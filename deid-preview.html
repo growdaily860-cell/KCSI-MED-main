@@ -49,7 +49,10 @@ document.getElementById('start').addEventListener('click', async () => {
   try {
     const [result] = await KCSI_DEID.processDataUrls([canvas.toDataURL('image/png')], {
       onProgress: text => { status.textContent = text; },
-      onWords: words => { window.__deidSyntheticWords = words; },
+      onWords: words => {
+        window.__deidSyntheticWords = words;
+        status.textContent = `OCR: ${words.map(word => word.text).join(' | ')}`;
+      },
     });
     status.innerHTML = `<b id="pass">PASS · 비식별화 사본 생성</b><br>가림 상자 ${result.maskCount}개<img alt="비식별화 결과" src="${result.dataUrl}">`;
   } catch (error) { status.textContent = error.message; }
