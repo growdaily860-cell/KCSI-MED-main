@@ -17,6 +17,7 @@
     { kind: '이메일', re: /\b[A-Z0-9._%+-]+\s*@\s*[A-Z0-9.-]+\.[A-Z]{2,}\b/gi },
     { kind: '생년월일', re: /\b(?:19|20)\d{2}\s*[./년-]\s*(?:0?[1-9]|1[0-2])\s*[./월-]\s*(?:0?[1-9]|[12]\d|3[01])\s*일?\b/g },
     { kind: '생년월일', re: /\b\d{2}\s*[./-]\s*(?:0?[1-9]|1[0-2])\s*[./-]\s*(?:0?[1-9]|[12]\d|3[01])\b/g },
+    { kind: '개인식별번호', re: /(?:환\s*자|병\s*원|차\s*트|등\s*록|접\s*수|처\s*방\s*전)\s*(?:번\s*[호흐로]|I\s*D|N\s*[O0]\.?)\s*[:：]?\s*[^\r\n]{2,40}/gi },
     { kind: '개인식별번호', re: /(?:환\s*자|병\s*원|차\s*트|등\s*록|접\s*수|처\s*방\s*전)\s*(?:번\s*[호흐]|I\s*D|N\s*[O0]\.?)\s*[:：]?\s*[A-Z0-9-]{3,}/gi },
     // OCR sometimes places the label and value in separate structural lines.
     // Strong medical-record prefixes still identify the value conservatively.
