@@ -93,7 +93,7 @@ assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not c
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
-assert(/APP_VERSION = 'v12\.4'/.test(html));
+assert(/APP_VERSION = 'v12\.5'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
 const css = fs.readFileSync('arena.css', 'utf8');
