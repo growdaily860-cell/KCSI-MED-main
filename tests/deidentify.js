@@ -25,6 +25,7 @@ assert(deid.detectTextRanges('주소 제주 한림읍 협재리 12').some(hit =>
 assert(deid.detectTextRanges('환 자 번 호 PT-20260813').some(hit => hit.kind === '개인식별번호'), '간격이 있는 환자번호 탐지 누락');
 assert(deid.detectTextRanges('PT-20260813').some(hit => hit.kind === '개인식별번호'), '구조 분리된 환자번호 탐지 누락');
 assert(deid.detectTextRanges('PI-20260813').some(hit => hit.kind === '개인식별번호'), 'OCR 변형 환자번호 탐지 누락');
+assert(deid.detectTextRanges('환 자 번 호 ㅁ +-20260813').some(hit => hit.kind === '개인식별번호'), '한글 잡음이 섞인 환자번호 탐지 누락');
 
 const words = [
   { text: '환자명', bbox: { x0: 10, y0: 10, x1: 55, y1: 30 }, lineKey: '1', order: 0 },
