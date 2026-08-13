@@ -14,7 +14,10 @@ const expired = await __test.signSession({ v:1, sub:'owner', iat:now - 7200, exp
 assert.equal(await __test.verifySession(expired, secret), null, 'expired session must fail');
 assert.equal(await __test.securePinMatches('123456', '123456', secret), true);
 assert.equal(await __test.securePinMatches('123457', '123456', secret), false);
-assert(__test.ALLOWED_MODELS.has('gpt-4o-mini') && __test.ALLOWED_MODELS.has('gpt-4.1-mini'));
+assert(__test.ALLOWED_MODELS.has('gpt-4o'));
+assert(__test.ALLOWED_MODELS.has('gpt-4.1'));
+assert(__test.ALLOWED_MODELS.has('gpt-5.6-luna'));
+assert(__test.ALLOWED_MODELS.has('gpt-5.6-terra'));
 
 class MemoryStorage {
   constructor() { this.values = new Map(); }

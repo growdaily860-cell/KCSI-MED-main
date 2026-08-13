@@ -7,61 +7,101 @@ assert.equal(parsed.drug_name, '테스트정');
 assert.equal(parsed.imprint_front, 'AB10');
 assert.equal(parsed.confidence, 88);
 
-const first = { provider:'openai', model:'gpt-4o-mini' };
-const second = { provider:'openai', model:'gpt-4.1-mini' };
-assert.deepEqual(arena.randomizedBlindOrder(first, second, () => 0.1), { A:first, B:second });
-assert.deepEqual(arena.randomizedBlindOrder(first, second, () => 0.9), { A:second, B:first });
+const batchPayload = { cases:Array.from({ length:5 }, (_, index) => ({
+  case_id:`CASE-${index + 1}`, drug_name:`테스트정${index + 1}`, imprint_front:`F${index + 1}`, imprint_back:`B${index + 1}`,
+})) };
+const batchParsed = arena.parseBatchModelOutput(JSON.stringify(batchPayload));
+assert.equal(batchParsed.length, 5);
+assert.equal(batchParsed[4].case_id, 'CASE-5');
+assert.equal(batchParsed[4].imprint_back, 'B5');
+
+const models = arena.DEFAULT_OPENAI_MODELS.map(model => ({ provider:'openai', model }));
+const order = arena.randomizedBlindOrder(models, () => 0.999);
+assert.deepEqual(Object.keys(order), ['A','B','C','D']);
+assert.deepEqual(Object.values(order), models);
+assert.equal(new Set(Object.values(arena.randomizedBlindOrder(models, () => 0.1)).map(item => item.model)).size, 4);
 
 assert.equal(arena.accuracyFromVerdict('correct'), 40);
-assert.equal(arena.computeTotal({ verdict:'partial', evidence:22, hallucination:18, clarity:14 }), 74);
+assert.equal(arena.averageAccuracy(['correct','partial','wrong','correct','partial']), 24);
+assert.equal(arena.computeBatchTotal({ caseVerdicts:['correct','correct','correct','correct','correct'], evidence:25, hallucination:20, clarity:15 }), 100);
 assert.equal(arena.suggestedVerdict('테스트정 10mg', '테스트정'), 'correct');
-assert.deepEqual(arena.DEFAULT_OPENAI_MODELS, ['gpt-4o-mini', 'gpt-4.1-mini']);
+assert.deepEqual(arena.DEFAULT_OPENAI_MODELS, ['gpt-4o','gpt-4.1','gpt-5.6-luna','gpt-5.6-terra']);
 
-const practiceBody = arena.createRequestBody('gpt-4o-mini', 'data:image/jpeg;base64,front', 'data:image/jpeg;base64,back', 'practice');
-assert.equal(practiceBody.messages[0].content[1].image_url.detail, 'low');
-assert.equal(practiceBody.messages[0].content[2].image_url.detail, 'low');
-assert.equal(practiceBody.max_tokens, 1200);
+const imagePairs = Array.from({ length:5 }, (_, index) => ({
+  front:`data:image/jpeg;base64,front${index}`, back:`data:image/jpeg;base64,back${index}`,
+}));
+const practiceBody = arena.createRequestBody('gpt-4o', imagePairs, 'practice');
+const practiceContent = practiceBody.messages[0].content;
+assert.equal(practiceContent.filter(part => part.type === 'image_url').length, 10);
+assert(practiceContent.filter(part => part.type === 'text').some(part => part.text === 'CASE-5 뒷면'));
+assert(practiceContent.filter(part => part.type === 'image_url').every(part => part.image_url.detail === 'low'));
+assert.equal(practiceBody.max_tokens, 3000);
 assert.equal(practiceBody.max_completion_tokens, undefined);
-const researchBody = arena.createRequestBody('gpt-4.1-mini', 'data:image/jpeg;base64,front', '', 'research');
-assert.equal(researchBody.messages[0].content[1].image_url.detail, 'high');
-assert.equal(researchBody.max_tokens, 2200);
-const gpt5Body = arena.createRequestBody('gpt-5-mini', 'data:image/jpeg;base64,front', '', 'practice');
-assert.equal(gpt5Body.max_completion_tokens, 1200);
+const researchBody = arena.createRequestBody('gpt-4.1', imagePairs, 'research');
+assert(researchBody.messages[0].content.filter(part => part.type === 'image_url').every(part => part.image_url.detail === 'high'));
+assert.equal(researchBody.max_tokens, 5000);
+const gpt5Body = arena.createRequestBody('gpt-5.6-luna', imagePairs, 'practice');
+assert.equal(gpt5Body.max_completion_tokens, 3000);
 assert.equal(gpt5Body.max_tokens, undefined);
 assert(arena.friendlyCallError('Unauthorized (401)').includes('다시 로그인'));
 assert(arena.friendlyCallError('insufficient_quota (429)').includes('사용 한도'));
 assert(arena.friendlyCallError('Daily API limit reached (429)').includes('한국시간 자정'));
-assert(arena.friendlyCallError('model not found').includes('모델 사용 권한'));
+assert(arena.friendlyCallError('model not found').includes('모델'));
 
-const runs = [{
-  id:'x', createdAt:'2026-08-12T00:00:00.000Z', caseId:'TEST-1', promptVersion:arena.PROMPT_VERSION,
-  condition:{ sides:'앞면+뒷면', clarity:'각인 명확', costMode:'practice', costModeLabel:'저비용 연습' }, vote:'A',
-  blindOrder:{ A:{ provider:'openai', providerLabel:'OpenAI', model:'gpt-4o-mini' }, B:{ provider:'openai', providerLabel:'OpenAI', model:'gpt-4.1-mini' } },
-  results:{
-    A:{ parsed:{ drug_name:'=FORMULA', imprint_front:'A', imprint_back:'B' }, db:{ matched:true, confidence:'high', candidate:'테스트정' }, latencyMs:100, rating:{ verdict:'correct', evidence:25, hallucination:20, clarity:15 } },
-    B:{ parsed:{ drug_name:'오답', imprint_front:'X', imprint_back:'Y' }, db:{ matched:false }, latencyMs:200, rating:{ verdict:'wrong', evidence:10, hallucination:5, clarity:12 } },
-  },
-}];
+const verdicts = {
+  A:['correct','correct','correct','correct','correct'],
+  B:['wrong','wrong','wrong','wrong','wrong'],
+  C:['partial','partial','partial','partial','partial'],
+  D:['correct','correct','correct','correct','correct'],
+};
+const cases = Array.from({ length:5 }, (_, index) => ({
+  id:`TEST-${index + 1}`, clarity:index < 3 ? '각인 명확' : '각인 불명확',
+  truthName:`정답${index + 1}`, truthFront:`F${index + 1}`, truthBack:`B${index + 1}`,
+}));
+const run = {
+  id:'BATCH-1', createdAt:'2026-08-13T00:00:00.000Z', promptVersion:arena.PROMPT_VERSION,
+  condition:{ sides:'앞면+뒷면 5쌍', costMode:'practice', costModeLabel:'저비용 연습' }, cases, vote:'A',
+  blindOrder:{}, results:{},
+};
+arena.MODEL_LABELS.forEach((label, labelIndex) => {
+  run.blindOrder[label] = { provider:'openai', providerLabel:'OpenAI', model:arena.DEFAULT_OPENAI_MODELS[labelIndex] };
+  run.results[label] = {
+    cases:Array.from({ length:5 }, (_, index) => ({
+      drug_name:label === 'A' && index === 0 ? '=FORMULA' : `답${label}${index + 1}`,
+      imprint_front:`F${index + 1}`, imprint_back:`B${index + 1}`,
+    })),
+    db:Array.from({ length:5 }, () => ({ matched:label === 'A', confidence:'high', candidate:'테스트정' })),
+    latencyMs:100 + labelIndex,
+    rating:{ caseVerdicts:verdicts[label], evidence:20, hallucination:18, clarity:12 },
+    error:'',
+  };
+});
+const runs = [run];
 const summary = arena.summarizeRuns(runs);
 assert.equal(summary.experiments, 1);
-assert.equal(summary.models.length, 2);
-assert.equal(summary.accuracy, 50);
+assert.equal(summary.cases, 5);
+assert.equal(summary.responses, 4);
+assert.equal(summary.ratedCases, 20);
+assert.equal(summary.models.length, 4);
+assert.equal(summary.accuracy, 62.5);
 const csv = arena.buildCsv(runs);
 assert(csv.includes("'=FORMULA"), 'CSV formula injection must be neutralized');
 assert(csv.includes('cost_mode') && csv.includes('저비용 연습'), 'CSV must record cost mode');
-assert(!csv.includes('apiKey') && !csv.includes('token'), 'CSV must not contain secrets');
+assert.equal(csv.split('\r\n').length, 21, 'one batch must export 20 data rows plus header');
+assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not contain secrets');
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
-assert(/APP_VERSION = 'v12\.3'/.test(html));
+assert(/APP_VERSION = 'v12\.4'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
 const css = fs.readFileSync('arena.css', 'utf8');
 assert(css.includes('#app.kcsi-research'));
-assert(css.includes('.arena-upload-actions'));
+assert(css.includes('.arena-cases') && css.includes('.arena-votes'));
 const arenaSource = fs.readFileSync('arena.js', 'utf8');
-assert(arenaSource.includes('arenaFrontFileCam') && arenaSource.includes('capture="environment"'));
+assert(arenaSource.includes('arenaBatchFiles') && arenaSource.includes('multiple'));
+assert(arenaSource.includes('arenaCase${number}${cap}Cam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
 
-console.log('[arena] PASS — OpenAI low-cost defaults · photo upload · blind order · scoring · login-only secrets · CSV safety');
+console.log('[arena] PASS — 4 OpenAI models · 5 pill pairs · 10 images · blind A–D · 20-row CSV');
