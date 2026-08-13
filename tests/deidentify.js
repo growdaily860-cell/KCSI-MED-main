@@ -23,6 +23,7 @@ const sanitized = deid.sanitizeText(sample);
 assert.strictEqual(deid.detectTextRanges('아세트아미노펜 500mg 1일 3회').length, 0, '약물 용법을 개인정보로 오탐');
 assert(deid.detectTextRanges('주소 제주 한림읍 협재리 12').some(hit => hit.kind === '주소'), '주소 라벨 기반 탐지 누락');
 assert(deid.detectTextRanges('환 자 번 호 PT-20260813').some(hit => hit.kind === '개인식별번호'), '간격이 있는 환자번호 탐지 누락');
+assert(deid.detectTextRanges('PT-20260813').some(hit => hit.kind === '개인식별번호'), '구조 분리된 환자번호 탐지 누락');
 
 const words = [
   { text: '환자명', bbox: { x0: 10, y0: 10, x1: 55, y1: 30 }, lineKey: '1', order: 0 },
