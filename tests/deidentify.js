@@ -36,6 +36,16 @@ const boxes = deid.boxesFromWords(words, { width: 500, height: 700 });
 assert.strictEqual(boxes.length, 1, '성명 영역 상자 생성 실패 또는 약물명 오탐');
 assert(boxes[0].x <= 10 && boxes[0].x + boxes[0].w >= 115, '성명 라인의 전체 탐지 범위를 가리지 못함');
 
+const splitIdWords = [
+  { text: '환자번호', bbox: { x0: 10, y0: 100, x1: 80, y1: 125 }, lineKey: 'label-block', order: 0 },
+  { text: 'PT', bbox: { x0: 90, y0: 102, x1: 120, y1: 124 }, lineKey: 'value-block-1', order: 1 },
+  { text: '-', bbox: { x0: 122, y0: 102, x1: 128, y1: 124 }, lineKey: 'value-block-2', order: 2 },
+  { text: '20260813', bbox: { x0: 130, y0: 102, x1: 220, y1: 124 }, lineKey: 'value-block-3', order: 3 },
+];
+const splitIdBoxes = deid.boxesFromWords(splitIdWords, { width: 500, height: 700 });
+assert.strictEqual(splitIdBoxes.length, 1, '구조가 분리된 환자번호 상자 생성 실패');
+assert(splitIdBoxes[0].x <= 10 && splitIdBoxes[0].x + splitIdBoxes[0].w >= 220, '환자번호 라벨과 값을 함께 가리지 못함');
+
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('KCSI_DEID.processFiles'), '의료기록 파일 비식별화 경로 누락');
 assert(html.includes('KCSI_DEID.processDataUrls'), '의료기록 촬영 비식별화 경로 누락');
