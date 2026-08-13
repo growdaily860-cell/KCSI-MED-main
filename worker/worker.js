@@ -11,7 +11,11 @@ const MAX_BODY_BYTES = 12 * 1024 * 1024;
 const ALLOWED_MODELS = new Set([
   'gpt-4o',
   'gpt-4o-mini',
+  'gpt-4.1',
   'gpt-4.1-mini',
+  'gpt-5.6-luna',
+  'gpt-5.6-terra',
+  'gpt-5.6-sol',
   'gpt-4o-search-preview',
 ]);
 const encoder = new TextEncoder();
@@ -209,7 +213,9 @@ async function handleOpenAI(request, env, origin, session) {
     return jsonResponse({ error: 'Model not allowed' }, 400, origin);
   }
   const requestedMax = Number(body.max_tokens || body.max_completion_tokens || 0);
-  if (requestedMax > 4000) return jsonResponse({ error: 'Token limit too high' }, 400, origin);
+  // A four-model Arena request asks one model to return five structured pill
+  // records. Keep a hard ceiling while allowing the 5,000-token research mode.
+  if (requestedMax > 6000) return jsonResponse({ error: 'Token limit too high' }, 400, origin);
 
   const quota = await consumeOpenAiQuota(env, session);
   if (!quota.allowed) {
