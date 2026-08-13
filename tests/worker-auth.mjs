@@ -18,6 +18,7 @@ assert(__test.ALLOWED_MODELS.has('gpt-4o'));
 assert(__test.ALLOWED_MODELS.has('gpt-4.1'));
 assert(__test.ALLOWED_MODELS.has('gpt-5.6-luna'));
 assert(__test.ALLOWED_MODELS.has('gpt-5.6-terra'));
+assert.equal(__test.WORKER_VERSION, 'v12.4');
 
 class MemoryStorage {
   constructor() { this.values = new Map(); }
@@ -50,6 +51,7 @@ const login = await worker.fetch(new Request('https://worker.test/auth/login', {
   method:'POST', headers:originHeaders, body:JSON.stringify({ pin:'123456' }),
 }), env);
 assert.equal(login.status, 200);
+assert.equal(login.headers.get('X-KCSI-Worker-Version'), 'v12.4');
 const loginData = await login.json();
 assert(loginData.token && loginData.expiresAt > Date.now() + 23 * 60 * 60 * 1000, 'login session should last about 24 hours');
 const session = await worker.fetch(new Request('https://worker.test/auth/session', {

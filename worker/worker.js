@@ -8,6 +8,7 @@ const LOGIN_ATTEMPTS_PER_WINDOW = 5;
 const GLOBAL_LOGIN_ATTEMPTS_PER_WINDOW = 30;
 const DEFAULT_DAILY_OPENAI_LIMIT = 40;
 const MAX_BODY_BYTES = 12 * 1024 * 1024;
+const WORKER_VERSION = 'v12.4';
 const ALLOWED_MODELS = new Set([
   'gpt-4o',
   'gpt-4o-mini',
@@ -95,7 +96,8 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Expose-Headers': 'X-Daily-Limit,X-Daily-Remaining,X-Session-Expires-At',
+    'Access-Control-Expose-Headers': 'X-Daily-Limit,X-Daily-Remaining,X-Session-Expires-At,X-KCSI-Worker-Version',
+    'X-KCSI-Worker-Version': WORKER_VERSION,
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
@@ -322,4 +324,4 @@ export default {
   },
 };
 
-export const __test = { signSession, verifySession, securePinMatches, kstDay, ALLOWED_MODELS };
+export const __test = { signSession, verifySession, securePinMatches, kstDay, ALLOWED_MODELS, WORKER_VERSION };
