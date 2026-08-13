@@ -302,10 +302,15 @@ export class AuthQuota {
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/health' && request.method === 'GET') {
+      return Response.json({ ok: true, service: 'kcsi-med-main', version: WORKER_VERSION }, {
+        headers: { 'Cache-Control': 'no-store', 'X-KCSI-Worker-Version': WORKER_VERSION },
+      });
+    }
     const origin = getAllowedOrigin(request, env);
     if (!origin) return new Response('Origin not allowed', { status: 403 });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
-    const url = new URL(request.url);
     try {
       if (url.pathname === '/auth/login' && request.method === 'POST') return handleLogin(request, env, origin);
       const session = await authenticate(request, env);
