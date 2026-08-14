@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KCSI Arena UI Harness</title>
+  <style>
+    :root{--bg:#f7f7f5;--surface:#fff;--ink:#1a1a1a;--soft:#5c5c5c;--line:#e6e4df}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,"Noto Sans KR",sans-serif}.app{max-width:480px;margin:0 auto;min-height:100vh}header{display:flex;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+  </style>
+  <link rel="stylesheet" href="../arena.css">
+</head>
+<body>
+  <main class="app" id="app"><header><b>KCSI Arena UI Harness</b><span>v12.9</span></header></main>
+  <script src="../arena.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!new URLSearchParams(location.search).has('results')) return;
+      document.getElementById('app').classList.add('kcsi-research');
+      document.getElementById('arenaResults').classList.add('show');
+      document.querySelectorAll('[data-auto-field^="case-"]').forEach(element => {
+        element.textContent = '정답 · 40점'; element.dataset.verdict = 'correct';
+      });
+      const sample = { identification:'40.0 / 40', imprint:'24.5 / 25', calibration:'14.2 / 15', brier:'0.053', completeness:'20.0 / 20', total:'98.7 / 100' };
+      document.querySelectorAll('[data-auto-field]').forEach(element => {
+        if (sample[element.dataset.autoField]) element.textContent = sample[element.dataset.autoField];
+      });
+      document.getElementById('arenaAutoSummary').textContent = '자동 판정: 모델 A 최고점';
+    });
+  </script>
+</body>
+</html>

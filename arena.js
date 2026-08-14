@@ -4,6 +4,8 @@
   const STORE_KEY = 'kcsi_arena_batch_runs_v2';
   const MAX_RUNS = 100;
   const PROMPT_VERSION = 'kcsi-pill-batch-arena-v3';
+  const EVALUATION_VERSION = 'kcsi-arena-auto-v1';
+  const AUTO_TIE_TOLERANCE = 1;
   const MODEL_LABELS = ['A', 'B', 'C', 'D'];
   const CASE_COUNT = 5;
   const DEFAULT_OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-5.6-luna', 'gpt-5.6-terra'];
@@ -39,8 +41,55 @@
   function normalizeDrugName(value) {
     return safeText(value).normalize('NFKC')
       .replace(/\([^)]*\)|\[[^\]]*\]/g, '')
-      .replace(/\b\d+(?:\.\d+)?\s*(?:mg|g|mcg|㎎|그램|밀리그램)\b/gi, '')
+      .replace(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|g)\b/gi, '')
+      .replace(/\d+(?:\.\d+)?\s*(?:㎎|밀리그램|그램)/g, '')
       .replace(/[^0-9A-Za-z가-힣]/g, '').toLowerCase();
+  }
+
+  function normalizeImprint(value) {
+    const text = safeText(value).normalize('NFKC').trim();
+    if (/^(?:없음|무각인|빈면|확인불가|판독불가|none|blank|unreadable|[-—–])$/i.test(text)) return '∅';
+    return text.replace(/[^0-9A-Za-z가-힣]/g, '').toUpperCase();
+  }
+
+  function levenshteinDistance(left, right) {
+    const a = safeText(left), b = safeText(right);
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+    for (let row = 1; row <= a.length; row += 1) {
+      const current = [row];
+      for (let column = 1; column <= b.length; column += 1) {
+        current[column] = Math.min(
+          current[column - 1] + 1,
+          previous[column] + 1,
+          previous[column - 1] + (a[row - 1] === b[column - 1] ? 0 : 1),
+        );
+      }
+      previous = current;
+    }
+    return previous[b.length];
+  }
+
+  function normalizedSimilarity(left, right) {
+    const a = safeText(left), b = safeText(right);
+    if (!a.length && !b.length) return 1;
+    const length = Math.max(a.length, b.length);
+    return length ? Math.max(0, 1 - levenshteinDistance(a, b) / length) : 0;
+  }
+
+  function productNameSimilarity(truth, prediction) {
+    const expected = normalizeDrugName(truth), actual = normalizeDrugName(prediction);
+    if (!expected || !actual) return 0;
+    return normalizedSimilarity(expected, actual);
+  }
+
+  function imprintPairSimilarity(truthFront, truthBack, predictionFront, predictionBack) {
+    const expectedFront = normalizeImprint(truthFront), expectedBack = normalizeImprint(truthBack);
+    const actualFront = normalizeImprint(predictionFront), actualBack = normalizeImprint(predictionBack);
+    const direct = (normalizedSimilarity(expectedFront, actualFront) + normalizedSimilarity(expectedBack, actualBack)) / 2;
+    const swapped = (normalizedSimilarity(expectedFront, actualBack) + normalizedSimilarity(expectedBack, actualFront)) / 2;
+    return Math.max(direct, swapped);
   }
 
   function cleanJsonText(raw) {
@@ -62,6 +111,7 @@
       return '';
     };
     const confidenceRaw = Number(parsed.confidence);
+    const hasConfidence = parsed.confidence != null && safeText(parsed.confidence).trim() !== '' && Number.isFinite(confidenceRaw);
     return {
       case_id: pick('case_id', 'id') || fallbackCaseId,
       drug_name: pick('drug_name', 'item_name', 'medicine_name', 'name'),
@@ -70,7 +120,7 @@
       shape: pick('shape'),
       color: pick('color', 'color_front'),
       dosage_form: pick('dosage_form', 'form_code', 'form'),
-      confidence: Number.isFinite(confidenceRaw) ? Math.max(0, Math.min(100, confidenceRaw)) : null,
+      confidence: hasConfidence ? Math.max(0, Math.min(100, confidenceRaw)) : null,
       evidence: pick('evidence', 'basis', 'mfds_basis'),
       uncertainty: pick('uncertainty', 'limitations', 'caveat'),
     };
@@ -100,7 +150,80 @@
     return scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : null;
   }
 
+  function meanFinite(values) {
+    const finite = (values || []).filter(Number.isFinite);
+    return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : null;
+  }
+
+  function automaticVerdict(truthName, predictedName) {
+    const truth = normalizeDrugName(truthName), answer = normalizeDrugName(predictedName);
+    if (!truth || !answer) return 'wrong';
+    if (truth === answer) return 'correct';
+    const similarity = normalizedSimilarity(truth, answer);
+    if (similarity >= 0.72 || (Math.min(truth.length, answer.length) >= 4 && (truth.includes(answer) || answer.includes(truth)))) return 'partial';
+    return 'wrong';
+  }
+
+  function evaluateCase(testCase, prediction) {
+    const expected = testCase || {}, actual = prediction || {};
+    const verdict = automaticVerdict(expected.truthName, actual.drug_name);
+    const nameSimilarity = productNameSimilarity(expected.truthName, actual.drug_name);
+    const imprintSimilarity = imprintPairSimilarity(expected.truthFront, expected.truthBack, actual.imprint_front, actual.imprint_back);
+    const confidenceValue = Number(actual.confidence);
+    const hasConfidence = actual.confidence != null && safeText(actual.confidence).trim() !== '' && Number.isFinite(confidenceValue);
+    const confidence = hasConfidence ? Math.max(0, Math.min(100, confidenceValue)) / 100 : null;
+    const outcome = verdict === 'correct' ? 1 : 0;
+    const brierLoss = confidence == null ? 1 : Math.pow(confidence - outcome, 2);
+    const completeParts = [
+      !!safeText(actual.drug_name).trim(),
+      !!safeText(actual.imprint_front).trim(),
+      !!safeText(actual.imprint_back).trim(),
+      hasConfidence,
+      !!safeText(actual.evidence || actual.uncertainty).trim(),
+    ];
+    return {
+      verdict,
+      nameSimilarity,
+      imprintSimilarity,
+      confidence,
+      brierLoss,
+      completeness: completeParts.filter(Boolean).length / completeParts.length,
+    };
+  }
+
+  function evaluateBatch(testCases, predictions) {
+    const cases = Array.isArray(testCases) ? testCases : [];
+    const answers = Array.isArray(predictions) ? predictions : [];
+    const caseMetrics = cases.map((testCase, index) => evaluateCase(testCase, answers[index]));
+    const caseVerdicts = caseMetrics.map(metric => metric.verdict);
+    const identification = averageAccuracy(caseVerdicts);
+    const imprintMean = meanFinite(caseMetrics.map(metric => metric.imprintSimilarity));
+    const imprint = imprintMean == null ? null : imprintMean * 25;
+    const brierLoss = meanFinite(caseMetrics.map(metric => metric.brierLoss));
+    const calibration = brierLoss == null ? null : (1 - brierLoss) * 15;
+    const completenessMean = meanFinite(caseMetrics.map(metric => metric.completeness));
+    const completeness = completenessMean == null ? null : completenessMean * 20;
+    const total = [identification, imprint, calibration, completeness].every(Number.isFinite)
+      ? identification + imprint + calibration + completeness
+      : null;
+    return {
+      evaluationMode: EVALUATION_VERSION,
+      caseVerdicts,
+      caseMetrics,
+      identification,
+      imprint,
+      brierLoss,
+      calibration,
+      completeness,
+      total,
+    };
+  }
+
   function computeBatchTotal(rating) {
+    if (rating && rating.evaluationMode === EVALUATION_VERSION) {
+      const scores = [rating.identification, rating.imprint, rating.calibration, rating.completeness].map(Number);
+      return scores.every(Number.isFinite) ? scores.reduce((sum, score) => sum + score, 0) : null;
+    }
     const accuracy = averageAccuracy(rating && rating.caseVerdicts);
     const evidence = Number(rating && rating.evidence);
     const hallucination = Number(rating && rating.hallucination);
@@ -110,6 +233,16 @@
   }
 
   function computeTotal(rating) { return computeBatchTotal(rating); }
+
+  function determineAutomaticVote(results, tolerance = AUTO_TIE_TOLERANCE) {
+    const ranked = MODEL_LABELS.map(label => {
+      const result = results && results[label];
+      return { label, total: result && !result.error ? computeBatchTotal(result.rating) : null };
+    }).filter(item => Number.isFinite(item.total)).sort((left, right) => right.total - left.total);
+    if (!ranked.length) return '';
+    if (ranked.length > 1 && ranked[0].total - ranked[1].total <= tolerance) return 'tie';
+    return ranked[0].label;
+  }
 
   function csvCell(value) {
     let text = safeText(value).replace(/\r?\n/g, ' ');
@@ -135,7 +268,9 @@
       const key = modelKey(model);
       if (!models.has(key)) models.set(key, {
         provider: model.providerLabel || model.provider, model: model.model,
-        tests: 0, batches: 0, rated: 0, correct: 0, totalSum: 0, totalN: 0, wins: 0, ties: 0,
+        tests: 0, batches: 0, rated: 0, correct: 0, totalSum: 0, totalN: 0,
+        imprintSum: 0, imprintN: 0, brierSum: 0, brierN: 0, latencySum: 0, latencyN: 0,
+        wins: 0, ties: 0,
       });
       const stat = models.get(key);
       stat.batches += 1;
@@ -145,6 +280,9 @@
         const eq = score / 40;
         stat.tests += 1; stat.rated += 1; stat.correct += eq;
         ratedCases += 1; weightedCorrect += eq;
+        const metric = rating.caseMetrics && rating.caseMetrics[index];
+        if (metric && Number.isFinite(metric.imprintSimilarity)) { stat.imprintSum += metric.imprintSimilarity; stat.imprintN += 1; }
+        if (metric && Number.isFinite(metric.brierLoss)) { stat.brierSum += metric.brierLoss; stat.brierN += 1; }
         const sides = run.condition && run.condition.sides || '앞면+뒷면';
         const clarity = run.cases && run.cases[index] && run.cases[index].clarity || '미상';
         [[conditions.sides, sides], [conditions.clarity, clarity]].forEach(([bucket, name]) => {
@@ -154,6 +292,7 @@
       });
       const total = computeBatchTotal(rating);
       if (total != null) { stat.totalSum += total; stat.totalN += 1; }
+      if (Number.isFinite(result.latencyMs) && result.latencyMs > 0) { stat.latencySum += result.latencyMs; stat.latencyN += 1; }
       if (run.vote === label) stat.wins += 1;
       if (run.vote === 'tie') stat.ties += 1;
     }));
@@ -164,7 +303,7 @@
       responses: (runs || []).length * MODEL_LABELS.length,
       ratedCases,
       accuracy: ratedCases ? weightedCorrect / ratedCases * 100 : null,
-      models: [...models.values()].sort((a, b) => (b.rated ? b.correct / b.rated : 0) - (a.rated ? a.correct / a.rated : 0)),
+      models: [...models.values()].sort((a, b) => (b.totalN ? b.totalSum / b.totalN : 0) - (a.totalN ? a.totalSum / a.totalN : 0)),
       conditions,
     };
   }
@@ -173,8 +312,9 @@
     const columns = [
       'batch_id','created_at','case_index','case_id','image_sides','image_clarity','cost_mode','prompt_version','blind_label',
       'provider','model','truth_drug_name','truth_imprint_front','truth_imprint_back','drug_name','imprint_front','imprint_back',
-      'mfds_match','mfds_candidate','verdict','accuracy_score','evidence_score','hallucination_score','clarity_score','total_score',
-      'vote','latency_ms','call_error',
+      'mfds_match','mfds_candidate','verdict','evaluation_mode','name_similarity','imprint_similarity','model_confidence',
+      'brier_loss','completeness_ratio','identification_score','imprint_score','calibration_score','completeness_score',
+      'evidence_score','hallucination_score','clarity_score','total_score','vote','vote_source','latency_ms','call_error',
     ];
     const rows = [columns];
     (runs || []).forEach(run => MODEL_LABELS.forEach(label => {
@@ -186,13 +326,17 @@
         const parsed = result.cases && result.cases[index] || {};
         const db = result.db && result.db[index] || {};
         const verdict = rating.caseVerdicts && rating.caseVerdicts[index] || '';
+        const metric = rating.caseMetrics && rating.caseMetrics[index] || {};
         rows.push([
           run.id, run.createdAt, index + 1, testCase.id, run.condition && run.condition.sides, testCase.clarity,
           run.condition && (run.condition.costModeLabel || run.condition.costMode), run.promptVersion, label,
           model.providerLabel || model.provider, model.model, testCase.truthName, testCase.truthFront, testCase.truthBack,
           parsed.drug_name, parsed.imprint_front, parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched',
-          db.candidate, verdict, accuracyFromVerdict(verdict), rating.evidence, rating.hallucination, rating.clarity,
-          computeBatchTotal(rating), run.vote, result.latencyMs, result.error,
+          db.candidate, verdict, rating.evaluationMode || 'manual-v1', metric.nameSimilarity, metric.imprintSimilarity,
+          parsed.confidence, metric.brierLoss, metric.completeness,
+          rating.evaluationMode === EVALUATION_VERSION ? rating.identification : averageAccuracy(rating.caseVerdicts),
+          rating.imprint, rating.calibration, rating.completeness, rating.evidence, rating.hallucination, rating.clarity,
+          computeBatchTotal(rating), run.vote, run.voteSource || 'manual', result.latencyMs, result.error,
         ]);
       });
     }));
@@ -300,11 +444,9 @@
   }
 
   function suggestedVerdict(truthName, parsedName) {
-    const truth = normalizeDrugName(truthName), answer = normalizeDrugName(parsedName);
-    if (!truth || !answer) return '';
-    if (truth === answer) return 'correct';
-    if (Math.min(truth.length, answer.length) >= 4 && (truth.includes(answer) || answer.includes(truth))) return 'partial';
-    return '';
+    if (!normalizeDrugName(truthName) || !normalizeDrugName(parsedName)) return '';
+    const verdict = automaticVerdict(truthName, parsedName);
+    return verdict === 'wrong' ? '' : verdict;
   }
 
   function readRuns() {
@@ -345,10 +487,12 @@
   }
 
   const core = {
-    PROVIDERS, PROMPT_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
+    PROVIDERS, PROMPT_VERSION, EVALUATION_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
     createRequestBody, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
     computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
-    normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck,
+    normalizeDrugName, normalizeImprint, levenshteinDistance, normalizedSimilarity, productNameSimilarity,
+    imprintPairSimilarity, automaticVerdict, evaluateCase, evaluateBatch, determineAutomaticVote,
+    suggestedVerdict, makePrompt, dbCrossCheck,
   };
   root.KCSIArenaCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
@@ -385,28 +529,24 @@
     return `<div class="arena-upload" id="arenaCase${number}${cap}Zone"><span class="arena-up-label">${number}번 ${sideLabel}</span><span class="arena-up-ph">${sideLabel} 사진<br><small>선택 또는 촬영</small></span><div class="arena-upload-actions"><label for="arenaCase${number}${cap}File">📁 선택</label><label for="arenaCase${number}${cap}Cam">📷 촬영</label></div><img alt="알약 ${number} ${sideLabel} 미리보기" hidden><span class="arena-up-ready">✓ 등록</span><span class="arena-file-name"></span><button type="button" class="arena-up-clear" aria-label="알약 ${number} ${sideLabel} 삭제">×</button><input class="arena-file-input" type="file" id="arenaCase${number}${cap}File" accept="image/*"><input class="arena-file-input" type="file" id="arenaCase${number}${cap}Cam" accept="image/*" capture="environment"></div>`;
   }
 
-  function verdictSelect(label, index) {
-    return `<select data-score-label="${label}" data-case-index="${index}" data-score-field="verdict"><option value="">평가 선택</option><option value="correct">정답 · 40</option><option value="partial">부분정답 · 20</option><option value="wrong">오답 · 0</option></select>`;
-  }
-
-  function scoreInput(label, field, max) {
-    return `<input class="arena-number" type="number" min="0" max="${max}" step="1" placeholder="0–${max}" data-score-label="${label}" data-score-field="${field}">`;
+  function metricSpan(label, field, className) {
+    return `<span class="arena-metric-output ${className || ''}" data-auto-label="${label}" data-auto-field="${field}">—</span>`;
   }
 
   function rootMarkup() {
     const modelHeads = MODEL_LABELS.map(label => `<th>모델 ${label}</th>`).join('');
-    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 정확성 (0/20/40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
-    const rubricRow = (title, field, max) => `<tr><td>${title}</td>${MODEL_LABELS.map(label => `<td>${scoreInput(label, field, max)}</td>`).join('')}</tr>`;
+    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 제품명 판정</td>${MODEL_LABELS.map(label => `<td>${metricSpan(label, `case-${index}`, 'arena-case-score')}</td>`).join('')}</tr>`).join('');
+    const metricRow = (title, field) => `<tr><td>${title}</td>${MODEL_LABELS.map(label => `<td>${metricSpan(label, field)}</td>`).join('')}</tr>`;
     return `<div class="arena-shell">
-      <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Blind Evaluation</div><h1>4개 OpenAI 모델 · 알약 5개 일괄 비교</h1><p>알약 5개의 앞·뒷면 사진 10장을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 채점 전까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 20회로 쪼개지 않고 각 모델이 사진 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
+      <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Automatic Evaluation</div><h1>4개 OpenAI 모델 · 알약 5개 일괄 비교</h1><p>알약 5개의 앞·뒷면 사진 10장을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 정답지 기반 자동평가가 끝날 때까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 20회로 쪼개지 않고 각 모델이 사진 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
       <div class="arena-nav"><button class="active" data-arena-view="experiment">새 배치 비교</button><button data-arena-view="dashboard">누적 연구결과</button></div>
       <div class="arena-view active" id="arenaExperiment">
-        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>한 배치에 알약 5개, 사진 10장을 등록합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>정답지 사용</label><small>제품명·각인 정답은 AI에 전송되지 않고 블라인드 채점 보조와 CSV에만 사용됩니다.</small></div></div></section>
+        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>한 배치에 알약 5개, 사진 10장을 등록합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>자동평가 정답지</label><small>제품명·각인 정답은 AI에 전송되지 않고 브라우저 자동평가와 CSV에만 사용됩니다. 무각인 면은 “없음”으로 입력하세요.</small></div></div></section>
         <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>5쌍 이미지와 정답지</h2><p>일괄 선택 시 반드시 1앞, 1뒤, 2앞, 2뒤 … 5앞, 5뒤 순서로 10장을 선택하세요.</p></div><div class="arena-batch-count" id="arenaBatchCount">0 / 10</div></div><div class="arena-bulk-actions"><label class="arena-action" for="arenaBatchFiles">📚 사진 10장 한꺼번에 선택</label><input class="arena-file-input" type="file" id="arenaBatchFiles" accept="image/*" multiple><button class="arena-action secondary" type="button" id="arenaClearImages">사진 전체 지우기</button></div><div class="arena-order-guide"><b>자동 배치 순서</b><span>① 1번 앞</span><span>② 1번 뒤</span><span>③ 2번 앞</span><span>④ 2번 뒤</span><span>…</span><span>⑨ 5번 앞</span><span>⑩ 5번 뒤</span></div><div class="arena-cases">${Array.from({ length: CASE_COUNT }, (_, index) => caseForm(index)).join('')}</div></section>
-        <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 5개 알약 채점과 투표가 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>10장 모두 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 사진 10장 · 모델 4개 블라인드 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
-        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">👁️ 실제 모델명은 숨겨져 있습니다. 모델 A–D가 판독한 알약 5개 결과와 식약처 DB 대조를 확인한 뒤 먼저 채점하세요.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${rubricRow('근거 타당성 (0–25)','evidence',25)}${rubricRow('환각 억제 (0–20)','hallucination',20)}${rubricRow('명확성 (0–15)','clarity',15)}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" id="arenaTotal${label}">—</span></td>`).join('')}</tr></tbody></table></div><div class="arena-vote-title">어느 모델의 5개 종합 결과가 가장 우수합니까?</div><div class="arena-votes">${MODEL_LABELS.map(label => `<button class="arena-vote" data-vote="${label}">${label}가 더 우수</button>`).join('')}<button class="arena-vote" data-vote="tie">동등</button></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
+        <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 자동평가와 저장이 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>10장 모두 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 사진 10장 · 모델 4개 자동 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
+        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">⚙️ 실제 모델명은 자동평가가 끝날 때까지 숨겨집니다. 정답 제품명·앞/뒤 각인·모델 신뢰도를 코드로 비교해 점수와 승자를 자동 저장합니다.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-auto-method"><b>자동평가 v1 · 총 100점</b><span>제품명 40 · 각인 문자 일치 25 · 신뢰도 보정 15 · 응답 완성도 20</span><small>오답인데 높은 신뢰도를 제시하면 Brier loss가 커져 감점됩니다. 응답시간은 환경 영향을 받아 점수에는 넣지 않고 별도 기록합니다.</small></div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>자동 평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${metricRow('제품명 평균 (0–40)','identification')}${metricRow('각인 문자 일치 (0–25)','imprint')}${metricRow('신뢰도 보정 (0–15)','calibration')}${metricRow('Brier loss · 낮을수록 우수','brier')}${metricRow('응답 완성도 (0–20)','completeness')}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" data-auto-label="${label}" data-auto-field="total">—</span></td>`).join('')}</tr></tbody></table></div><div class="arena-auto-summary" id="arenaAutoSummary" role="status"></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
       </div>
-      <div class="arena-view" id="arenaDashboard"><div class="arena-stat-grid" id="arenaStats"></div><section class="arena-card"><div class="arena-card-h"><div><h2>모델별 누적 성과</h2><p>부분정답은 0.5건으로 계산하며 N은 채점된 알약 수입니다.</p></div></div><div id="arenaModelStats"></div></section><section class="arena-card"><div class="arena-card-h"><div><h2>촬영 조건별 정확도</h2><p>선명도 조건에 따른 결과를 확인합니다.</p></div></div><div id="arenaConditionStats"></div></section><div class="arena-dashboard-actions"><button class="arena-action secondary" id="arenaCsv">📊 CSV 저장 · 배치당 20행</button><button class="arena-action danger" id="arenaClearRuns">누적 기록 전체 삭제</button></div><section class="arena-card"><div class="arena-card-h"><div><h2>최근 배치</h2></div></div><div class="arena-history" id="arenaHistory"></div></section></div>
+      <div class="arena-view" id="arenaDashboard"><div class="arena-stat-grid" id="arenaStats"></div><section class="arena-card"><div class="arena-card-h"><div><h2>모델별 누적 자동평가</h2><p>제품명 부분정답은 0.5건으로 계산하며 N은 평가된 알약 수입니다.</p></div></div><div id="arenaModelStats"></div></section><section class="arena-card"><div class="arena-card-h"><div><h2>촬영 조건별 정확도</h2><p>선명도 조건에 따른 결과를 확인합니다.</p></div></div><div id="arenaConditionStats"></div></section><div class="arena-dashboard-actions"><button class="arena-action secondary" id="arenaCsv">📊 자동평가 CSV 저장 · 배치당 20행</button><button class="arena-action danger" id="arenaClearRuns">누적 기록 전체 삭제</button></div><section class="arena-card"><div class="arena-card-h"><div><h2>최근 배치</h2></div></div><div class="arena-history" id="arenaHistory"></div></section></div>
     </div>`;
   }
 
@@ -439,8 +579,6 @@
     for (let index = 0; index < CASE_COUNT; index += 1) { bindImage(index, 'front'); bindImage(index, 'back'); }
     document.getElementById('arenaConsent').addEventListener('change', refreshRunButton);
     document.getElementById('arenaRun').addEventListener('click', runExperiment);
-    document.querySelectorAll('[data-score-label]').forEach(element => element.addEventListener('input', refreshTotals));
-    document.querySelectorAll('[data-vote]').forEach(button => button.addEventListener('click', () => finalizeVote(button.dataset.vote)));
     document.getElementById('arenaNew').addEventListener('click', resetExperiment);
     document.getElementById('arenaGoDashboard').addEventListener('click', () => switchArenaView('dashboard'));
     document.getElementById('arenaCsv').addEventListener('click', () => {
@@ -557,6 +695,12 @@
     if (new Set(configs.map(config => config.model)).size !== MODEL_LABELS.length) throw new Error('서로 다른 4개 모델을 선택하세요');
     if (uploadedCount() !== 10) throw new Error('알약 5개의 앞·뒷면 사진 10장을 모두 등록하세요');
     if (totalImageChars() > MAX_REQUEST_IMAGE_CHARS) throw new Error('사진 10장의 전송 용량이 큽니다. 원본 크기를 줄여 다시 등록하세요');
+    const missingTruth = Array.from({ length: CASE_COUNT }, (_, index) => index + 1).filter(number => (
+      !document.getElementById(`arenaTruthName${number}`).value.trim()
+      || !document.getElementById(`arenaTruthFront${number}`).value.trim()
+      || !document.getElementById(`arenaTruthBack${number}`).value.trim()
+    ));
+    if (missingTruth.length) throw new Error(`자동평가를 위해 ${missingTruth.join(', ')}번 알약의 제품명과 앞·뒤 각인 정답을 모두 입력하세요. 무각인은 “없음”으로 입력합니다`);
   }
 
   function setArenaStatus(message, error) {
@@ -603,7 +747,10 @@
     await dbPromise;
     MODEL_LABELS.forEach((label, index) => {
       const item = settled[index];
-      if (item.status === 'fulfilled') state.current.results[label] = { ...item.value, db: item.value.cases.map(dbCrossCheck), error: '' };
+      if (item.status === 'fulfilled') {
+        state.current.results[label] = { ...item.value, db: item.value.cases.map(dbCrossCheck), error: '' };
+        state.current.results[label].rating = evaluateBatch(state.current.cases, item.value.cases);
+      }
       else state.current.results[label] = { raw: '', cases: [], db: [], latencyMs: 0, error: safeText(item.reason && item.reason.message || item.reason) };
     });
     renderComparison(); resultsElement.classList.add('show');
@@ -611,8 +758,12 @@
     if (!successCount) {
       resultsElement.classList.add('arena-all-failed'); setArenaStatus('4개 모델 호출이 모두 실패했습니다. 오류 내용을 확인하세요.', true);
       document.getElementById('arenaSetupCard').classList.remove('arena-running'); state.current = null; refreshRunButton();
-    } else if (successCount < MODEL_LABELS.length) setArenaStatus(`${successCount}/4개 모델만 응답했습니다. 실패한 모델의 계정 권한 또는 ID를 확인하세요.`, true);
-    else setArenaStatus('4개 모델 응답 완료 · 실제 모델명을 보지 말고 5개 결과를 먼저 채점하세요');
+    } else if (successCount < 2) {
+      setArenaStatus('자동 비교 저장에는 최소 2개 모델의 정상 응답이 필요합니다', true);
+      document.getElementById('arenaSetupCard').classList.remove('arena-running'); state.current = null; refreshRunButton();
+    } else {
+      finalizeAutomaticEvaluation(successCount);
+    }
     setTimeout(() => resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
 
@@ -628,54 +779,49 @@
     document.getElementById('arenaCompare').innerHTML = MODEL_LABELS.map(label => resultHtml(label, state.current.results[label])).join('');
     MODEL_LABELS.forEach(label => {
       const result = state.current.results[label];
-      const voteButton = document.querySelector(`[data-vote="${label}"]`);
-      if (voteButton) voteButton.disabled = !!result.error;
       for (let index = 0; index < CASE_COUNT; index += 1) {
-        const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
-        select.value = result.error ? '' : suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
-        select.disabled = !!result.error;
+        const element = document.querySelector(`[data-auto-label="${label}"][data-auto-field="case-${index}"]`);
+        const metric = result.rating && result.rating.caseMetrics[index];
+        if (!element) continue;
+        if (!metric) { element.textContent = '실패'; element.dataset.verdict = 'error'; continue; }
+        const labels = { correct: '정답', partial: '부분', wrong: '오답' };
+        element.textContent = `${labels[metric.verdict]} · ${accuracyFromVerdict(metric.verdict)}점`;
+        element.dataset.verdict = metric.verdict;
       }
-      ['evidence','hallucination','clarity'].forEach(field => {
-        const input = document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`);
-        input.value = ''; input.disabled = !!result.error;
+      const values = result.rating ? {
+        identification: `${result.rating.identification.toFixed(1)} / 40`,
+        imprint: `${result.rating.imprint.toFixed(1)} / 25`,
+        calibration: `${result.rating.calibration.toFixed(1)} / 15`,
+        brier: result.rating.brierLoss.toFixed(3),
+        completeness: `${result.rating.completeness.toFixed(1)} / 20`,
+        total: `${computeBatchTotal(result.rating).toFixed(1)} / 100`,
+      } : {};
+      ['identification','imprint','calibration','brier','completeness','total'].forEach(field => {
+        const element = document.querySelector(`[data-auto-label="${label}"][data-auto-field="${field}"]`);
+        if (element) element.textContent = values[field] || '실패';
       });
     });
-    refreshTotals();
   }
 
-  function ratingFor(label, strict) {
-    if (!state.current || state.current.results[label].error) return null;
-    const caseVerdicts = Array.from({ length: CASE_COUNT }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`).value);
-    const get = field => document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`).value;
-    const rating = { caseVerdicts, evidence: get('evidence') === '' ? null : Number(get('evidence')), hallucination: get('hallucination') === '' ? null : Number(get('hallucination')), clarity: get('clarity') === '' ? null : Number(get('clarity')) };
-    const valid = caseVerdicts.every(Boolean) && Number.isFinite(rating.evidence) && rating.evidence >= 0 && rating.evidence <= 25 && Number.isFinite(rating.hallucination) && rating.hallucination >= 0 && rating.hallucination <= 20 && Number.isFinite(rating.clarity) && rating.clarity >= 0 && rating.clarity <= 15;
-    if (strict && !valid) throw new Error(`모델 ${label}의 알약 5개 정확성과 나머지 3개 점수를 모두 입력하세요`);
-    return rating;
-  }
-
-  function refreshTotals() {
-    MODEL_LABELS.forEach(label => {
-      const total = state.current && !state.current.results[label].error ? computeBatchTotal(ratingFor(label, false)) : null;
-      const element = document.getElementById(`arenaTotal${label}`);
-      if (element) element.textContent = total == null ? '—' : `${total.toFixed(1)} / 100`;
-    });
-  }
-
-  function finalizeVote(vote) {
+  function finalizeAutomaticEvaluation(successCount) {
     if (!state.current || state.current.vote) return;
-    const successLabels = MODEL_LABELS.filter(label => !state.current.results[label].error);
-    if (successLabels.length < 2) return setArenaStatus('비교 저장에는 최소 2개 모델의 정상 응답이 필요합니다', true);
-    try { successLabels.forEach(label => { state.current.results[label].rating = ratingFor(label, true); }); }
-    catch (error) { return setArenaStatus(error.message, true); }
-    state.current.vote = vote; state.runs.push(state.current); state.runs = state.runs.slice(-MAX_RUNS); writeRuns(state.runs);
-    revealIdentities(); renderDashboard(); setArenaStatus('4모델 × 5알약 블라인드 평가를 저장했습니다');
+    const vote = determineAutomaticVote(state.current.results);
+    if (!vote) return setArenaStatus('자동평가 점수를 계산하지 못했습니다', true);
+    state.current.vote = vote;
+    state.current.voteSource = EVALUATION_VERSION;
+    state.runs.push(state.current); state.runs = state.runs.slice(-MAX_RUNS); writeRuns(state.runs);
+    const summary = document.getElementById('arenaAutoSummary');
+    if (summary) summary.textContent = vote === 'tie' ? '자동 판정: 1점 이내 동률' : `자동 판정: 모델 ${vote} 최고점`;
+    revealIdentities(); renderDashboard();
+    const prefix = successCount < MODEL_LABELS.length ? `${successCount}/4개 모델 응답 · ` : '';
+    setArenaStatus(`${prefix}자동평가와 연구기록 저장을 완료했습니다${successCount < MODEL_LABELS.length ? ' (실패 모델 확인 필요)' : ''}`, successCount < MODEL_LABELS.length);
   }
 
   function revealIdentities() {
     const current = state.current, reveal = document.getElementById('arenaReveal');
-    const voteLabel = current.vote === 'tie' ? '동등' : `모델 ${current.vote} 우수`;
-    reveal.innerHTML = `<h3>✓ 평가 완료 · 선택: ${esc(voteLabel)}</h3><div class="arena-reveal-grid">${MODEL_LABELS.map(label => { const model = current.blindOrder[label], result = current.results[label]; return `<div class="arena-reveal-item">모델 ${label}<b>${esc(model.providerLabel)} · ${esc(model.model)}</b>${result.error ? `<span class="arena-fail-text">${esc(friendlyCallError(result.error))}</span>` : `응답시간 ${esc(result.latencyMs)}ms · 총점 ${computeBatchTotal(result.rating).toFixed(1)}`}</div>`; }).join('')}</div>`;
-    reveal.classList.add('show'); document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = true; }); document.getElementById('arenaPostActions').hidden = false;
+    const voteLabel = current.vote === 'tie' ? '1점 이내 동률' : `모델 ${current.vote} 최고점`;
+    reveal.innerHTML = `<h3>✓ 자동평가 완료 · ${esc(voteLabel)}</h3><div class="arena-reveal-grid">${MODEL_LABELS.map(label => { const model = current.blindOrder[label], result = current.results[label]; return `<div class="arena-reveal-item">모델 ${label}<b>${esc(model.providerLabel)} · ${esc(model.model)}</b>${result.error ? `<span class="arena-fail-text">${esc(friendlyCallError(result.error))}</span>` : `응답시간 ${esc(result.latencyMs)}ms · 총점 ${computeBatchTotal(result.rating).toFixed(1)}`}</div>`; }).join('')}</div>`;
+    reveal.classList.add('show'); document.getElementById('arenaPostActions').hidden = false;
   }
 
   function resetExperiment() {
@@ -688,7 +834,8 @@
     }
     document.getElementById('arenaConsent').checked = false; document.getElementById('arenaSetupCard').classList.remove('arena-running');
     document.getElementById('arenaResults').classList.remove('show', 'arena-all-failed'); document.getElementById('arenaReveal').classList.remove('show'); document.getElementById('arenaPostActions').hidden = true;
-    document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = false; if (element.dataset.scoreField) element.value = ''; });
+    document.querySelectorAll('[data-auto-label]').forEach(element => { element.textContent = '—'; delete element.dataset.verdict; });
+    document.getElementById('arenaAutoSummary').textContent = '';
     setArenaStatus(''); refreshRunButton(); switchArenaView('experiment'); document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -702,10 +849,10 @@
     const summary = summarizeRuns(state.runs);
     const last = state.runs.length ? new Date(state.runs[state.runs.length - 1].createdAt).toLocaleDateString('ko-KR') : '—';
     const stats = document.getElementById('arenaStats'); if (!stats) return;
-    stats.innerHTML = `<div class="arena-stat"><b>${summary.experiments}</b><span>총 배치</span></div><div class="arena-stat"><b>${summary.cases}</b><span>시험 알약</span></div><div class="arena-stat"><b>${pct(summary.accuracy)}</b><span>전체 가중 정확도</span></div><div class="arena-stat"><b class="arena-stat-date">${esc(last)}</b><span>최근 실험일</span></div>`;
-    document.getElementById('arenaModelStats').innerHTML = summary.models.length ? `<div class="arena-table-wrap"><table class="arena-table"><thead><tr><th>모델</th><th>N</th><th>정확도</th><th>평균 총점</th><th>승리</th><th>동률</th></tr></thead><tbody>${summary.models.map(model => `<tr><td><b>${esc(model.model)}</b><br><span class="arena-muted">${esc(model.provider)}</span></td><td>${model.tests}</td><td>${pct(model.rated ? model.correct / model.rated * 100 : null)}</td><td>${model.totalN ? (model.totalSum / model.totalN).toFixed(1) : '—'}</td><td>${model.wins}</td><td>${model.ties}</td></tr>`).join('')}</tbody></table></div>` : '<div class="arena-empty">아직 저장된 배치 비교가 없습니다.</div>';
+    stats.innerHTML = `<div class="arena-stat"><b>${summary.experiments}</b><span>총 배치</span></div><div class="arena-stat"><b>${summary.cases}</b><span>시험 알약</span></div><div class="arena-stat"><b>${pct(summary.accuracy)}</b><span>제품명 가중 정확도</span></div><div class="arena-stat"><b class="arena-stat-date">${esc(last)}</b><span>최근 실험일</span></div>`;
+    document.getElementById('arenaModelStats').innerHTML = summary.models.length ? `<div class="arena-table-wrap"><table class="arena-table"><thead><tr><th>모델</th><th>N</th><th>제품명</th><th>각인 일치</th><th>Brier↓</th><th>평균 총점</th><th>평균 지연</th><th>승리</th><th>동률</th></tr></thead><tbody>${summary.models.map(model => `<tr><td><b>${esc(model.model)}</b><br><span class="arena-muted">${esc(model.provider)}</span></td><td>${model.tests}</td><td>${pct(model.rated ? model.correct / model.rated * 100 : null)}</td><td>${pct(model.imprintN ? model.imprintSum / model.imprintN * 100 : null)}</td><td>${model.brierN ? (model.brierSum / model.brierN).toFixed(3) : '—'}</td><td>${model.totalN ? (model.totalSum / model.totalN).toFixed(1) : '—'}</td><td>${model.latencyN ? `${Math.round(model.latencySum / model.latencyN)}ms` : '—'}</td><td>${model.wins}</td><td>${model.ties}</td></tr>`).join('')}</tbody></table></div>` : '<div class="arena-empty">아직 저장된 배치 비교가 없습니다.</div>';
     document.getElementById('arenaConditionStats').innerHTML = conditionRows(summary.conditions.clarity, '각인 선명도') || '<div class="arena-empty">조건별 분석 데이터가 없습니다.</div>';
-    document.getElementById('arenaHistory').innerHTML = state.runs.length ? [...state.runs].reverse().slice(0, 12).map(run => `<div class="arena-history-item"><b>${esc(run.id)}</b> · ${run.cases.length}개 알약 · ${run.vote === 'tie' ? '동등' : `${esc(run.vote)} 우수`}<div>${MODEL_LABELS.map(label => esc(run.blindOrder[label].model)).join(' · ')}</div><div class="arena-history-meta">${esc(run.condition.costModeLabel || run.condition.costMode)} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`).join('') : '<div class="arena-empty">최근 배치가 없습니다.</div>';
+    document.getElementById('arenaHistory').innerHTML = state.runs.length ? [...state.runs].reverse().slice(0, 12).map(run => `<div class="arena-history-item"><b>${esc(run.id)}</b> · ${run.cases.length}개 알약 · ${run.vote === 'tie' ? '자동 동률' : `${esc(run.vote)} 자동 우승`}<div>${MODEL_LABELS.map(label => esc(run.blindOrder[label].model)).join(' · ')}</div><div class="arena-history-meta">${esc(run.condition.costModeLabel || run.condition.costMode)} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`).join('') : '<div class="arena-empty">최근 배치가 없습니다.</div>';
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installUi);
