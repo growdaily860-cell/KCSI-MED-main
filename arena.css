@@ -1,8 +1,6 @@
-/* KCSI Arena v12.4 — four-model, five-pair batch research mode. */
-.kcsi-mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 20px;padding:4px;background:#ecebe7;border-radius:12px}
-.kcsi-mode-tab{border:0;border-radius:9px;padding:10px 8px;background:transparent;color:var(--soft);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
-.kcsi-mode-tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 5px rgba(0,0,0,.08)}
-#arenaRoot{display:none}#app.kcsi-research{max-width:1280px}#app.kcsi-research>#arenaRoot{display:block}#app.kcsi-research>:not(header):not(#kcsiModeTabs):not(#arenaRoot){display:none!important}
+/* KCSI Arena — /research 전용 독립 화면. */
+#arenaRoot{display:none}#app.kcsi-research{max-width:1280px}#app.kcsi-research>#arenaRoot{display:block}#app.kcsi-research>:not(header):not(#arenaRoot){display:none!important}
+html.kcsi-research-route #app>:not(header):not(#arenaRoot){display:none!important}
 .arena-shell{padding:0 20px 52px}.arena-hero{border:1px solid #dde3ed;border-radius:16px;padding:20px;background:linear-gradient(145deg,#f8fafc,#eff4fb);margin-bottom:12px}
 .arena-eyebrow{font:700 10.5px/1.2 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#4b5563;text-transform:uppercase}.arena-hero h1{font-size:22px;line-height:1.35;margin:7px 0 5px}.arena-hero p{font-size:12.5px;line-height:1.65;color:var(--soft)}
 .arena-cost-notice{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:11px;padding:11px 12px;border-radius:9px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:11.5px;line-height:1.55}.arena-cost-notice b{white-space:nowrap}.arena-privacy{margin-top:11px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;font-size:11.5px;line-height:1.55}
