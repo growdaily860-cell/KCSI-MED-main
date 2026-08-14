@@ -6,11 +6,21 @@
   const PDF_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
   const HEIC_URL = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
   const MAX_SIDE = 1800;
+  // The supplied ZIP used these coordinate heuristics after EasyOCR/Presidio.
+  // Keep the same safety net in the browser so uploaded originals never need a server round-trip.
+  const ZIP_ROW_Y_TOLERANCE_PX = 12;
+  const ZIP_COLUMN_SPLIT_GAP_PX = 150;
+  const ZIP_EMAIL_MERGE_GAP_PX = 20;
+  const ZIP_NAME_VALUE_GAP_PX = 40;
+  const OCR_TARGET_MAX_SIDE = 2600;
 
   let ocrWorker = null;
   let pdfLibPromise = null;
   let activeReview = null;
 
+  // ZIP fusion: the supplied Presidio custom recognizers for Korean RRN, phone and
+  // email are represented here as browser-side patterns, alongside the app's
+  // existing medical-record identifiers, dates and addresses.
   const PII_RULES = [
     { kind: '주민등록번호', re: /\b\d{6}\s*[-–]?\s*[1-8]\d{6}\b/g },
     { kind: '전화번호', re: /\b(?:01[016789]|02|0[3-6][1-5])\s*[-.)]?\s*\d{3,4}\s*[-.]?\s*\d{4}\b/g },
@@ -23,6 +33,7 @@
     // Strong medical-record prefixes still identify the value conservatively.
     { kind: '개인식별번호', re: /\b(?:P\s*[T7]|P\s*I\s*D|M\s*R\s*N|C\s*H\s*A\s*R\s*T|R\s*X\s*N?)\s*[-:：]\s*[A-Z0-9-]{4,}\b/gi },
     { kind: '개인식별번호', re: /\b[A-Z]{1,4}\s*[-:：]\s*\d{5,}\b/gi },
+    { kind: '개인식별번호', re: /제\s*\d{4,}\s*호/g },
     { kind: '성명', re: /(?:성\s*명|환\s*자\s*명|수\s*진\s*자|이\s*름|처방\s*받는\s*분)\s*[:：]?\s*[가-힣]{2,5}/g },
     { kind: '주소', re: /(?:주\s*소|거\s*주\s*지|소\s*재\s*지)\s*[:：]?\s*[^\r\n]{2,80}/g },
     { kind: '주소', re: /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충[청북남]*|전[라북남]*|경[상북남]*|제주)[가-힣0-9\s-]{2,45}(?:로|길|동|읍|면|리|번지|아파트)\s*\d*[가-힣0-9-]*/g },
@@ -94,6 +105,10 @@
         }[message.status] || '로컬 OCR 처리 중';
         onProgress(`${ko}${pct == null ? '' : ` · ${pct}%`}`);
       },
+    });
+    await ocrWorker.setParameters({
+      tessedit_pageseg_mode: root.Tesseract.PSM.AUTO,
+      preserve_interword_spaces: '1',
     });
     return ocrWorker;
   }
@@ -235,6 +250,205 @@
     return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
   }
 
+  function visualRows(words) {
+    const rows = [];
+    const items = (words || [])
+      .filter(word => word && word.bbox && String(word.text || '').trim())
+      .sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
+    items.forEach(word => {
+      const height = Math.max(1, word.bbox.y1 - word.bbox.y0);
+      const center = (word.bbox.y0 + word.bbox.y1) / 2;
+      const row = rows.find(candidate => {
+        const tolerance = Math.max(
+          ZIP_ROW_Y_TOLERANCE_PX,
+          Math.min(candidate.refHeight, height) * 0.6,
+        );
+        return Math.abs(center - candidate.refCenter) <= tolerance;
+      });
+      if (row) row.words.push(word);
+      else rows.push({ words: [word], refCenter: center, refHeight: height });
+    });
+    return rows.map(row => row.words.sort((a, b) => a.bbox.x0 - b.bbox.x0));
+  }
+
+  function splitVisualColumns(row) {
+    if (!row.length) return [];
+    const groups = [[row[0]]];
+    for (let index = 1; index < row.length; index += 1) {
+      const previous = row[index - 1];
+      const current = row[index];
+      if (current.bbox.x0 - previous.bbox.x1 > ZIP_COLUMN_SPLIT_GAP_PX) groups.push([]);
+      groups[groups.length - 1].push(current);
+    }
+    return groups;
+  }
+
+  function zipEmailLikeBoxes(words, canvas) {
+    const boxes = [];
+    visualRows(words).forEach(row => row.forEach((word, index) => {
+      if (!String(word.text).includes('@')) return;
+      const group = [word];
+      [index - 1, index + 1].forEach(neighborIndex => {
+        if (neighborIndex < 0 || neighborIndex >= row.length) return;
+        const other = row[neighborIndex];
+        const gap = Math.min(
+          Math.abs(other.bbox.x0 - word.bbox.x1),
+          Math.abs(word.bbox.x0 - other.bbox.x1),
+        );
+        if (gap <= ZIP_EMAIL_MERGE_GAP_PX) group.push(other);
+      });
+      boxes.push({ ...unionBoxes(group.map(item => item.bbox), canvas), kind: '이메일', auto: true });
+    }));
+    return boxes;
+  }
+
+  function zipNameLabelBoxes(words, canvas) {
+    const boxes = [];
+    const labels = ['성명', '이름'];
+    const fieldBoundary = /^(?:성별|나이|생년월일|주민(?:등록)?번호|환자번호|주소|연락처|전화번호)$/;
+    visualRows(words).forEach(row => splitVisualColumns(row).forEach(group => {
+      const compactWords = group.map(word => String(word.text).replace(/\s/g, ''));
+      const joined = compactWords.join('');
+      labels.some(label => {
+        const labelStart = joined.indexOf(label);
+        if (labelStart < 0) return false;
+        let position = 0;
+        let labelEndIndex = -1;
+        for (let index = 0; index < compactWords.length; index += 1) {
+          position += compactWords[index].length;
+          if (position >= labelStart + label.length) {
+            labelEndIndex = index;
+            break;
+          }
+        }
+        if (labelEndIndex < 0) return true;
+
+        // If OCR joined the label and value into one token, mask that token. The
+        // normal text rule also catches this case, and de-duplication merges them.
+        const charsBeforeWord = position - compactWords[labelEndIndex].length;
+        if (labelStart + label.length < charsBeforeWord + compactWords[labelEndIndex].length) {
+          boxes.push({ ...unionBoxes([group[labelEndIndex].bbox], canvas), kind: '성명', auto: true });
+          return true;
+        }
+
+        const valueWords = [];
+        let previousRight = null;
+        let valueLength = 0;
+        for (const word of group.slice(labelEndIndex + 1)) {
+          const compact = String(word.text).replace(/[\s:：|]/g, '');
+          if (!compact) continue;
+          if (fieldBoundary.test(compact)) break;
+          if (previousRight !== null && word.bbox.x0 - previousRight > ZIP_NAME_VALUE_GAP_PX) break;
+          valueWords.push(word);
+          valueLength += compact.length;
+          previousRight = word.bbox.x1;
+          if (valueLength >= 5 || valueWords.length >= 3) break;
+        }
+        if (valueWords.length) {
+          boxes.push({ ...unionBoxes(valueWords.map(word => word.bbox), canvas), kind: '성명', auto: true });
+        }
+        return true;
+      });
+    }));
+    return boxes;
+  }
+
+  function zipLabeledValueBoxes(words, canvas) {
+    const boxes = [];
+    const configs = [
+      { label: '요양기관기호', kind: '개인식별번호', maxWords: 2, maxChars: 16 },
+      { label: '주민등록번호', kind: '주민등록번호', maxWords: 2, maxChars: 16 },
+      { label: '전화번호', kind: '전화번호', maxWords: 2, maxChars: 18 },
+      { label: '팩스번호', kind: '전화번호', maxWords: 2, maxChars: 18 },
+      { label: '면허번호', kind: '개인식별번호', maxWords: 3, maxChars: 14 },
+      { label: '의료인의', kind: '성명', maxWords: 3, maxChars: 5 },
+      { label: '조제약사', kind: '성명', maxWords: 3, maxChars: 5 },
+      { label: '명칭', kind: '기관명', maxWords: 5, maxChars: 12, institutionOnly: true },
+    ];
+    const stopField = /^(?:성명|성별|나이|생년월일|주민(?:등록)?번호|환자번호|주소|연락처|전화번호|팩스번호|면허번호|서명|날인)$/;
+    visualRows(words).forEach(row => splitVisualColumns(row).forEach(group => {
+      const compactWords = group.map(word => String(word.text).replace(/[\s:：|]/g, ''));
+      const joined = compactWords.join('');
+      configs.forEach(config => {
+        if (config.institutionOnly) {
+          const rowCenter = group.reduce((sum, word) => sum + (word.bbox.y0 + word.bbox.y1) / 2, 0) / group.length;
+          if (rowCenter > canvas.height * 0.34 && !joined.includes('조제기관')) return;
+        }
+        const labelStart = joined.indexOf(config.label);
+        if (labelStart < 0) return;
+        let position = 0;
+        let labelEndIndex = -1;
+        for (let index = 0; index < compactWords.length; index += 1) {
+          position += compactWords[index].length;
+          if (position >= labelStart + config.label.length) {
+            labelEndIndex = index;
+            break;
+          }
+        }
+        if (labelEndIndex < 0) return;
+        const values = [];
+        let valueLength = 0;
+        let previousRight = null;
+        for (const word of group.slice(labelEndIndex + 1)) {
+          const compact = String(word.text).replace(/[\s:：|]/g, '');
+          if (!compact) continue;
+          if (/서명|날인/.test(compact) || stopField.test(compact)) break;
+          if (previousRight !== null && word.bbox.x0 - previousRight > 90) break;
+          values.push(word);
+          valueLength += compact.length;
+          previousRight = word.bbox.x1;
+          if (values.length >= config.maxWords || valueLength >= config.maxChars) break;
+        }
+        if (values.length) {
+          boxes.push({ ...unionBoxes(values.map(word => word.bbox), canvas), kind: config.kind, auto: true });
+        }
+      });
+    }));
+    return boxes;
+  }
+
+  function zipOcrPhoneBoxes(words, canvas) {
+    const boxes = [];
+    (words || []).forEach(word => {
+      const source = String(word.text || '');
+      if ((source.match(/-/g) || []).length < 2) return;
+      const normalized = source.toUpperCase()
+        .replace(/[OQD]/g, '0')
+        .replace(/[IL|]/g, '1')
+        .replace(/Z/g, '2')
+        .replace(/S/g, '5')
+        .replace(/B/g, '8')
+        .replace(/[^0-9-]/g, '');
+      if (!/^\d{1,3}-\d{3,4}-\d{4,5}$/.test(normalized)) return;
+      const merged = unionBoxes([word.bbox], canvas);
+      const rawHeight = word.bbox.y1 - word.bbox.y0;
+      if (rawHeight > 36 && merged.w > canvas.width * 0.25) {
+        const half = merged.h / 2;
+        boxes.push({ x: merged.x, y: merged.y, w: merged.w, h: half, kind: '전화번호', auto: true });
+        boxes.push({ x: merged.x, y: merged.y + half, w: merged.w, h: half, kind: '전화번호', auto: true });
+      } else {
+        boxes.push({ ...merged, kind: '전화번호', auto: true });
+      }
+    });
+    return boxes;
+  }
+
+  function zipPersonLikeBoxes(words, canvas) {
+    const boxes = [];
+    const surnames = new Set('김이박최정강조윤장임한오서신권황안송전홍유고문양손배백허남심노하곽성차주우구민진지엄채원천방공현함변염여추도소석선설마길연위표명기반라왕금옥육인맹제모탁국어은편용'.split(''));
+    const excluded = new Set(['성명', '이름', '의사', '약사', '질병', '분류', '기호', '처방', '보험']);
+    buildLines(words).forEach(line => {
+      const tokens = line.text.trim().split(/\s+/).filter(Boolean);
+      const compact = tokens.join('');
+      if (tokens.length < 2 || tokens.length > 4 || !/^[가-힣]{2,4}$/.test(compact)) return;
+      if (!surnames.has(compact[0]) || excluded.has(compact)) return;
+      const center = line.spans.reduce((sum, span) => sum + (span.bbox.y0 + span.bbox.y1) / 2, 0) / line.spans.length;
+      if (center > canvas.height * 0.42) return;
+      boxes.push({ ...unionBoxes(line.spans.map(span => span.bbox), canvas), kind: '성명', auto: true });
+    });
+    return boxes;
+  }
+
   function recordIdNeighborBoxes(words, canvas) {
     const out = [];
     const items = (words || []).filter(word => word && word.bbox && String(word.text || '').trim());
@@ -267,6 +481,11 @@
         boxes.push({ ...unionBoxes(spans.map(span => span.bbox), canvas), kind: hit.kind, auto: true });
       });
     });
+    boxes.push(...zipEmailLikeBoxes(words, canvas));
+    boxes.push(...zipNameLabelBoxes(words, canvas));
+    boxes.push(...zipLabeledValueBoxes(words, canvas));
+    boxes.push(...zipOcrPhoneBoxes(words, canvas));
+    boxes.push(...zipPersonLikeBoxes(words, canvas));
     boxes.push(...recordIdNeighborBoxes(words, canvas));
     return dedupeBoxes(boxes);
   }
@@ -295,8 +514,92 @@
 
   async function recognize(canvas, onProgress) {
     const worker = await ensureOcr(onProgress);
-    const result = await worker.recognize(canvas, {}, { blocks: true, tsv: true });
-    return normalizeWords(result.data || {});
+    const scale = Math.min(2, OCR_TARGET_MAX_SIDE / Math.max(canvas.width, canvas.height));
+    let ocrCanvas = canvas;
+    if (scale > 1.05) {
+      ocrCanvas = document.createElement('canvas');
+      ocrCanvas.width = Math.round(canvas.width * scale);
+      ocrCanvas.height = Math.round(canvas.height * scale);
+      const context = ocrCanvas.getContext('2d', { alpha: false });
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(canvas, 0, 0, ocrCanvas.width, ocrCanvas.height);
+    }
+    const tileHeight = Math.ceil(ocrCanvas.height * 0.42);
+    const tileStarts = ocrCanvas.height > ocrCanvas.width * 1.15
+      ? [0, Math.round(ocrCanvas.height * 0.29), Math.max(0, ocrCanvas.height - tileHeight)]
+      : [0];
+    const words = [];
+    for (let tileIndex = 0; tileIndex < tileStarts.length; tileIndex += 1) {
+      const top = tileStarts[tileIndex];
+      let target = ocrCanvas;
+      if (tileStarts.length > 1) {
+        target = document.createElement('canvas');
+        target.width = ocrCanvas.width;
+        target.height = Math.min(tileHeight, ocrCanvas.height - top);
+        target.getContext('2d', { alpha: false }).drawImage(
+          ocrCanvas,
+          0,
+          top,
+          target.width,
+          target.height,
+          0,
+          0,
+          target.width,
+          target.height,
+        );
+      }
+      const result = await worker.recognize(target, {}, { blocks: true, tsv: true });
+      normalizeWords(result.data || {}).forEach(word => words.push({
+        ...word,
+        lineKey: `${tileIndex}:${word.lineKey}`,
+        bbox: {
+          x0: word.bbox.x0 / scale,
+          y0: (word.bbox.y0 + top) / scale,
+          x1: word.bbox.x1 / scale,
+          y1: (word.bbox.y1 + top) / scale,
+        },
+      }));
+    }
+    if (tileStarts.length > 1) {
+      const digitCanvas = document.createElement('canvas');
+      digitCanvas.width = ocrCanvas.width;
+      digitCanvas.height = Math.round(ocrCanvas.height * 0.38);
+      digitCanvas.getContext('2d', { alpha: false }).drawImage(
+        ocrCanvas,
+        0,
+        0,
+        digitCanvas.width,
+        digitCanvas.height,
+        0,
+        0,
+        digitCanvas.width,
+        digitCanvas.height,
+      );
+      try {
+        await worker.setParameters({
+          tessedit_pageseg_mode: root.Tesseract.PSM.SPARSE_TEXT,
+          tessedit_char_whitelist: '0123456789-',
+        });
+        const digitResult = await worker.recognize(digitCanvas, {}, { blocks: true, tsv: true });
+        normalizeWords(digitResult.data || {}).forEach(word => words.push({
+          ...word,
+          lineKey: `digits:${word.lineKey}`,
+          bbox: {
+            x0: word.bbox.x0 / scale,
+            y0: word.bbox.y0 / scale,
+            x1: word.bbox.x1 / scale,
+            y1: word.bbox.y1 / scale,
+          },
+        }));
+      } finally {
+        await worker.setParameters({
+          tessedit_pageseg_mode: root.Tesseract.PSM.AUTO,
+          tessedit_char_whitelist: '',
+        });
+      }
+    }
+    return words;
   }
 
   function reviewElements() {
@@ -630,7 +933,7 @@
     detectTextRanges,
     boxesFromWords,
     cancelActive,
-    versions: { tesseract: '7.0.0', pdfjs: '6.2.108', heic2any: '0.0.4' },
+    versions: { tesseract: '7.0.0', pdfjs: '6.2.108', heic2any: '0.0.4', zipRules: '1.0.0' },
   };
 
   root.KCSI_DEID = api;

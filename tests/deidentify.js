@@ -26,6 +26,7 @@ assert(deid.detectTextRanges('환 자 번 호 PT-20260813').some(hit => hit.kind
 assert(deid.detectTextRanges('PT-20260813').some(hit => hit.kind === '개인식별번호'), '구조 분리된 환자번호 탐지 누락');
 assert(deid.detectTextRanges('PI-20260813').some(hit => hit.kind === '개인식별번호'), 'OCR 변형 환자번호 탐지 누락');
 assert(deid.detectTextRanges('환 자 번 호 ㅁ +-20260813').some(hit => hit.kind === '개인식별번호'), '한글 잡음이 섞인 환자번호 탐지 누락');
+assert(deid.detectTextRanges('면허번호 제 12345 호').some(hit => hit.kind === '개인식별번호'), '면허번호 탐지 누락');
 
 const words = [
   { text: '환자명', bbox: { x0: 10, y0: 10, x1: 55, y1: 30 }, lineKey: '1', order: 0 },
@@ -47,6 +48,52 @@ const splitIdBoxes = deid.boxesFromWords(splitIdWords, { width: 500, height: 700
 assert.strictEqual(splitIdBoxes.length, 1, '구조가 분리된 환자번호 상자 생성 실패');
 assert(splitIdBoxes[0].x <= 10 && splitIdBoxes[0].x + splitIdBoxes[0].w >= 220, '환자번호 라벨과 값을 함께 가리지 못함');
 
+// Supplied ZIP heuristic: malformed OCR email text containing '@' must still be masked,
+// including an adjacent OCR fragment even when the normal email regex cannot match it.
+const brokenEmailWords = [
+  { text: 'test.person@example', bbox: { x0: 20, y0: 160, x1: 170, y1: 182 }, lineKey: 'email-a', order: 0 },
+  { text: 'com', bbox: { x0: 174, y0: 161, x1: 210, y1: 182 }, lineKey: 'email-b', order: 1 },
+];
+const brokenEmailBoxes = deid.boxesFromWords(brokenEmailWords, { width: 500, height: 700 });
+assert.strictEqual(brokenEmailBoxes.length, 1, 'ZIP @ 보정 규칙이 실제 OCR 상자로 연결되지 않음');
+assert(brokenEmailBoxes[0].x <= 20 && brokenEmailBoxes[0].x + brokenEmailBoxes[0].w >= 210, '분리된 이메일 조각을 함께 가리지 못함');
+
+// Supplied ZIP heuristic: a name value visually to the right of 성명/이름 must be
+// masked even when Tesseract assigns the label and value to different line structures.
+const splitNameWords = [
+  { text: '성명', bbox: { x0: 20, y0: 220, x1: 60, y1: 244 }, lineKey: 'name-label', order: 0 },
+  { text: '홍', bbox: { x0: 70, y0: 221, x1: 86, y1: 244 }, lineKey: 'name-value-a', order: 1 },
+  { text: '길동', bbox: { x0: 89, y0: 221, x1: 122, y1: 244 }, lineKey: 'name-value-b', order: 2 },
+  { text: '진단명', bbox: { x0: 340, y0: 220, x1: 400, y1: 244 }, lineKey: 'other-column', order: 3 },
+  { text: '폐렴', bbox: { x0: 410, y0: 220, x1: 445, y1: 244 }, lineKey: 'other-column-value', order: 4 },
+];
+const splitNameBoxes = deid.boxesFromWords(splitNameWords, { width: 500, height: 700 });
+assert.strictEqual(splitNameBoxes.length, 1, 'ZIP 성명 라벨 보정 규칙이 실제 OCR 상자로 연결되지 않음');
+assert(splitNameBoxes[0].x <= 70 && splitNameBoxes[0].x + splitNameBoxes[0].w >= 122, '분리 인식된 이름 전체를 가리지 못함');
+assert(splitNameBoxes[0].x + splitNameBoxes[0].w < 200, '다른 표 열의 진단 내용까지 잘못 가림');
+
+const institutionWords = [
+  { text: '명', bbox: { x0: 20, y0: 80, x1: 36, y1: 104 }, lineKey: 'clinic-label-a', order: 0 },
+  { text: '칭', bbox: { x0: 40, y0: 80, x1: 56, y1: 104 }, lineKey: 'clinic-label-b', order: 1 },
+  { text: '국민건강의원', bbox: { x0: 75, y0: 80, x1: 175, y1: 104 }, lineKey: 'clinic-value', order: 2 },
+];
+const institutionBoxes = deid.boxesFromWords(institutionWords, { width: 500, height: 700 });
+assert.strictEqual(institutionBoxes.length, 1, '분리 인식된 의료기관 명칭 탐지 누락');
+assert(institutionBoxes[0].x <= 75 && institutionBoxes[0].x + institutionBoxes[0].w >= 175, '의료기관 명칭 값 전체를 가리지 못함');
+
+const personWords = [
+  { text: '홍', bbox: { x0: 80, y0: 130, x1: 96, y1: 154 }, lineKey: 'person', order: 0 },
+  { text: '길', bbox: { x0: 100, y0: 130, x1: 116, y1: 154 }, lineKey: 'person', order: 1 },
+  { text: '동', bbox: { x0: 120, y0: 130, x1: 136, y1: 154 }, lineKey: 'person', order: 2 },
+];
+assert.strictEqual(deid.boxesFromWords(personWords, { width: 500, height: 700 }).length, 1, 'Presidio PERSON 대응 이름 탐지 누락');
+
+const mergedPhoneWords = [
+  { text: '4-123-45680', bbox: { x0: 180, y0: 180, x1: 450, y1: 228 }, lineKey: 'phones', order: 0 },
+];
+const mergedPhoneBoxes = deid.boxesFromWords(mergedPhoneWords, { width: 500, height: 700 });
+assert.strictEqual(mergedPhoneBoxes.length, 2, '두 행으로 합쳐진 전화·팩스 OCR 영역 분리 누락');
+
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('KCSI_DEID.processFiles'), '의료기록 파일 비식별화 경로 누락');
 assert(html.includes('KCSI_DEID.processDataUrls'), '의료기록 촬영 비식별화 경로 누락');
@@ -57,5 +104,7 @@ assert(html.includes('id="deidDownload"'), '비식별화 사본 로컬 저장 �
 const deidSource = fs.readFileSync('deidentify.js', 'utf8');
 assert(deidSource.includes('downloadDataUrl(finalDataUrl'), '검토 완료 사본 저장 경로 누락');
 assert(deidSource.includes('invalidateConfirmation(state)'), '가림 수정 후 재확인 게이트 누락');
+assert(deidSource.includes('zipEmailLikeBoxes(words, canvas)'), 'ZIP 이메일 보정 규칙 업로드 경로 누락');
+assert(deidSource.includes('zipNameLabelBoxes(words, canvas)'), 'ZIP 성명 보정 규칙 업로드 경로 누락');
 
 console.log('[deidentify] PASS — 개인정보 패턴·텍스트 재마스킹·의료기록 안전 게이트');

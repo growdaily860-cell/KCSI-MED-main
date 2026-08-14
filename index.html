@@ -719,7 +719,7 @@ input[type=file]{display:none}
       <span class="extra-count mono" id="rxCount"></span>
     </div>
     <div class="privacy-warn">
-      🔒 <b>자동 비식별화</b> — 원본은 서버로 보내지 않습니다. 브라우저에서 성명·주민번호·생년월일·주소·전화번호·환자번호를 먼저 가린 뒤, 직접 확인한 사본만 판독합니다.
+      🔒 <b>자동 비식별화</b> — 원본은 서버로 보내지 않습니다. 첨부 ZIP의 주민번호·전화번호·이메일·성명 보정 규칙을 브라우저 OCR에 융합해 먼저 가린 뒤, 직접 확인한 사본만 판독합니다.
     </div>
     <div class="deid-flow" id="rxPrivacyStatus" role="status" aria-live="polite">
       <div class="deid-safe"><span><b>기기 안에서만 처리</b><br>자동 가림 → 손가락으로 추가/삭제 → 최종 확인</span></div>
@@ -908,7 +908,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.7';
+const APP_VERSION = 'v12.8';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
