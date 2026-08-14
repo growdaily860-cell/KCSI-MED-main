@@ -82,7 +82,7 @@ npx wrangler deploy
 
 ## 5. 배포 후 점검
 
-- `/`가 정상적으로 열리고 화면에 `v12.7`이 표시되는지 확인
+- `/`가 정상적으로 열리고 화면에 `v12.8`이 표시되는지 확인
 - `https://kcsi-med-main.growdaily860.workers.dev/health`에서 Worker `v12.6`이 표시되는지 확인
 - 로그인 화면에서 잘못된 PIN이 거부되는지 확인
 - 올바른 PIN으로 로그인한 뒤 새로고침해도 로그인 상태가 유지되는지 확인
