@@ -53,5 +53,9 @@ assert(html.includes('KCSI_DEID.processDataUrls'), '의료기록 촬영 비식�
 assert(html.includes('page.redacted === true'), '비식별화 확인 게이트 누락');
 assert(html.includes('const safeRxPages = (img.rxPages || []).filter'), 'IndexedDB 안전 사본 필터 누락');
 assert(html.includes("영역의 내용을 추론하거나 복원하지 마세요"), 'GPT 비식별화 프롬프트 누락');
+assert(html.includes('id="deidDownload"'), '비식별화 사본 로컬 저장 버튼 누락');
+const deidSource = fs.readFileSync('deidentify.js', 'utf8');
+assert(deidSource.includes('downloadDataUrl(finalDataUrl'), '검토 완료 사본 저장 경로 누락');
+assert(deidSource.includes('invalidateConfirmation(state)'), '가림 수정 후 재확인 게이트 누락');
 
 console.log('[deidentify] PASS — 개인정보 패턴·텍스트 재마스킹·의료기록 안전 게이트');

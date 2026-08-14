@@ -2,7 +2,7 @@
 
 현장 의약품 사진과 처방전 정보를 바탕으로 식약처 낱알식별 데이터베이스 후보를 제시하고, 조사관의 실물 대조 및 법의학 검토를 보조하는 정적 웹 애플리케이션입니다.
 
-현재 버전: **v12.6**
+현재 버전: **v12.7**
 
 > 이 도구의 결과는 의약품 신원을 자동 확정하거나 의료적 진단을 내리는 용도가 아닙니다. 모든 후보는 포장, 처방전, 식약처 등록정보 및 실물을 조사관이 직접 대조한 후 사용해야 합니다.
 
@@ -16,6 +16,7 @@
 - JPG·PNG·WEBP·HEIC·PDF 의료기록 입력과 브라우저 로컬 비식별화 검토
 - 성명·주민번호·생년월일·주소·전화번호·환자번호 자동 마스킹 및 손가락 수동 보정
 - 비식별화 확인 사본만 처방전 OCR 및 선택적 GPT Vision 연동
+- 검토 완료 비식별화 사본을 기기에 별도 저장해 API 호출 없이 결과 확인 가능
 - 의료기록 원본의 Worker·OpenAI·IndexedDB 전송/저장 차단
 - 개인정보 이미지를 제외한 TXT 및 구조화 JSON 보고서 저장
 - 식약처 낱알식별 DB 월간 갱신 GitHub Actions
@@ -56,6 +57,8 @@ npm run serve
 브라우저에서 `http://127.0.0.1:8765`로 접속합니다.
 
 `index.html`을 `file://` 방식으로 직접 열면 브라우저 보안 정책으로 JSON 데이터 로딩이 실패할 수 있으므로 로컬 HTTP 서버를 사용하세요.
+
+첨부 자료의 Python 방식으로 PNG를 독립 실행하거나, 비식별화 코드·초안을 복구하는 방법은 [`docs/DEIDENTIFICATION_RECOVERY.md`](docs/DEIDENTIFICATION_RECOVERY.md)를 참고하세요. 실제 개인정보 문서와 출력 사본은 Git 저장소에 커밋하지 마세요.
 
 ## 테스트
 
@@ -116,6 +119,8 @@ Cloudflare 설정과 배포 순서는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고�
 index.html                  웹 애플리케이션
 deidentify.js              브라우저 로컬 OCR·PDF 변환·자동/수동 개인정보 마스킹
 deidentify.css             비식별화 검토 화면 스타일
+tools/pii-redactor/        첨부 자료 기반 오프라인 PNG 비식별화 실행 도구
+docs/                      비식별화 실행·복구·보안 운영 문서
 arena.js                   블라인드 모델 비교·채점·통계
 arena.css                  연구 모드 전용 화면 스타일
 worker/worker.js           PIN 로그인·API 프록시·일일 한도 Worker

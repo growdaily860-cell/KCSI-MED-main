@@ -314,6 +314,7 @@
       erase: document.getElementById('deidErase'),
       undo: document.getElementById('deidUndo'),
       check: document.getElementById('deidConfirm'),
+      download: document.getElementById('deidDownload'),
       apply: document.getElementById('deidApply'),
       cancel: document.getElementById('deidCancel'),
       skip: document.getElementById('deidSkip'),
@@ -377,6 +378,25 @@
     return dataUrl;
   }
 
+  function safeDownloadName(label) {
+    const stem = String(label || '의료기록')
+      .replace(/\.[a-z0-9]{2,5}(?:\s*·.*)?$/i, '')
+      .replace(/[\\/:*?"<>|]+/g, '_')
+      .replace(/\s+/g, '_')
+      .slice(0, 64) || '의료기록';
+    return `${stem}_비식별화.jpg`;
+  }
+
+  function downloadDataUrl(dataUrl, label) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = safeDownloadName(label);
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
   function setMode(state, mode) {
     state.mode = mode;
     state.els.draw.classList.toggle('on', mode === 'draw');
@@ -386,10 +406,17 @@
       : '약물명 등 필요한 글자를 잘못 가렸다면 해당 상자를 한 번 탭해 삭제하세요.';
   }
 
+  function invalidateConfirmation(state) {
+    state.els.check.checked = false;
+    state.els.download.disabled = true;
+    state.els.apply.disabled = true;
+  }
+
   function closeReview(state) {
     state.els.modal.classList.remove('show');
     state.els.modal.setAttribute('aria-hidden', 'true');
     state.els.check.checked = false;
+    state.els.download.disabled = true;
     state.els.apply.disabled = true;
     state.els.canvas.width = 1; state.els.canvas.height = 1;
     state.source.width = 1; state.source.height = 1;
@@ -399,13 +426,14 @@
   function reviewCanvas(source, boxes, meta) {
     const els = reviewElements();
     return new Promise((resolve, reject) => {
-      const state = { els, source, boxes: boxes.map(box => ({ ...box })), draft: null, mode: 'draw', resolve, reject };
+      const state = { els, source, boxes: boxes.map(box => ({ ...box })), meta, draft: null, mode: 'draw', resolve, reject };
       activeReview = state;
       els.title.textContent = `비식별화 검토 · ${meta.current}/${meta.total}`;
       els.sub.textContent = `${meta.label} · 자동 탐지는 보조 기능이며 최종 확인은 사용자가 합니다.`;
       els.canvas.width = source.width; els.canvas.height = source.height;
       els.loading.hidden = true;
       els.check.checked = false;
+      els.download.disabled = true;
       els.apply.disabled = true;
       els.modal.classList.add('show');
       els.modal.setAttribute('aria-hidden', 'false');
@@ -424,10 +452,20 @@
       els.erase.onclick = () => setMode(state, 'erase');
       els.undo.onclick = () => {
         const index = state.boxes.map(box => !box.auto).lastIndexOf(true);
-        if (index >= 0) state.boxes.splice(index, 1);
+        if (index >= 0) {
+          state.boxes.splice(index, 1);
+          invalidateConfirmation(state);
+        }
         drawReview(state);
       };
-      els.check.onchange = () => { els.apply.disabled = !els.check.checked; };
+      els.check.onchange = () => {
+        els.download.disabled = !els.check.checked;
+        els.apply.disabled = !els.check.checked;
+      };
+      els.download.onclick = () => {
+        if (!els.check.checked) return;
+        downloadDataUrl(finalDataUrl(source, state.boxes), state.meta.label);
+      };
       els.apply.onclick = () => {
         if (!els.check.checked) return;
         const result = {
@@ -447,7 +485,10 @@
           for (let i = state.boxes.length - 1; i >= 0; i -= 1) {
             const box = state.boxes[i];
             if (point.x >= box.x && point.x <= box.x + box.w && point.y >= box.y && point.y <= box.y + box.h) {
-              state.boxes.splice(i, 1); drawReview(state); return;
+              state.boxes.splice(i, 1);
+              invalidateConfirmation(state);
+              drawReview(state);
+              return;
             }
           }
           return;
@@ -465,7 +506,10 @@
         if (!state.draft) return;
         const box = normalizedRect(state.draft);
         state.draft = null;
-        if (box.w >= 8 && box.h >= 8) state.boxes.push({ ...box, kind: '수동', auto: false });
+        if (box.w >= 8 && box.h >= 8) {
+          state.boxes.push({ ...box, kind: '수동', auto: false });
+          invalidateConfirmation(state);
+        }
         drawReview(state);
         if (els.canvas.releasePointerCapture) {
           try { els.canvas.releasePointerCapture(event.pointerId); } catch (error) { void error; }

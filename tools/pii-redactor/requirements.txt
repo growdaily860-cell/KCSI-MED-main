@@ -1,0 +1,6 @@
+easyocr>=1.7,<2
+numpy>=1.26,<3
+Pillow>=10,<13
+presidio-analyzer>=2.2,<3
+presidio-image-redactor>=0.0.50,<1
+spacy>=3.7,<4

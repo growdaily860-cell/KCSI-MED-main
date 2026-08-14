@@ -13,3 +13,10 @@ npm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Local-only medical documents and Python redaction environments
+.venv/
+__pycache__/
+*.py[cod]
+tools/pii-redactor/private/
+tools/pii-redactor/output/
