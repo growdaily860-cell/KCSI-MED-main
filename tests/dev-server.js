@@ -16,7 +16,8 @@ const mime = {
 
 http.createServer((req, res) => {
   const pathname = decodeURIComponent(String(req.url || '/').split('?')[0]);
-  const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const entryRoutes = new Set(['/', '/field', '/research']);
+  const rel = entryRoutes.has(pathname.replace(/\/+$/, '') || '/') ? 'index.html' : pathname.replace(/^\/+/, '');
   const file = path.resolve(root, rel);
   if (file !== root && !file.startsWith(root + path.sep)) {
     res.writeHead(403).end('forbidden');

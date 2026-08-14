@@ -410,27 +410,29 @@
     </div>`;
   }
 
+  function isResearchRoute() {
+    const pathname = safeText(root.location && root.location.pathname).replace(/\/+$/, '') || '/';
+    const search = safeText(root.location && root.location.search);
+    return pathname === '/research' || /(?:^|[?&])app=research(?:&|$)/.test(search);
+  }
+
   function installUi() {
+    if (!isResearchRoute()) return;
     const app = document.getElementById('app');
     const header = app && app.querySelector('header');
     if (!app || !header || document.getElementById('arenaRoot')) return;
-    const tabs = document.createElement('div');
-    tabs.id = 'kcsiModeTabs'; tabs.className = 'kcsi-mode-tabs';
-    tabs.innerHTML = '<button class="kcsi-mode-tab active" data-kcsi-mode="field">🔎 현장 판독</button><button class="kcsi-mode-tab" data-kcsi-mode="research">🧪 모델 비교 연구</button>';
-    header.insertAdjacentElement('afterend', tabs);
+    app.classList.add('kcsi-research');
+    document.documentElement.classList.add('kcsi-research-route');
+    document.title = 'KCSI Research · AI 모델 비교 연구';
+    const brand = header.querySelector('.brand');
+    if (brand) brand.innerHTML = 'KCSI <b>Research</b> · AI 모델 비교 연구';
     const arenaRoot = document.createElement('div');
     arenaRoot.id = 'arenaRoot'; arenaRoot.innerHTML = rootMarkup();
-    tabs.insertAdjacentElement('afterend', arenaRoot);
-    bindUi(app, tabs); renderDashboard(); refreshUploadCount();
+    header.insertAdjacentElement('afterend', arenaRoot);
+    bindUi(); renderDashboard(); refreshUploadCount();
   }
 
-  function bindUi(app, tabs) {
-    tabs.querySelectorAll('[data-kcsi-mode]').forEach(button => button.addEventListener('click', () => {
-      const research = button.dataset.kcsiMode === 'research';
-      app.classList.toggle('kcsi-research', research);
-      tabs.querySelectorAll('[data-kcsi-mode]').forEach(item => item.classList.toggle('active', item === button));
-      if (research) setTimeout(() => document.getElementById('arenaRoot').scrollIntoView({ block: 'start' }), 0);
-    }));
+  function bindUi() {
     document.querySelectorAll('[data-arena-view]').forEach(button => button.addEventListener('click', () => switchArenaView(button.dataset.arenaView)));
     document.getElementById('arenaOpenAiPreset').addEventListener('click', restorePreset);
     document.getElementById('arenaCostMode').addEventListener('change', syncCostHint);

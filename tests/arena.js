@@ -104,5 +104,11 @@ const arenaSource = fs.readFileSync('arena.js', 'utf8');
 assert(arenaSource.includes('arenaBatchFiles') && arenaSource.includes('multiple'));
 assert(arenaSource.includes('arenaCase${number}${cap}Cam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
+assert(arenaSource.includes("pathname === '/research'"), 'research must have an independent route');
+assert(!arenaSource.includes('kcsiModeTabs') && !arenaSource.includes('data-kcsi-mode'), 'field/research mode tabs must be removed');
+const vercel = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+const routes = Object.fromEntries((vercel.rewrites || []).map(route => [route.source, route.destination]));
+assert.equal(routes['/field'], '/index.html');
+assert.equal(routes['/research'], '/index.html');
 
 console.log('[arena] PASS — 4 OpenAI models · 5 pill pairs · 10 images · blind A–D · 20-row CSV');
