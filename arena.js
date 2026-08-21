@@ -19,6 +19,31 @@
   };
   const PROVIDERS = { openai: { label: 'OpenAI' } };
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
+  const MAX_DATASET_IMAGES = 1000;
+  const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
+  const PDF_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
+  const DATASET_COLUMNS = [
+    { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', '시험번호', '익명시험번호', '검체번호'] },
+    { key: 'pill_id', label: '알약번호', aliases: ['pill_id', 'pill id', '알약번호', '약물번호'] },
+    { key: 'front_image', label: '앞면 이미지', aliases: ['front_image', 'front image', '앞면이미지', '앞면사진', '앞사진'] },
+    { key: 'back_image', label: '뒷면 이미지', aliases: ['back_image', 'back image', '뒷면이미지', '뒷면사진', '뒤사진'] },
+    { key: 'mfds_item_id', label: '식약처 품목ID', aliases: ['mfds_item_id', 'mfds id', 'item_seq', '품목일련번호', '품목id', '식약처id'] },
+    { key: 'drug_name', label: '정답 의약품명', aliases: ['drug_name', 'drug name', 'item_name', '의약품명', '제품명', '정답의약품명'] },
+    { key: 'front_imprint', label: '앞면 각인', aliases: ['front_imprint', 'imprint_front', '앞면각인', '앞각인'] },
+    { key: 'back_imprint', label: '뒷면 각인', aliases: ['back_imprint', 'imprint_back', '뒷면각인', '뒤각인'] },
+    { key: 'shape', label: '모양', aliases: ['shape', '모양', '제형모양'] },
+    { key: 'color', label: '색상', aliases: ['color', 'colour', '색상', '색깔'] },
+    { key: 'mark_id', label: '마크 ID', aliases: ['mark_id', 'mark id', 'logo_id', '마크id', '로고id', '마크'] },
+    { key: 'imprint_type', label: '각인 형태', aliases: ['imprint_type', 'imprint type', '각인형태', '음양각'] },
+    { key: 'score_line', label: '분할선', aliases: ['score_line', 'score line', '분할선', '분할선유무'] },
+    { key: 'expected_readable', label: '판독 가능', aliases: ['expected_readable', 'readable', '판독가능', '판독가능여부'] },
+    { key: 'light', label: '조도', aliases: ['light', 'lighting', '조도', '조명'] },
+    { key: 'background', label: '배경', aliases: ['background', '배경', '배경조건'] },
+    { key: 'blur', label: '흐림', aliases: ['blur', 'clarity', '흐림', '선명도'] },
+    { key: 'angle', label: '촬영각도', aliases: ['angle', '촬영각도', '각도', '기울기'] },
+    { key: 'notes', label: '비고', aliases: ['notes', 'note', '비고', '메모', '특이사항'] },
+  ];
 
   const safeText = value => String(value == null ? '' : value);
   const esc = value => safeText(value).replace(/[&<>'"]/g, ch => ({
@@ -41,6 +66,160 @@
       .replace(/\([^)]*\)|\[[^\]]*\]/g, '')
       .replace(/\b\d+(?:\.\d+)?\s*(?:mg|g|mcg|㎎|그램|밀리그램)\b/gi, '')
       .replace(/[^0-9A-Za-z가-힣]/g, '').toLowerCase();
+  }
+
+  function normalizeDatasetHeader(value) {
+    return safeText(value).replace(/^\uFEFF/, '').normalize('NFKC').trim().toLowerCase().replace(/[^0-9a-z가-힣]/g, '');
+  }
+
+  const DATASET_HEADER_LOOKUP = (() => {
+    const lookup = new Map();
+    DATASET_COLUMNS.forEach(column => [column.key, column.label, ...column.aliases]
+      .forEach(alias => lookup.set(normalizeDatasetHeader(alias), column.key)));
+    return lookup;
+  })();
+
+  function datasetImageKey(value) {
+    const name = safeText(value).normalize('NFKC').trim().replace(/\\/g, '/').split('/').pop() || '';
+    return name.toLocaleLowerCase('en-US');
+  }
+
+  function detectDelimiter(text) {
+    const counts = { ',': 0, '\t': 0, ';': 0 };
+    let quoted = false;
+    for (let index = 0; index < text.length; index += 1) {
+      const ch = text[index];
+      if (ch === '"') {
+        if (quoted && text[index + 1] === '"') index += 1;
+        else quoted = !quoted;
+      } else if (!quoted && (ch === '\r' || ch === '\n')) break;
+      else if (!quoted && Object.prototype.hasOwnProperty.call(counts, ch)) counts[ch] += 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][1] ? Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0] : ',';
+  }
+
+  function parseDelimitedRows(raw, delimiter) {
+    const text = safeText(raw).replace(/^\uFEFF/, '');
+    const separator = delimiter || detectDelimiter(text);
+    const rows = [];
+    let row = [], field = '', quoted = false;
+    for (let index = 0; index < text.length; index += 1) {
+      const ch = text[index];
+      if (quoted) {
+        if (ch === '"' && text[index + 1] === '"') { field += '"'; index += 1; }
+        else if (ch === '"') quoted = false;
+        else field += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === separator) { row.push(field); field = ''; }
+      else if (ch === '\r' || ch === '\n') {
+        if (ch === '\r' && text[index + 1] === '\n') index += 1;
+        row.push(field); field = '';
+        if (row.some(value => safeText(value).trim())) rows.push(row);
+        row = [];
+      } else field += ch;
+    }
+    row.push(field);
+    if (row.some(value => safeText(value).trim())) rows.push(row);
+    return rows;
+  }
+
+  function normalizeDatasetTable(table) {
+    const rows = Array.isArray(table) ? table.map(row => Array.isArray(row) ? row : []) : [];
+    if (!rows.length) throw new Error('정답지에서 표 데이터를 찾지 못했습니다');
+    let headerRowIndex = -1;
+    let bestMatches = -1;
+    rows.slice(0, 20).forEach((row, index) => {
+      const matches = row.filter(value => DATASET_HEADER_LOOKUP.has(normalizeDatasetHeader(value))).length;
+      if (matches > bestMatches) { bestMatches = matches; headerRowIndex = index; }
+    });
+    if (headerRowIndex < 0 || bestMatches < 3) throw new Error('정답지 머리글을 인식하지 못했습니다. CSV 템플릿의 열 이름을 사용하세요');
+    const rawHeaders = rows[headerRowIndex];
+    const keyCounts = new Map();
+    const mappedHeaders = rawHeaders.map(value => {
+      const rawName = safeText(value).trim();
+      const key = DATASET_HEADER_LOOKUP.get(normalizeDatasetHeader(rawName)) || '';
+      if (key) keyCounts.set(key, (keyCounts.get(key) || 0) + 1);
+      return { rawName, key };
+    });
+    const duplicateHeaders = [...keyCounts.entries()].filter(([, count]) => count > 1).map(([key]) => key);
+    const unknownHeaders = mappedHeaders.filter(header => header.rawName && !header.key).map(header => header.rawName);
+    const normalizedRows = rows.slice(headerRowIndex + 1).map((values, index) => {
+      const record = { _sourceRow: headerRowIndex + index + 2 };
+      mappedHeaders.forEach((header, columnIndex) => {
+        if (header.key && record[header.key] == null) record[header.key] = safeText(values[columnIndex]).trim();
+      });
+      DATASET_COLUMNS.forEach(column => { if (record[column.key] == null) record[column.key] = ''; });
+      return record;
+    }).filter(record => DATASET_COLUMNS.some(column => safeText(record[column.key]).trim()));
+    if (!normalizedRows.length) throw new Error('정답지에 데이터 행이 없습니다');
+    return {
+      rows: normalizedRows,
+      headerRowIndex,
+      recognizedHeaders: mappedHeaders.filter(header => header.key).map(header => header.key),
+      unknownHeaders,
+      duplicateHeaders,
+    };
+  }
+
+  function validateDatasetRows(rows, imageNames) {
+    const files = (imageNames || []).map(value => typeof value === 'string' ? value : value && value.name).filter(Boolean);
+    const imageCounts = new Map();
+    files.forEach(name => {
+      const key = datasetImageKey(name);
+      if (key) imageCounts.set(key, (imageCounts.get(key) || 0) + 1);
+    });
+    const caseCounts = new Map();
+    (rows || []).forEach(row => {
+      const key = safeText(row.case_id).normalize('NFKC').trim().toLocaleLowerCase('en-US');
+      if (key) caseCounts.set(key, (caseCounts.get(key) || 0) + 1);
+    });
+    const usedImages = new Set();
+    const checkedRows = (rows || []).map(row => {
+      const errors = [], warnings = [];
+      const caseId = safeText(row.case_id).trim();
+      if (!caseId) errors.push('시험번호(case_id)가 없습니다');
+      else if ((caseCounts.get(caseId.normalize('NFKC').toLocaleLowerCase('en-US')) || 0) > 1) errors.push('시험번호가 중복되었습니다');
+      if (!safeText(row.front_image).trim()) errors.push('앞면 이미지 파일명이 없습니다');
+      if (!safeText(row.back_image).trim()) errors.push('뒷면 이미지 파일명이 없습니다');
+      if (!safeText(row.drug_name).trim() && !safeText(row.mfds_item_id).trim()) errors.push('정답 의약품명 또는 식약처 품목ID가 필요합니다');
+      if (!safeText(row.front_imprint).trim() && !safeText(row.back_imprint).trim()) warnings.push('앞·뒷면 정답 각인이 모두 비어 있습니다');
+      const frontKey = datasetImageKey(row.front_image), backKey = datasetImageKey(row.back_image);
+      if (frontKey && backKey && frontKey === backKey) errors.push('앞면과 뒷면에 같은 파일이 지정되었습니다');
+      [[frontKey, '앞면'], [backKey, '뒷면']].forEach(([key, label]) => {
+        if (!key) return;
+        usedImages.add(key);
+        const count = imageCounts.get(key) || 0;
+        if (!count) errors.push(`${label} 이미지 파일을 찾지 못했습니다`);
+        else if (count > 1) errors.push(`${label} 이미지 파일명이 업로드 목록에서 중복됩니다`);
+      });
+      return { ...row, _errors: errors, _warnings: warnings, _valid: !errors.length };
+    });
+    const orphanImages = [...imageCounts.keys()].filter(key => !usedImages.has(key));
+    const duplicateImages = [...imageCounts.entries()].filter(([, count]) => count > 1).map(([key]) => key);
+    const validRows = checkedRows.filter(row => row._valid);
+    return {
+      rows: checkedRows,
+      validRows,
+      invalidRows: checkedRows.filter(row => !row._valid),
+      orphanImages,
+      duplicateImages,
+      summary: {
+        totalRows: checkedRows.length,
+        validRows: validRows.length,
+        invalidRows: checkedRows.length - validRows.length,
+        imageCount: files.length,
+        matchedImages: [...usedImages].filter(key => imageCounts.get(key) === 1).length,
+      },
+    };
+  }
+
+  function buildDatasetTemplateCsv() {
+    const columns = DATASET_COLUMNS.map(column => column.key);
+    const sample = [
+      'CASE-001', 'PILL-001', 'CASE-001_front.jpg', 'CASE-001_back.jpg', '식약처 품목일련번호', '정답 의약품명',
+      '앞면각인', '뒷면각인', '타원형', '흰색', '', '음각', '있음', 'TRUE', '정상', '단순', '선명', '정면', '예시 행은 수정하거나 삭제하세요',
+    ];
+    return '\uFEFF' + [columns, sample].map(row => row.map(csvCell).join(',')).join('\r\n');
   }
 
   function cleanJsonText(raw) {
@@ -344,18 +523,120 @@
     });
   }
 
+  let xlsxPromise = null;
+  let pdfPromise = null;
+
+  function loadArenaScript(url, ready) {
+    if (ready()) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const old = document.querySelector(`script[data-arena-src="${url}"]`);
+      if (old) {
+        old.addEventListener('load', resolve, { once: true });
+        old.addEventListener('error', () => reject(new Error('정답지 처리 구성요소를 불러오지 못했습니다')), { once: true });
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = url; script.async = true; script.dataset.arenaSrc = url;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Excel 처리 구성요소를 불러오지 못했습니다'));
+      document.head.appendChild(script);
+    });
+  }
+
+  function ensureXlsxLib() {
+    if (!xlsxPromise) xlsxPromise = loadArenaScript(XLSX_URL, () => !!root.XLSX).then(() => root.XLSX);
+    return xlsxPromise;
+  }
+
+  function ensurePdfLib() {
+    if (!pdfPromise) pdfPromise = import(PDFJS_URL).then(lib => {
+      if (lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+      return lib;
+    });
+    return pdfPromise;
+  }
+
+  function pdfTableFromLines(lines) {
+    let headerCells = null;
+    const output = [];
+    (lines || []).forEach(line => {
+      const cells = [...line].sort((a, b) => a.x - b.x);
+      const recognized = cells.map(cell => ({ ...cell, key: DATASET_HEADER_LOOKUP.get(normalizeDatasetHeader(cell.text)) || '' })).filter(cell => cell.key);
+      if (recognized.length >= 3) {
+        if (!headerCells || recognized.length > headerCells.length) headerCells = recognized;
+        return;
+      }
+      if (!headerCells || !cells.length) return;
+      const row = Array.from({ length: headerCells.length }, () => '');
+      cells.forEach(cell => {
+        let nearest = 0, distance = Infinity;
+        headerCells.forEach((header, index) => {
+          const nextDistance = Math.abs(cell.x - header.x);
+          if (nextDistance < distance) { distance = nextDistance; nearest = index; }
+        });
+        row[nearest] = [row[nearest], cell.text].filter(Boolean).join(' ').trim();
+      });
+      if (row.some(Boolean)) output.push(row);
+    });
+    if (!headerCells) throw new Error('PDF 표의 머리글을 인식하지 못했습니다. CSV 또는 Excel 정답지를 권장합니다');
+    return [headerCells.map(cell => cell.key), ...output];
+  }
+
+  async function readPdfTable(file) {
+    const pdfjs = await ensurePdfLib();
+    const documentProxy = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise;
+    const lines = [];
+    for (let pageNumber = 1; pageNumber <= documentProxy.numPages; pageNumber += 1) {
+      const page = await documentProxy.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const pageLines = [];
+      (content.items || []).forEach(item => {
+        const text = safeText(item && item.str).trim();
+        if (!text) return;
+        const x = Number(item.transform && item.transform[4]) || 0;
+        const y = Number(item.transform && item.transform[5]) || 0;
+        let line = pageLines.find(candidate => Math.abs(candidate.y - y) <= 2.5);
+        if (!line) { line = { y, cells: [] }; pageLines.push(line); }
+        line.cells.push({ x, text });
+      });
+      pageLines.sort((a, b) => b.y - a.y).forEach(line => lines.push(line.cells));
+    }
+    return pdfTableFromLines(lines);
+  }
+
+  async function readAnswerKeyFile(file) {
+    const extension = safeText(file && file.name).split('.').pop().toLowerCase();
+    if (extension === 'csv' || extension === 'tsv' || extension === 'txt') {
+      return { ...normalizeDatasetTable(parseDelimitedRows(await file.text(), extension === 'tsv' ? '\t' : undefined)), sourceType: 'csv', requiresConfirmation: false };
+    }
+    if (extension === 'xlsx' || extension === 'xls') {
+      const XLSX = await ensureXlsxLib();
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      if (!sheet) throw new Error('Excel 첫 번째 시트를 읽지 못했습니다');
+      const table = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+      return { ...normalizeDatasetTable(table), sourceType: 'excel', requiresConfirmation: false };
+    }
+    if (extension === 'pdf') {
+      return { ...normalizeDatasetTable(await readPdfTable(file)), sourceType: 'pdf', requiresConfirmation: true };
+    }
+    throw new Error('CSV, XLSX, XLS 또는 텍스트형 PDF 정답지만 사용할 수 있습니다');
+  }
+
   const core = {
     PROVIDERS, PROMPT_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
     createRequestBody, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
     computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
-    normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck,
+    normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
+    normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
   };
   root.KCSIArenaCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
 
   const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
-  const state = { images: blankImages(), current: null, runs: readRuns() };
+  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], imageFiles: [], validation: null, confirmed: false, importMeta: null });
+  const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset() };
 
   function modelForm(number, preset) {
     return `<div class="arena-model" data-model-form="${number}">
@@ -393,14 +674,42 @@
     return `<input class="arena-number" type="number" min="0" max="${max}" step="1" placeholder="0–${max}" data-score-label="${label}" data-score-field="${field}">`;
   }
 
+  function datasetViewMarkup() {
+    return `<div class="arena-view active" id="arenaDataset">
+      <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>정답지와 이미지 데이터셋</h2><p>정답지의 이미지 파일명과 실제 사진을 브라우저 안에서 대조합니다. 원본은 서버나 연구기록에 저장하지 않습니다.</p></div><button class="arena-preset" type="button" id="arenaDatasetTemplate">CSV 템플릿 받기</button></div>
+        <div class="arena-dataset-upload-grid">
+          <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · 텍스트형 PDF</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
+          <input class="arena-file-input" type="file" id="arenaDatasetAnswer" accept=".csv,.tsv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          <label class="arena-dataset-drop" for="arenaDatasetImages"><span class="arena-dataset-icon">💊</span><b>알약 사진 선택</b><small>앞·뒷면 이미지를 여러 장 동시 선택</small><strong id="arenaDatasetImageName">선택된 사진 없음</strong></label>
+          <input class="arena-file-input" type="file" id="arenaDatasetImages" accept="image/*" multiple>
+        </div>
+        <div class="arena-dataset-guide"><b>필수 열</b><span>case_id</span><span>front_image</span><span>back_image</span><span>drug_name 또는 mfds_item_id</span><span>front_imprint</span><span>back_imprint</span></div>
+        <label class="arena-check arena-pdf-confirm" id="arenaPdfConfirmWrap" hidden><input type="checkbox" id="arenaPdfConfirm"><span>PDF에서 자동 추출한 정답지 내용을 아래 표에서 직접 확인했습니다. 확인 전에는 데이터셋을 비교 배치로 불러올 수 없습니다.</span></label>
+        <div class="arena-status" id="arenaDatasetStatus" role="status" aria-live="polite"></div>
+      </section>
+      <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>자동 검증 결과</h2><p>시험번호 중복, 필수 정답 누락, 앞·뒷면 파일명과 업로드 사진의 일치 여부를 확인합니다.</p></div><button class="arena-preset arena-preset-danger" type="button" id="arenaDatasetClear">데이터셋 지우기</button></div>
+        <div class="arena-dataset-stats">
+          <div class="arena-dataset-stat"><b id="arenaDatasetRows">0</b><span>정답지 행</span></div>
+          <div class="arena-dataset-stat ok"><b id="arenaDatasetValid">0</b><span>검증 통과</span></div>
+          <div class="arena-dataset-stat bad"><b id="arenaDatasetInvalid">0</b><span>수정 필요</span></div>
+          <div class="arena-dataset-stat"><b id="arenaDatasetImagesCount">0</b><span>업로드 사진</span></div>
+        </div>
+        <div id="arenaDatasetNotices"></div>
+        <div class="arena-dataset-preview" id="arenaDatasetPreview"><div class="arena-empty">정답지와 알약 사진을 선택하면 검증 결과가 표시됩니다.</div></div>
+        <div class="arena-dataset-import" id="arenaDatasetImport" hidden><div><b>검증된 데이터를 기존 5알약 비교에 적용</b><span>한 번에 5건씩 앞·뒷면과 정답을 자동 입력합니다.</span></div><select class="arena-select" id="arenaDatasetBatchSelect" aria-label="불러올 데이터셋 범위"></select><button class="arena-action" type="button" id="arenaDatasetLoadBatch">선택한 5건 불러오기</button></div>
+      </section>
+    </div>`;
+  }
+
   function rootMarkup() {
     const modelHeads = MODEL_LABELS.map(label => `<th>모델 ${label}</th>`).join('');
     const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 정확성 (0/20/40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
     const rubricRow = (title, field, max) => `<tr><td>${title}</td>${MODEL_LABELS.map(label => `<td>${scoreInput(label, field, max)}</td>`).join('')}</tr>`;
     return `<div class="arena-shell">
       <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Blind Evaluation</div><h1>4개 OpenAI 모델 · 알약 5개 일괄 비교</h1><p>알약 5개의 앞·뒷면 사진 10장을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 채점 전까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 20회로 쪼개지 않고 각 모델이 사진 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
-      <div class="arena-nav"><button class="active" data-arena-view="experiment">새 배치 비교</button><button data-arena-view="dashboard">누적 연구결과</button></div>
-      <div class="arena-view active" id="arenaExperiment">
+      <div class="arena-nav"><button class="active" data-arena-view="dataset">데이터셋 검증</button><button data-arena-view="experiment">새 배치 비교</button><button data-arena-view="dashboard">누적 연구결과</button></div>
+      ${datasetViewMarkup()}
+      <div class="arena-view" id="arenaExperiment">
         <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>한 배치에 알약 5개, 사진 10장을 등록합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>정답지 사용</label><small>제품명·각인 정답은 AI에 전송되지 않고 블라인드 채점 보조와 CSV에만 사용됩니다.</small></div></div></section>
         <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>5쌍 이미지와 정답지</h2><p>일괄 선택 시 반드시 1앞, 1뒤, 2앞, 2뒤 … 5앞, 5뒤 순서로 10장을 선택하세요.</p></div><div class="arena-batch-count" id="arenaBatchCount">0 / 10</div></div><div class="arena-bulk-actions"><label class="arena-action" for="arenaBatchFiles">📚 사진 10장 한꺼번에 선택</label><input class="arena-file-input" type="file" id="arenaBatchFiles" accept="image/*" multiple><button class="arena-action secondary" type="button" id="arenaClearImages">사진 전체 지우기</button></div><div class="arena-order-guide"><b>자동 배치 순서</b><span>① 1번 앞</span><span>② 1번 뒤</span><span>③ 2번 앞</span><span>④ 2번 뒤</span><span>…</span><span>⑨ 5번 앞</span><span>⑩ 5번 뒤</span></div><div class="arena-cases">${Array.from({ length: CASE_COUNT }, (_, index) => caseForm(index)).join('')}</div></section>
         <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 5개 알약 채점과 투표가 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>10장 모두 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 사진 10장 · 모델 4개 블라인드 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
@@ -434,6 +743,12 @@
 
   function bindUi() {
     document.querySelectorAll('[data-arena-view]').forEach(button => button.addEventListener('click', () => switchArenaView(button.dataset.arenaView)));
+    document.getElementById('arenaDatasetAnswer').addEventListener('change', handleDatasetAnswer);
+    document.getElementById('arenaDatasetImages').addEventListener('change', handleDatasetImages);
+    document.getElementById('arenaDatasetTemplate').addEventListener('click', () => download('KCSI_MED_dataset_template.csv', buildDatasetTemplateCsv(), 'text/csv;charset=utf-8'));
+    document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
+    document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
+    document.getElementById('arenaDatasetLoadBatch').addEventListener('click', loadDatasetBatch);
     document.getElementById('arenaOpenAiPreset').addEventListener('click', restorePreset);
     document.getElementById('arenaCostMode').addEventListener('change', syncCostHint);
     document.getElementById('arenaBatchFiles').addEventListener('change', handleBatchFiles);
@@ -456,9 +771,172 @@
   }
 
   function switchArenaView(name) {
-    document.querySelectorAll('.arena-view').forEach(view => view.classList.toggle('active', view.id === (name === 'dashboard' ? 'arenaDashboard' : 'arenaExperiment')));
+    const viewIds = { dataset: 'arenaDataset', experiment: 'arenaExperiment', dashboard: 'arenaDashboard' };
+    document.querySelectorAll('.arena-view').forEach(view => view.classList.toggle('active', view.id === (viewIds[name] || viewIds.dataset)));
     document.querySelectorAll('[data-arena-view]').forEach(button => button.classList.toggle('active', button.dataset.arenaView === name));
     if (name === 'dashboard') renderDashboard();
+  }
+
+  function setDatasetStatus(message, error) {
+    const element = document.getElementById('arenaDatasetStatus');
+    if (!element) return;
+    element.textContent = message || '';
+    element.classList.toggle('show', !!message);
+    element.classList.toggle('error', !!message && !!error);
+  }
+
+  function datasetFileByName(name) {
+    const key = datasetImageKey(name);
+    return state.dataset.imageFiles.find(file => datasetImageKey(file.name) === key) || null;
+  }
+
+  async function handleDatasetAnswer(event) {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    state.dataset.answerFile = file;
+    state.dataset.rows = [];
+    state.dataset.importMeta = null;
+    state.dataset.validation = null;
+    state.dataset.confirmed = false;
+    document.getElementById('arenaDatasetAnswerName').textContent = file.name;
+    setDatasetStatus('정답지의 열과 데이터 행을 확인하는 중...');
+    try {
+      const parsed = await readAnswerKeyFile(file);
+      state.dataset.rows = parsed.rows;
+      state.dataset.sourceType = parsed.sourceType;
+      state.dataset.confirmed = !parsed.requiresConfirmation;
+      state.dataset.importMeta = parsed;
+      const confirmWrap = document.getElementById('arenaPdfConfirmWrap');
+      const confirm = document.getElementById('arenaPdfConfirm');
+      confirmWrap.hidden = !parsed.requiresConfirmation;
+      confirm.checked = false;
+      refreshDatasetValidation();
+      setDatasetStatus(`${file.name} · ${parsed.rows.length}개 데이터 행을 읽었습니다${parsed.requiresConfirmation ? ' · PDF 추출 내용을 확인하세요' : ''}`);
+    } catch (error) {
+      state.dataset.rows = [];
+      state.dataset.sourceType = '';
+      document.getElementById('arenaPdfConfirmWrap').hidden = true;
+      setDatasetStatus(error.message || '정답지를 읽지 못했습니다', true);
+      refreshDatasetValidation();
+    }
+  }
+
+  function handleDatasetImages(event) {
+    const files = [...(event.target.files || [])];
+    event.target.value = '';
+    if (!files.length) return;
+    if (files.length > MAX_DATASET_IMAGES) return setDatasetStatus(`사진은 한 번에 최대 ${MAX_DATASET_IMAGES.toLocaleString('ko-KR')}장까지 선택할 수 있습니다`, true);
+    if (files.some(file => file.type && !file.type.startsWith('image/'))) return setDatasetStatus('알약 사진이 아닌 파일이 포함되어 있습니다', true);
+    if (files.some(file => file.size > 30 * 1024 * 1024)) return setDatasetStatus('사진 1장당 30MB 이하만 사용할 수 있습니다', true);
+    state.dataset.imageFiles = files;
+    document.getElementById('arenaDatasetImageName').textContent = `${files.length.toLocaleString('ko-KR')}장 선택됨`;
+    refreshDatasetValidation();
+    setDatasetStatus(`알약 사진 ${files.length.toLocaleString('ko-KR')}장을 파일명으로 대조했습니다`);
+  }
+
+  function refreshDatasetValidation() {
+    state.dataset.validation = validateDatasetRows(state.dataset.rows, state.dataset.imageFiles);
+    renderDatasetValidation();
+  }
+
+  function datasetRowIssueHtml(row) {
+    const messages = [...row._errors, ...row._warnings];
+    return messages.length ? messages.map(message => `<span>${esc(message)}</span>`).join('') : '<span class="ok">검증 통과</span>';
+  }
+
+  function renderDatasetValidation() {
+    const validation = state.dataset.validation || validateDatasetRows([], state.dataset.imageFiles);
+    const summary = validation.summary;
+    document.getElementById('arenaDatasetRows').textContent = summary.totalRows.toLocaleString('ko-KR');
+    document.getElementById('arenaDatasetValid').textContent = summary.validRows.toLocaleString('ko-KR');
+    document.getElementById('arenaDatasetInvalid').textContent = summary.invalidRows.toLocaleString('ko-KR');
+    document.getElementById('arenaDatasetImagesCount').textContent = summary.imageCount.toLocaleString('ko-KR');
+    const notices = [];
+    const meta = state.dataset.importMeta || {};
+    if (meta.duplicateHeaders && meta.duplicateHeaders.length) notices.push(`중복 머리글: ${meta.duplicateHeaders.join(', ')}`);
+    if (meta.unknownHeaders && meta.unknownHeaders.length) notices.push(`채점에서 제외되는 열: ${meta.unknownHeaders.slice(0, 8).join(', ')}${meta.unknownHeaders.length > 8 ? ' 외' : ''}`);
+    if (validation.duplicateImages.length) notices.push(`같은 파일명의 사진이 중복 선택됨: ${validation.duplicateImages.slice(0, 5).join(', ')}`);
+    if (validation.orphanImages.length) notices.push(`정답지에 연결되지 않은 사진 ${validation.orphanImages.length}장`);
+    if (state.dataset.sourceType === 'pdf' && !state.dataset.confirmed) notices.push('PDF 추출값을 직접 확인하고 확인란을 선택해야 합니다');
+    document.getElementById('arenaDatasetNotices').innerHTML = notices.length
+      ? `<div class="arena-dataset-notices">${notices.map(message => `<div>⚠ ${esc(message)}</div>`).join('')}</div>` : '';
+    const preview = document.getElementById('arenaDatasetPreview');
+    if (!validation.rows.length) preview.innerHTML = '<div class="arena-empty">정답지와 알약 사진을 선택하면 검증 결과가 표시됩니다.</div>';
+    else {
+      const visibleRows = validation.rows.slice(0, 100);
+      preview.innerHTML = `<div class="arena-table-wrap"><table class="arena-table arena-dataset-table"><thead><tr><th>상태</th><th>행</th><th>case_id</th><th>앞면 파일</th><th>뒷면 파일</th><th>정답</th><th>각인 앞·뒤</th><th>검증 내용</th></tr></thead><tbody>${visibleRows.map(row => `<tr class="${row._valid ? 'is-valid' : 'is-invalid'}"><td><span class="arena-dataset-badge ${row._valid ? 'ok' : 'bad'}">${row._valid ? '통과' : '수정'}</span></td><td>${esc(row._sourceRow)}</td><td class="mono">${esc(row.case_id || '—')}</td><td>${esc(row.front_image || '—')}</td><td>${esc(row.back_image || '—')}</td><td>${esc(row.drug_name || row.mfds_item_id || '—')}</td><td class="mono">${esc(row.front_imprint || '—')} · ${esc(row.back_imprint || '—')}</td><td><div class="arena-dataset-issues">${datasetRowIssueHtml(row)}</div></td></tr>`).join('')}</tbody></table></div>${validation.rows.length > visibleRows.length ? `<div class="arena-dataset-more">처음 100행만 표시합니다 · 전체 ${validation.rows.length.toLocaleString('ko-KR')}행</div>` : ''}`;
+    }
+    const importArea = document.getElementById('arenaDatasetImport');
+    const select = document.getElementById('arenaDatasetBatchSelect');
+    const button = document.getElementById('arenaDatasetLoadBatch');
+    const canImport = validation.validRows.length >= CASE_COUNT;
+    importArea.hidden = !canImport;
+    if (canImport) {
+      const options = [];
+      for (let index = 0; index + CASE_COUNT <= validation.validRows.length; index += CASE_COUNT) {
+        const first = validation.validRows[index], last = validation.validRows[index + CASE_COUNT - 1];
+        options.push(`<option value="${index}">${index + 1}–${index + CASE_COUNT}번 · ${esc(first.case_id)} ~ ${esc(last.case_id)}</option>`);
+      }
+      select.innerHTML = options.join('');
+      button.disabled = state.dataset.sourceType === 'pdf' && !state.dataset.confirmed;
+    }
+  }
+
+  function clearDataset() {
+    state.dataset = blankDataset();
+    document.getElementById('arenaDatasetAnswer').value = '';
+    document.getElementById('arenaDatasetImages').value = '';
+    document.getElementById('arenaDatasetAnswerName').textContent = '선택된 파일 없음';
+    document.getElementById('arenaDatasetImageName').textContent = '선택된 사진 없음';
+    document.getElementById('arenaPdfConfirmWrap').hidden = true;
+    document.getElementById('arenaPdfConfirm').checked = false;
+    setDatasetStatus('데이터셋을 브라우저 메모리에서 지웠습니다');
+    refreshDatasetValidation();
+  }
+
+  function clarityFromDatasetRow(row) {
+    const readable = safeText(row.expected_readable).normalize('NFKC').trim().toLowerCase();
+    const blur = safeText(row.blur).normalize('NFKC').trim().toLowerCase();
+    if (/^(?:false|0|no)$|불가|unreadable/.test(readable)) return '각인 불명확';
+    if (/혼합|곤란|partial|uncertain/.test(`${readable} ${blur}`)) return '혼합·판단곤란';
+    if (!/없음|선명|정상|clear/.test(blur) && /심한|흐림|blur/.test(blur)) return '각인 불명확';
+    return '각인 명확';
+  }
+
+  async function loadDatasetBatch() {
+    const validation = state.dataset.validation;
+    if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
+    if (state.dataset.sourceType === 'pdf' && !state.dataset.confirmed) return setDatasetStatus('PDF 추출 내용을 확인한 뒤 확인란을 선택하세요', true);
+    const start = Number(document.getElementById('arenaDatasetBatchSelect').value) || 0;
+    const rows = validation.validRows.slice(start, start + CASE_COUNT);
+    if (rows.length !== CASE_COUNT) return setDatasetStatus('선택한 범위에서 5건을 불러오지 못했습니다', true);
+    setDatasetStatus('앞·뒷면 사진 10장을 비교용 크기로 최적화하는 중...');
+    try {
+      const pairs = await Promise.all(rows.map(async row => {
+        const frontFile = datasetFileByName(row.front_image), backFile = datasetFileByName(row.back_image);
+        if (!frontFile || !backFile) throw new Error(`${row.case_id}의 앞·뒷면 파일을 찾지 못했습니다`);
+        const [front, back] = await Promise.all([fileToDataUrl(frontFile), fileToDataUrl(backFile)]);
+        return { front, back, frontName: frontFile.name, backName: backFile.name };
+      }));
+      state.images = pairs;
+      const sourceName = safeText(state.dataset.answerFile && state.dataset.answerFile.name).replace(/\.[^.]+$/, '') || 'DATASET';
+      document.getElementById('arenaBatchId').value = `${sourceName}-${String(start + 1).padStart(3, '0')}-${String(start + CASE_COUNT).padStart(3, '0')}`;
+      rows.forEach((row, index) => {
+        const number = index + 1;
+        document.getElementById(`arenaCaseId${number}`).value = row.case_id;
+        document.getElementById(`arenaClarity${number}`).value = clarityFromDatasetRow(row);
+        document.getElementById(`arenaTruthName${number}`).value = row.drug_name || row.mfds_item_id;
+        document.getElementById(`arenaTruthFront${number}`).value = row.front_imprint;
+        document.getElementById(`arenaTruthBack${number}`).value = row.back_imprint;
+        refreshUploadSlot(index, 'front'); refreshUploadSlot(index, 'back');
+      });
+      document.getElementById('arenaConsent').checked = false;
+      refreshUploadCount();
+      switchArenaView('experiment');
+      setArenaStatus(`검증된 데이터셋 ${start + 1}–${start + CASE_COUNT}번을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`);
+      document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) { setDatasetStatus(error.message || '데이터셋을 불러오지 못했습니다', true); }
   }
 
   function restorePreset() {
