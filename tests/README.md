@@ -55,6 +55,92 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - CSV 열 구성과 스프레드시트 수식 주입 방지
 - 연구기록·CSV에 API 키·토큰이 포함되지 않는지
 
+### research-dataset-tools.js / research-dataset-integration.js
+
+- XLSX 정답지 2시트·19열 구조와 수식 주입 차단
+- 스캔 PDF OCR 표 재구성, 기본 20페이지 제한, 취소 및 worker/캔버스 정리
+- `/research` 화면 설치와 PDF 텍스트 추출 실패 시 로컬 OCR 자동 전환
+- OCR 원문·경고·수정 가능한 구조화 표와 사람 확인 전/후 배치 불러오기 잠금
+- OCR 값을 수정하면 확인 상태가 해제되고 재검증되는지
+- 데이터셋 지우기 시 OCR 검토 내용 제거
+
+### providers.js
+
+연구 공급자 Adapter와 Contract v1을 실제 API 비용 없이 검사한다.
+
+- Registry 등록·조회·목록과 잘못된 provider 거부
+- OpenAI·Anthropic·Gemini 요청 및 이미지 형식 매핑
+- 정상 응답·usage·malformed JSON·인증·quota·timeout 오류 정규화
+- 모든 성공/실패 결과의 공통 `ResearchResult` 적합성
+- correct·partial·wrong·error·slow MockProvider fixture
+- 기존 Arena 5쌍 batch와 인증된 `gptFetch` Worker 호환
+- `/api/research/provider` 서버 프록시 요청에 API key가 포함되지 않는지
+
+### research-platform-integration.js / research-arena-bridge.js
+
+- Dataset 행 → GroundTruth → ResearchInput → MockProvider → ResearchResult 전체 흐름
+- Provider 결과가 자동채점·비용·강건성 Result Dataset으로 이어지는지
+- Dashboard view model과 CSV·XLSX·PDF 보고서 생성
+- 기존 Arena 배치와 Provider Adapter 결과를 Contract v1으로 함께 변환
+- 배치 usage를 샘플에 중복 복제하지 않고 분배하는지
+- 보고서에서 원본 이미지·base64·provider raw 응답이 제거되는지
+- 정적 브라우저 번들이 OpenAI·Anthropic·Gemini·Mock Registry를 노출하는지
+
+### arena-rubric.js
+
+첨부 화면의 40+25+20+15 점수표 자동화를 독립 모듈 단위로 검사한다.
+
+- Contract v1과 기존 Arena 필드의 동시 지원
+- 완전정답 100점, 부분정답 20점, 앞·뒤 각인 교환 처리
+- 고신뢰 오식별의 환각 억제 감점과 안전한 판독 보류 분리
+- 정답 누락 시 자동채점 중단, 1점 이내 동률 추천
+- 공급자 원본 `raw`가 자동점수 결과에 복사되지 않는지
+
+### arena-auto-scoring-integration.js
+
+자동채점과 Research Platform v1이 한 `arena.js` 위에서 함께 도는지 확인한다.
+
+- 두 갈래 코어 API의 공존과 화면 `readCases()` 모양 그대로의 자동채점
+- 정답지가 없는 손입력 배치의 레거시 채점 하위호환
+- 제품명 없는 정답지에서 품목 ID를 되뇐 응답이 정답 40점을 가져가지 않는지
+- 자동점수·수동수정 감사 열이 기존 CSV에 남고 provider raw는 빠지는지
+- 같은 배치를 Contract v1 결과로 다시 채점해도 판정이 일치하는지
+- Bridge Result Dataset에 이미지·base64·provider raw가 섞이지 않는지
+
+### sample-dataset-builder.js / random-batch.js
+
+고정 샘플 확장(120건)과 무작위 출제를 검사한다. 식약처 서버 없이 돈다.
+
+- 세트 정의: 확장 세트가 기존 20건을 같은 순서로 포함하는지, 후보가 목표보다 많은지
+- 후보 150건이 `pill_db.json`에 실제로 있고 이미지 URL 형식·모양·색상 다양성을 만족하는지
+- 사진이 빠진 품목을 건너뛰고도 목표 건수를 채우며, case_id가 빈틈없이 이어지는지
+- 목표를 채우면 남은 후보는 내려받지 않는지(불필요한 요청 방지)
+- 만들어진 ZIP이 앱의 `validateDatasetRows`를 그대로 통과하는지
+- 좌=앞면·우=뒷면 분할이 실제로 맞는지 (sharp 설치 시)
+- 외부 `zip` 명령 없이 만든 ZIP이 두 번 만들어도 같은 바이트인지, JSZip으로도 풀리는지
+- 무작위 출제: 같은 바퀴 중복 없음, 전량 순회, seed 재현, 5건 미만이면 뽑지 않음
+
+### promptfoo-assertion.js
+
+외부 평가 러너용 assertion이 화면과 같은 산식을 쓰는지 확인한다(Promptfoo 미설치).
+
+- 화면 자동채점과 총점이 정확히 같은지
+- 코드블록으로 감싼 응답도 같은 파서를 타는지
+- 고신뢰 오식별의 환각 억제 감점 반영
+- 정답 누락이 모델 0점이 아니라 채점 보류로 남는지
+- JSON이 아닌 응답에서 예외 대신 실패 결과를 돌려주는지
+- Contract v1 `answer` vars와 기존 `truth*` vars 동시 지원
+
+### browser-research.mjs (선택 · `npm run test:browser`)
+
+실제 Chromium으로 `/research`를 띄운다. Playwright가 없으면 건너뛴다.
+
+- 자동채점 모듈이 `arena.js`보다 먼저 실행되어 전역에 잡히는지
+- 실제 페이지에서 `KCSIArenaCore.scoreBatchWithRubric()`이 100점을 산출하는지
+- 자동채점 UI와 Contract 보고서 UI가 한 화면에 함께 설치되는지
+- 390px에서 가로 넘침 없이 자동 추천 영역이 1열로 접히는지
+- 화면을 여는 동안 정적 폰트·CDN 외의 요청이나 본문 전송이 없는지
+
 ## 테스트가 실제로 작동하는지 확인하는 법 (중요)
 
 통과만 확인하면 의미가 없다. 버그를 일부러 심어 검출되는지 봐야 한다.

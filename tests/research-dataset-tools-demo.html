@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KCSI MED · 연구 정답지 도구 데모 (Task A)</title>
+<style>
+  :root { color-scheme: light dark; --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --text:#e8ecf3; --muted:#9aa4b6; --accent:#4c8dff; --ok:#2fbf71; --warn:#e0a92c; --bad:#e35d6a; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f5f7fb; --card:#ffffff; --line:#dfe4ee; --text:#161a22; --muted:#5b6577; } }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system, "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif; }
+  main { max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:16px; margin:0 0 8px; }
+  p { margin:0 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  button { min-height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--line); background:var(--accent); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--text); }
+  button[disabled] { opacity:.5; cursor:not-allowed; }
+  input[type=file] { max-width:100%; font-size:14px; }
+  input[type=number] { min-height:44px; width:96px; padding:0 10px; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--text); }
+  .bar { height:10px; border-radius:6px; background:var(--line); overflow:hidden; }
+  .bar > i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .banner { border-radius:10px; padding:10px 12px; font-weight:600; }
+  .banner.confirm { background:rgba(224,169,44,.16); border:1px solid var(--warn); color:var(--warn); }
+  .banner.bad { background:rgba(227,93,106,.16); border:1px solid var(--bad); color:var(--bad); }
+  .banner.ok { background:rgba(47,191,113,.16); border:1px solid var(--ok); color:var(--ok); }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { border-collapse:collapse; font-size:13px; white-space:nowrap; }
+  th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; }
+  th { background:rgba(127,127,127,.12); position:sticky; top:0; }
+  td.low { background:rgba(224,169,44,.2); }
+  ul { margin:6px 0 0; padding-left:18px; font-size:13px; }
+  li.warn { color:var(--warn); }
+  li.bad { color:var(--bad); }
+  pre { margin:6px 0 0; padding:10px; background:rgba(127,127,127,.12); border-radius:10px; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:260px; overflow:auto; }
+  canvas { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <header class="card">
+    <h1>연구 정답지 도구 데모 · Task A</h1>
+    <p class="muted">XLSX 정답지 템플릿 생성과 스캔 PDF 로컬 OCR을 <b>운영 화면 없이</b> 확인하는 독립 데모입니다. 로그인·PIN·OpenAI API를 사용하지 않고 합성 정답지만 사용합니다.</p>
+    <p class="muted">PDF 이미지와 OCR 결과는 이 브라우저 밖으로 나가지 않습니다. CDN에서는 실행 코드와 글자 모델만 내려받습니다.</p>
+    <p class="muted" id="demoVersions"></p>
+  </header>
+
+  <section class="card">
+    <h2>1. XLSX 정답지 템플릿</h2>
+    <p class="muted">SheetJS <code>xlsx@0.18.5</code>를 고정 버전 CDN에서 불러와 <b>정답지</b>·<b>작성안내</b> 두 시트를 만듭니다.</p>
+    <div class="row">
+      <button type="button" id="demoTemplate">📄 XLSX 템플릿 내려받기</button>
+      <span class="muted" id="demoTemplateStatus">대기 중</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. 스캔 정답지 PDF 선택</h2>
+    <p class="muted">텍스트 레이어가 없는 스캔 PDF만 대상입니다. 아래 버튼으로 합성 스캔 정답지를 즉시 만들 수 있습니다.</p>
+    <div class="row">
+      <button type="button" class="secondary" id="demoMakeScan">🧪 합성 스캔 PDF 만들기</button>
+      <button type="button" class="secondary" id="demoSaveScan" disabled>⬇ 합성 PDF 저장</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <input type="file" id="demoFile" accept="application/pdf,.pdf">
+      <label class="muted">최대 페이지 <input type="number" id="demoMaxPages" value="20" min="1" max="50"></label>
+    </div>
+    <p class="muted" id="demoFileStatus" style="margin-top:8px">선택된 파일이 없습니다.</p>
+    <div class="row" style="margin-top:8px">
+      <button type="button" id="demoRun" disabled>🔍 로컬 OCR 실행</button>
+      <button type="button" class="secondary" id="demoCancel" disabled>취소</button>
+    </div>
+    <div class="bar" style="margin-top:12px"><i id="demoBar"></i></div>
+    <p class="muted" id="demoProgress" style="margin-top:6px">대기 중</p>
+  </section>
+
+  <section class="card">
+    <h2>3. 결과</h2>
+    <div id="demoBanner"></div>
+    <p class="muted" id="demoMeta"></p>
+    <div id="demoRows"></div>
+    <div id="demoMessages"></div>
+    <div id="demoPages"></div>
+  </section>
+
+  <section class="card">
+    <h2>4. 네트워크 없는 표 재구성 확인</h2>
+    <p class="muted">합성 OCR word 좌표(<code>tests/fixtures/research-dataset-synthetic.js</code>)를 표로 재구성합니다. CDN 없이 동작합니다.</p>
+    <div class="row"><button type="button" class="secondary" id="demoOffline">🧩 합성 좌표로 표 재구성</button></div>
+    <div id="demoOfflineOut"></div>
+  </section>
+</main>
+
+<canvas id="demoCanvas"></canvas>
+
+<script src="../arena.js"></script>
+<script src="../research-dataset-tools.js"></script>
+<script src="fixtures/research-dataset-synthetic.js"></script>
+<script>
+(function initDemo() {
+  'use strict';
+  const tools = window.KCSIResearchDatasetTools;
+  const arena = window.KCSIArenaCore;
+  const fixture = window.KCSIResearchDatasetFixture;
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value == null ? '' : value).replace(/[&<>'"]/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+  })[ch]);
+
+  const state = { file: null, scanBlob: null, controller: null, running: false };
+  $('demoVersions').textContent = `모듈 ${tools.versions.module} · SheetJS ${tools.versions.xlsx} · PDF.js ${tools.versions.pdfjs} · Tesseract.js ${tools.versions.tesseract} (kor+eng)`;
+
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  // ------------------------------------------------------------- XLSX 템플릿
+  $('demoTemplate').addEventListener('click', async () => {
+    const status = $('demoTemplateStatus');
+    status.textContent = 'SheetJS 준비 중…';
+    try {
+      const blob = await tools.buildXlsxTemplate({ arenaCore: arena });
+      download(blob, tools.templateFileName());
+      status.textContent = `저장했습니다 · ${(blob.size / 1024).toFixed(1)} KB`;
+    } catch (error) {
+      status.textContent = `오류: ${error && error.message ? error.message : error}`;
+    }
+  });
+
+  // ------------------------------------------------- 합성 스캔 PDF (이미지 전용)
+  function drawScanPage(cells, pageNumber) {
+    const canvas = $('demoCanvas');
+    canvas.width = 1654; canvas.height = 2339; // A4 200dpi 정도의 스캔본
+    const context = canvas.getContext('2d', { alpha: false });
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.save();
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate(0.004); // 스캔본처럼 살짝 기울인다
+    context.translate(-canvas.width / 2, -canvas.height / 2);
+    context.fillStyle = '#111111';
+    // 이어지는 쪽에는 제목을 넣지 않는다. 표 밖 제목은 OCR에서 데이터 행으로 잡힐 수 있다.
+    if (pageNumber === 1) {
+      context.font = 'bold 34px "Noto Sans KR", sans-serif';
+      context.fillText('합성 정답지 스캔본 · 연구용 가상 데이터', 60, 110);
+    }
+    const columnX = [70, 250, 610, 970, 1190, 1410];
+    const rowY = 230;
+    const rowHeight = 78;
+    cells.forEach((row, rowIndex) => {
+      const y = rowY + rowIndex * rowHeight;
+      context.strokeStyle = '#666666';
+      context.lineWidth = 1;
+      context.strokeRect(55, y - 44, 1545, rowHeight);
+      context.font = `${rowIndex === 0 && pageNumber === 1 ? 'bold ' : ''}28px "Noto Sans KR", sans-serif`;
+      row.forEach((cell, columnIndex) => {
+        const text = fixture.cellText(cell);
+        if (text) context.fillText(text, columnX[columnIndex], y + 6);
+      });
+    });
+    context.restore();
+    for (let index = 0; index < 1400; index += 1) {
+      context.fillStyle = `rgba(0,0,0,${0.03 + Math.random() * 0.06})`;
+      context.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+    }
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+    const binary = atob(dataUrl.split(',')[1]);
+    const jpeg = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) jpeg[index] = binary.charCodeAt(index);
+    const size = { width: canvas.width, height: canvas.height };
+    canvas.width = 0; canvas.height = 0;
+    return { jpeg, width: size.width, height: size.height };
+  }
+
+  function buildScanPdf(pages) {
+    const chunks = [];
+    let length = 0;
+    const offsets = [0];
+    const pushBytes = bytes => { chunks.push(bytes); length += bytes.length; };
+    const pushText = text => {
+      const bytes = new Uint8Array(text.length);
+      for (let index = 0; index < text.length; index += 1) bytes[index] = text.charCodeAt(index) & 0xff;
+      pushBytes(bytes);
+    };
+    const startObject = number => { offsets[number] = length; pushText(`${number} 0 obj\n`); };
+    const pageIds = pages.map((_, index) => 3 + index * 3);
+    pushText('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    startObject(1);
+    pushText('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+    startObject(2);
+    pushText(`<< /Type /Pages /Count ${pages.length} /Kids [${pageIds.map(id => `${id} 0 R`).join(' ')}] >>\nendobj\n`);
+    pages.forEach((page, index) => {
+      const pageId = pageIds[index];
+      const imageId = pageId + 1;
+      const contentId = pageId + 2;
+      const content = `q ${page.width} 0 0 ${page.height} 0 0 cm /Im0 Do Q\n`;
+      startObject(pageId);
+      pushText(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.width} ${page.height}] `
+        + `/Resources << /XObject << /Im0 ${imageId} 0 R >> >> /Contents ${contentId} 0 R >>\nendobj\n`);
+      startObject(imageId);
+      pushText(`<< /Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} `
+        + `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.jpeg.length} >>\nstream\n`);
+      pushBytes(page.jpeg);
+      pushText('\nendstream\nendobj\n');
+      startObject(contentId);
+      pushText(`<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`);
+    });
+    const total = 3 + pages.length * 3;
+    const xrefOffset = length;
+    let xref = `xref\n0 ${total}\n0000000000 65535 f \n`;
+    for (let number = 1; number < total; number += 1) xref += `${String(offsets[number] || 0).padStart(10, '0')} 00000 n \n`;
+    pushText(`${xref}trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+    const output = new Uint8Array(length);
+    let position = 0;
+    chunks.forEach(chunk => { output.set(chunk, position); position += chunk.length; });
+    return output;
+  }
+
+  $('demoMakeScan').addEventListener('click', () => {
+    const pages = fixture.pageCells.map((cells, index) => drawScanPage(cells, index + 1));
+    const bytes = buildScanPdf(pages);
+    state.scanBlob = new Blob([bytes], { type: 'application/pdf' });
+    state.file = new File([state.scanBlob], 'synthetic-answer-sheet.pdf', { type: 'application/pdf' });
+    $('demoSaveScan').disabled = false;
+    $('demoRun').disabled = false;
+    $('demoFileStatus').textContent = `합성 스캔 PDF 준비됨 · ${pages.length}쪽 · ${(bytes.length / 1024).toFixed(0)} KB · 텍스트 레이어 없음`;
+  });
+
+  $('demoSaveScan').addEventListener('click', () => {
+    if (state.scanBlob) download(state.scanBlob, 'synthetic-answer-sheet.pdf');
+  });
+
+  $('demoFile').addEventListener('change', event => {
+    state.file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+    $('demoRun').disabled = !state.file;
+    $('demoFileStatus').textContent = state.file
+      ? `선택됨: ${state.file.name} · ${(state.file.size / 1024).toFixed(0)} KB`
+      : '선택된 파일이 없습니다.';
+  });
+
+  // ------------------------------------------------------------------ 실행
+  function setProgress(percent, message) {
+    $('demoBar').style.width = `${Math.max(0, Math.min(100, percent || 0))}%`;
+    $('demoProgress').textContent = message;
+  }
+
+  function renderMessages(result) {
+    const list = []
+      .concat(result.errors.map(item => ({ level: 'bad', text: `[오류·${item.code}] ${item.message}` })))
+      .concat(result.warnings.map(item => ({ level: 'warn', text: `[경고·${item.code}] ${item.message}` })));
+    $('demoMessages').innerHTML = list.length
+      ? `<h3 style="font-size:14px;margin:12px 0 0">경고·오류 ${list.length}건</h3><ul>${list.map(item => `<li class="${item.level}">${esc(item.text)}</li>`).join('')}</ul>`
+      : '<p class="muted" style="margin-top:12px">경고와 오류가 없습니다.</p>';
+  }
+
+  function renderRows(result) {
+    if (!result.rows.length) { $('demoRows').innerHTML = '<p class="muted">구조화된 행이 없습니다. 아래 페이지별 OCR 원문을 확인하세요.</p>'; return; }
+    const keys = arena.DATASET_COLUMNS.map(column => column.key);
+    const low = new Set(result.warnings.filter(item => item.code === 'low_confidence').map(item => `${item.row}:${item.column}`));
+    $('demoRows').innerHTML = `<div class="scroll"><table><thead><tr><th>쪽</th><th>신뢰도</th>${keys.map(key => `<th>${esc(key)}</th>`).join('')}</tr></thead><tbody>`
+      + result.rows.map(row => `<tr><td>${esc(row._page)}</td><td>${row._ocrConfidence == null ? '—' : esc(row._ocrConfidence.toFixed(1))}</td>`
+        + keys.map(key => `<td class="${low.has(`${row._sourceRow}:${key}`) ? 'low' : ''}">${esc(row[key])}</td>`).join('') + '</tr>').join('')
+      + '</tbody></table></div>';
+  }
+
+  function renderPages(result) {
+    $('demoPages').innerHTML = result.pages.map(page => `<h3 style="font-size:14px;margin:12px 0 0">${page.pageNumber}쪽 OCR 원문 · 신뢰도 ${page.confidence == null ? '—' : esc(page.confidence)} · 단어 ${page.wordCount}개</h3><pre>${esc(page.text) || '(인식된 글자 없음)'}</pre>`).join('')
+      || '<p class="muted">페이지 결과가 없습니다.</p>';
+  }
+
+  function renderResult(result) {
+    $('demoBanner').innerHTML = `<div class="banner confirm">⚠ requiresConfirmation: ${result.requiresConfirmation} · OCR 결과는 자동 확정이 아니며 사람이 원문과 대조해야 합니다.</div>`
+      + (result.errors.length ? '' : `<div class="banner ok" style="margin-top:8px">구조화된 행 ${result.rows.length}건 · sourceType ${esc(result.sourceType)}</div>`);
+    $('demoMeta').textContent = `엔진 ${result.meta.engine} ${result.meta.engineVersion} · 언어 ${result.meta.languages} · 처리 ${result.meta.processedPages}/${result.meta.pageCount}쪽 · ${(result.meta.durationMs / 1000).toFixed(1)}초 · 신뢰도 기준 ${result.meta.minConfidence}`;
+    renderRows(result);
+    renderMessages(result);
+    renderPages(result);
+  }
+
+  $('demoRun').addEventListener('click', async () => {
+    if (!state.file || state.running) return;
+    state.running = true;
+    state.controller = new AbortController();
+    $('demoRun').disabled = true;
+    $('demoCancel').disabled = false;
+    $('demoBanner').innerHTML = '';
+    $('demoMeta').textContent = '';
+    $('demoRows').innerHTML = '';
+    $('demoMessages').innerHTML = '';
+    $('demoPages').innerHTML = '';
+    setProgress(0, 'OCR 준비 중…');
+    try {
+      const result = await tools.parseScannedPdf(state.file, {
+        arenaCore: arena,
+        maxPages: Number($('demoMaxPages').value) || 20,
+        signal: state.controller.signal,
+        onProgress(event) {
+          const page = event.pageNumber ? `${event.pageNumber}/${event.totalPages}쪽 · ` : '';
+          const ocr = event.ocrPercent == null ? '' : ` (OCR ${event.ocrPercent}%)`;
+          setProgress(event.percent, `${page}${event.message}${ocr}`);
+        },
+      });
+      setProgress(100, `완료 · ${result.rows.length}행`);
+      renderResult(result);
+    } catch (error) {
+      const cancelled = error && error.name === 'AbortError';
+      setProgress(0, cancelled ? '취소했습니다.' : '실패했습니다.');
+      $('demoBanner').innerHTML = `<div class="banner bad">${cancelled ? '⏹ 사용자가 취소했습니다.' : '⚠ 오류'} · ${esc(error && error.message ? error.message : error)}${error && error.code ? ` (${esc(error.code)})` : ''}</div>`;
+    } finally {
+      state.running = false;
+      state.controller = null;
+      $('demoRun').disabled = !state.file;
+      $('demoCancel').disabled = true;
+    }
+  });
+
+  $('demoCancel').addEventListener('click', () => {
+    if (state.controller) state.controller.abort();
+    else tools.cancelActiveOcr();
+    $('demoCancel').disabled = true;
+  });
+
+  // ------------------------------------------------------- 네트워크 없는 확인
+  $('demoOffline').addEventListener('click', () => {
+    const words = fixture.makeWords(fixture.titledCells);
+    const built = tools.buildTableFromWords(words, { arenaCore: arena });
+    const keys = arena.DATASET_COLUMNS.map(column => column.key);
+    $('demoOfflineOut').innerHTML = built.records.length
+      ? `<p class="muted" style="margin-top:8px">머리글 행 ${built.headerIndex} · 인식한 열 ${built.matches}개 · 재구성한 행 ${built.records.length}개</p>`
+        + `<div class="scroll"><table><thead><tr>${keys.map(key => `<th>${esc(key)}</th>`).join('')}</tr></thead><tbody>`
+        + built.records.map(record => `<tr>${keys.map(key => `<td>${esc(record.values[key] || '')}</td>`).join('')}</tr>`).join('')
+        + '</tbody></table></div>'
+      : '<p class="muted">표 머리글을 인식하지 못했습니다.</p>';
+  });
+})();
+</script>
+</body>
+</html>

@@ -41,6 +41,8 @@ Secret을 등록하지 않아도 현재 포함된 JSON DB로 사이트는 실행
 7. 최신 `main` 커밋을 Production으로 배포합니다.
 
 Git 연동 후 `main` 브랜치에 새 커밋을 push하면 Vercel이 자동 배포합니다.
+연구 플랫폼 소스를 수정했다면 push 전에 `npm run build:research`로
+`research/platform-browser.js`를 다시 만들고 `npm test`를 통과시켜야 합니다.
 
 ## 4. Cloudflare 로그인형 Worker 설정
 
@@ -55,6 +57,9 @@ Cloudflare Dashboard에서 `Workers & Pages → kcsi-med-main → Settings → V
 | `ACCESS_TOKEN` | Secret, 24자 이상 임의 문자열 | 24시간 로그인 세션 서명 |
 | `LOGIN_PIN` | Secret, 숫자 6자리 | 휴대폰·태블릿 로그인 PIN |
 | `REFILL_PIN` | Secret, 숫자 6자리 | 200회 추가 충전 PIN, `LOGIN_PIN`과 다른 값 |
+
+`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`는 현재 운영 Worker에 공통 provider 프록시를
+추가하기 전에는 필요하지 않습니다. 브라우저/Vercel 환경변수에 공급자 키를 넣지 마세요.
 
 Text 변수는 다음처럼 설정합니다.
 
@@ -82,14 +87,14 @@ npx wrangler deploy
 
 ## 5. 배포 후 점검
 
-- `/`가 정상적으로 열리고 화면에 `v12.10`이 표시되는지 확인
+- `/`가 정상적으로 열리고 화면에 `v12.11`이 표시되는지 확인
 - `https://kcsi-med-main.growdaily860.workers.dev/health`에서 Worker `v12.6`이 표시되는지 확인
 - 로그인 화면에서 잘못된 PIN이 거부되는지 확인
 - 올바른 PIN으로 로그인한 뒤 새로고침해도 로그인 상태가 유지되는지 확인
 - 다른 브라우저에서는 다시 PIN을 요구하는지 확인
 - OpenAI API 패널에 오늘 사용량과 남은 횟수가 표시되는지 확인
 - 잘못된 충전 PIN은 거부되고, 올바른 PIN으로 `40 → 240 → 440`회가 된 뒤 세 번째 충전이 차단되는지 확인
-- 상단 `현장 판독 / 모델 비교 연구` 탭 전환 확인
+- `/field` 현장 판독과 `/research` 모델 비교 연구가 서로 분리되어 직접 열리는지 확인
 - 연구 모드에서 사진 10장 일괄 선택과 5개 앞·뒷면 쌍 자동 배치 확인
 - 연구 모드에서 식약처 고정 샘플 20건·사진 40장이 자동 검증되고 5건씩 선택되는지 확인
 - GPT-4o 이상 4개 모델이 A–D에 배정되고 투표 전 비공개, 투표 후 공개되는지 확인
@@ -99,6 +104,7 @@ npx wrangler deploy
 - DB 후보가 자동 확정으로 표시되지 않는지 확인
 - 수동 실물 확인 전 DUR·종합 소견 반영이 차단되는지 확인
 - TXT 및 JSON 보고서 다운로드 확인
+- `/research` 표준 CSV·XLSX·PDF 보고서와 MockProvider 통합 테스트 확인
 - 브라우저 개발자 도구 Console에 오류가 없는지 확인
 
 ## 6. 외부 Worker 확인

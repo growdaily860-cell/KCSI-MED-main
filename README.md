@@ -2,7 +2,7 @@
 
 현장 의약품 사진과 처방전 정보를 바탕으로 식약처 낱알식별 데이터베이스 후보를 제시하고, 조사관의 실물 대조 및 법의학 검토를 보조하는 정적 웹 애플리케이션입니다.
 
-현재 버전: **v12.10**
+현재 버전: **v12.11**
 
 > 이 도구의 결과는 의약품 신원을 자동 확정하거나 의료적 진단을 내리는 용도가 아닙니다. 모든 후보는 포장, 처방전, 식약처 등록정보 및 실물을 조사관이 직접 대조한 후 사용해야 합니다.
 
@@ -30,17 +30,21 @@
 - 한국시간 기준 일일 OpenAI 호출 한도(기본 40회)와 로그인 시도 제한
 - 로그인 PIN과 분리된 충전 PIN으로 200회씩 하루 최대 2회 추가(최대 440회)
 - 사진 10장 일괄 선택 또는 모바일 카메라 개별 촬영 및 앞·뒷면 미리보기
-- CSV·Excel·텍스트형 PDF 정답지와 다중 알약 사진 데이터셋 업로드
+- CSV·TSV·XLSX·XLS·텍스트/스캔 PDF 정답지와 다중 알약 사진 데이터셋 업로드
+- XLSX 정답지 템플릿과 PDF.js·Tesseract.js 브라우저 로컬 OCR 검토·수정
 - 시험번호·필수 정답·이미지 파일명 중복/누락 자동 검증 및 행별 오류표
 - 검증된 데이터셋 5건을 기존 블라인드 비교 배치에 자동 입력
 - 식약처 공식 등록사진 고정 샘플 20건·앞뒷면 40장 자동 불러오기 및 ZIP 저장
 - 연습용 `detail: low`와 정식 평가용 `detail: high` 비용 모드
 - 식약처 내장 DB 교차 결과와 100점 평가표 제공
 - 투표 후 모델 공개, 누적 통계 및 배치당 20행 연구용 CSV 저장
+- Contract v1 Provider Registry(OpenAI·Anthropic·Gemini·Mock)와 공통 ResearchResult
+- 제품명·앞/뒤 각인 CER·Brier loss·비용·강건성 자동채점 Dashboard
+- 표준 CSV·6시트 XLSX·인쇄용 PDF 연구 보고서
 
 ## AI 모델 비교 연구
 
-`/research`의 `데이터셋 검증` 화면에서는 CSV·Excel(XLSX/XLS)·텍스트형 PDF 정답지와 알약 앞·뒷면 사진을 여러 장 선택할 수 있습니다. 정답지는 브라우저 안에서만 파싱하며 `case_id`, 정답, 앞·뒷면 파일명, 중복 및 누락을 자동 검증합니다. PDF에서 추출한 정답지는 표를 직접 확인하고 확인란을 선택해야 비교 배치로 불러올 수 있습니다. 검증을 통과한 행은 5건씩 기존 4모델 블라인드 비교 화면에 자동 입력할 수 있습니다. CSV 템플릿은 화면에서 바로 내려받을 수 있습니다.
+`/research`의 `데이터셋 검증` 화면에서는 CSV·TSV·Excel(XLSX/XLS)·PDF 정답지와 알약 앞·뒷면 사진을 여러 장 선택할 수 있습니다. 정답지는 브라우저 안에서만 파싱하며 `case_id`, 정답, 앞·뒷면 파일명, 중복 및 누락을 자동 검증합니다. PDF 텍스트 표가 없으면 PDF.js와 Tesseract.js 로컬 OCR로 자동 전환하며, 페이지 원문과 변환 표를 직접 수정·확인하기 전에는 비교 배치로 불러올 수 없습니다. 검증을 통과한 행은 5건씩 기존 4모델 블라인드 비교 화면에 자동 입력할 수 있습니다. CSV와 2시트 XLSX 템플릿은 화면에서 바로 내려받을 수 있습니다.
 
 `식약처 공식사진 고정 샘플`의 `샘플 20건 자동 불러오기`를 누르면 정답지와 앞·뒷면 사진 40장을 같은 브라우저 메모리에서 풀어 자동 검증합니다. 고정 샘플은 5건씩 네 배치로 반복 실행할 수 있고 ZIP으로도 내려받을 수 있습니다. 원본 URL과 변환 파일 해시는 샘플의 `source_manifest.csv`에 기록됩니다. 공식 등록사진은 선명하고 표준화되어 있으므로 이 결과는 기능 및 기본 성능 확인용이며 실제 현장사진 정확도와 별도로 보고해야 합니다.
 
@@ -48,9 +52,9 @@
 
 기본 모델은 `GPT-4o`, `GPT-4.1`, `GPT-5.6 Luna`, `GPT-5.6 Terra`입니다. 각 모델에 사진 10장을 한 요청으로 보내므로 배치 한 번에 API 요청은 총 4회입니다. 현재 일일 기본 한도 40회라면 최대 10배치를 실행할 수 있습니다. 별도 충전 PIN을 입력하면 기존 사용량을 유지한 채 한도가 200회 늘어나며, 한국시간 기준 하루 최대 2회 충전해 총 440회까지 사용할 수 있습니다. `저비용 연습`은 이미지를 `detail: low`로 전송하고 모델별 최대 출력을 3,000 토큰으로 제한합니다. 작은 각인의 정식 정확도 평가에는 `detail: high`와 최대 출력 5,000 토큰을 사용하는 `정밀 비교`를 선택하세요. 이미지 입력도 토큰으로 과금되며 모델 사용 가능 여부는 OpenAI 계정 등급에 따라 다를 수 있습니다.
 
-OpenAI 후보는 로그인된 KCSI Cloudflare Worker만 사용합니다. OpenAI API 키와 세션 서명용 비밀값은 Worker Secret에만 보관되고, 브라우저에는 24시간 뒤 만료되는 서명 세션만 저장됩니다. 현재 연습판은 OpenAI 모델끼리 비교하도록 잠겨 있으며, Gemini·Qwen은 나중에 제공자 키를 Worker Secret으로 연결한 뒤 추가할 수 있습니다.
+OpenAI 후보는 로그인된 KCSI Cloudflare Worker만 사용합니다. OpenAI API 키와 세션 서명용 비밀값은 Worker Secret에만 보관되고, 브라우저에는 24시간 뒤 만료되는 서명 세션만 저장됩니다. 현재 10장 배치 화면은 기존 비용·quota를 보존하기 위해 OpenAI 모델끼리 비교하도록 유지합니다. 공통 Provider Registry에는 Anthropic·Gemini·Mock Adapter도 포함되며, Mock은 API 비용 없는 전체 파이프라인 검증에 사용합니다. Anthropic·Gemini 실호출은 동일 PIN·quota를 적용한 Worker 공통 프록시를 추가한 뒤 활성화해야 합니다.
 
-비교 결과는 이 브라우저의 `localStorage`에 최대 100배치 보존합니다. 원본 이미지와 API 인증정보는 누적 연구기록에 포함하지 않습니다. CSV는 배치마다 `5개 알약 × 4개 모델 = 20행`을 생성합니다. 브라우저 데이터 삭제나 기기 변경 전에는 `연구데이터 CSV 저장`으로 내보내세요.
+비교 결과는 이 브라우저의 `localStorage`에 최대 100배치 보존합니다. 원본 이미지와 API 인증정보는 누적 연구기록에 포함하지 않습니다. 기존 원본 배치 CSV는 배치마다 `5개 알약 × 4개 모델 = 20행`을 생성합니다. Contract v1 자동채점 화면에서는 표준 CSV, Summary·Model Comparison·Per Sample·Errors·Robustness·Cost 6시트 XLSX, PDF 인쇄용 보고서를 추가로 저장할 수 있습니다.
 
 ## 로컬 실행
 
@@ -58,6 +62,7 @@ Node.js 20 이상을 권장합니다.
 
 ```powershell
 npm install
+npm run build:research
 npm test
 npm run serve
 ```
@@ -131,10 +136,21 @@ deidentify.js              브라우저 로컬 OCR·PDF 변환·자동/수동 �
 deidentify.css             비식별화 검토 화면 스타일
 tools/pii-redactor/        첨부 자료 기반 오프라인 PNG 비식별화 실행 도구
 docs/                      비식별화 실행·복구·보안 운영 문서
-arena.js                   블라인드 모델 비교·채점·통계
+arena.js                   블라인드 모델 비교 UI·레거시 호환 연결
 arena.css                  연구 모드 전용 화면 스타일
-samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트
-scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트
+research/contracts/        Contract v1 데이터 계약
+research/runner.js         공통 Research Runner
+research/arena-bridge.js   기존 Arena → Contract v1 변환
+research/platform-browser.js  연구 플랫폼 브라우저 번들
+providers/                 OpenAI·Anthropic·Gemini·Mock Adapter와 Registry
+scoring/                   자동채점·비용·강건성 엔진
+scoring/arena-rubric.js    기존 40+25+20+15 평가표 자동채점·감사 근거
+evaluation/                Promptfoo 등 외부 러너용 평가 assertion
+reports/                   Dashboard·CSV·XLSX·PDF 보고서
+samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트 (20건 · 120건)
+scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트 (`--set=extended120`)
+scripts/mfds-sample-sets.mjs           고정 샘플 품목 목록
+scripts/select-mfds-sample-items.mjs   품목 선정 기준과 재생성기
 worker/worker.js           PIN 로그인·API 프록시·일일 한도 Worker
 wrangler.jsonc             Cloudflare Worker 및 Durable Object 배포 설정
 pill_db.json               낱알식별 검색 데이터
@@ -142,7 +158,7 @@ easy_db.json               효능·주의사항 데이터
 med-manifest.json          PWA manifest
 vercel.json                Vercel 캐시 헤더 설정
 scripts/update_pill_db.mjs DB 갱신 스크립트
-tests/                     자동 테스트
+tests/                     자동 테스트 (`npm test` · 브라우저 확인은 `npm run test:browser`)
 .github/workflows/         월간 DB 갱신 작업
 ```
 

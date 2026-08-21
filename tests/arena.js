@@ -87,6 +87,7 @@ assert.equal(summary.accuracy, 62.5);
 const csv = arena.buildCsv(runs);
 assert(csv.includes("'=FORMULA"), 'CSV formula injection must be neutralized');
 assert(csv.includes('cost_mode') && csv.includes('저비용 연습'), 'CSV must record cost mode');
+assert(csv.includes('rating_source') && csv.includes('evaluation_version') && csv.includes('vote_source'), 'CSV must preserve automatic/manual scoring audit fields');
 assert.equal(csv.split('\r\n').length, 21, 'one batch must export 20 data rows plus header');
 assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not contain secrets');
 
@@ -99,6 +100,17 @@ assert.equal(normalizedDataset.rows.length, 1);
 assert.equal(normalizedDataset.rows[0].case_id, 'CASE-001');
 assert.equal(normalizedDataset.rows[0].front_image, 'pill_front.jpg');
 assert.equal(normalizedDataset.rows[0].drug_name, '테스트, 정');
+const datasetTsv = 'case_id\tfront_image\tback_image\tdrug_name\nCASE-TSV\ttsv_front.jpg\ttsv_back.jpg\tTSV정';
+const normalizedTsv = arena.normalizeDatasetTable(arena.parseDelimitedRows(datasetTsv, '\t'));
+assert.equal(normalizedTsv.rows[0].case_id, 'CASE-TSV', 'TSV 정답지 회귀');
+assert.equal(normalizedTsv.rows[0].back_image, 'tsv_back.jpg');
+const pdfTable = arena.pdfTableFromLines([
+  [{ x:0, text:'시험번호' }, { x:100, text:'앞면사진' }, { x:200, text:'뒷면사진' }, { x:300, text:'제품명' }],
+  [{ x:0, text:'CASE-PDF' }, { x:100, text:'pdf_front.jpg' }, { x:200, text:'pdf_back.jpg' }, { x:300, text:'PDF정' }],
+]);
+const normalizedPdf = arena.normalizeDatasetTable(pdfTable);
+assert.equal(normalizedPdf.rows[0].case_id, 'CASE-PDF', '텍스트형 PDF 표 회귀');
+assert.equal(normalizedPdf.rows[0].drug_name, 'PDF정');
 const validDataset = arena.validateDatasetRows(normalizedDataset.rows, ['pill_front.jpg', 'pill_back.jpg']);
 assert.equal(validDataset.summary.validRows, 1);
 assert.equal(validDataset.summary.invalidRows, 0);
@@ -112,11 +124,21 @@ assert(invalidDataset.rows[1]._errors.some(message => message.includes('찾지 �
 const template = arena.buildDatasetTemplateCsv();
 assert(template.includes('case_id') && template.includes('mfds_item_id') && template.includes('expected_readable'));
 assert.equal(arena.datasetImageKey('folder\\PILL_FRONT.JPG'), 'pill_front.jpg');
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'pdf' }), true);
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'pdf_ocr' }), true, 'OCR PDF must require human confirmation');
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'excel', requiresConfirmation: false }), false);
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'excel', requiresConfirmation: true }), true);
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
+assert(html.includes('<script src="research/platform-browser.js"></script>'));
 assert(html.includes('<script src="arena.js"></script>'));
-assert(/APP_VERSION = 'v12\.10'/.test(html));
+assert(html.includes('<script src="research-dataset-tools.js"></script>'));
+assert(html.includes('<script src="scoring/arena-rubric.js"></script>'));
+assert(html.indexOf('research/platform-browser.js') < html.indexOf('<script src="arena.js"></script>'), 'Contract platform must load before Arena');
+assert(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'), 'auto rubric must load before Arena');
+assert(html.indexOf('<script src="arena.js"></script>') < html.indexOf('<script src="research-dataset-tools.js"></script>'), 'arena core must load before dataset tools');
+assert(/APP_VERSION = 'v12\.11'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(html.includes('id="quotaRefillForm"') && html.includes('id="quotaRefillPin"') && html.includes('+200회 충전'));
 assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
@@ -126,9 +148,15 @@ assert(css.includes('.arena-cases') && css.includes('.arena-votes'));
 const arenaSource = fs.readFileSync('arena.js', 'utf8');
 assert(arenaSource.includes('arenaBatchFiles') && arenaSource.includes('multiple'));
 assert(arenaSource.includes('arenaDatasetAnswer') && arenaSource.includes('arenaDatasetImages'));
+assert(arenaSource.includes('arenaDatasetTemplateXlsx') && arenaSource.includes('buildXlsxTemplate'));
+assert(arenaSource.includes('arenaDatasetOcrCancel') && arenaSource.includes('parseScannedPdf'));
+assert(arenaSource.includes('arenaDatasetOcrReview') && arenaSource.includes('페이지 OCR 원문'));
+assert(arenaSource.includes('arenaContractCsv') && arenaSource.includes('arenaXlsx') && arenaSource.includes('arenaPdf'));
+assert(arenaSource.includes('buildContractDatasetFromRuns') && arenaSource.includes('renderContractDashboard'));
 assert(arenaSource.includes('arenaDatasetSampleLoad') && arenaSource.includes('KCSI_MED_MFDS_sample_20.zip'));
 assert(arenaSource.includes('loadFixedSampleDataset') && arenaSource.includes('JSZIP_URL'));
 assert(arenaSource.includes('.csv,.tsv,.xlsx,.xls,.pdf'));
+assert(arenaSource.includes('XLSX.read') && arenaSource.includes('sheet_to_json'), 'XLS/XLSX reader must remain wired');
 assert(arenaSource.includes('validateDatasetRows') && arenaSource.includes('buildDatasetTemplateCsv'));
 assert(arenaSource.includes('arenaCase${number}${cap}Cam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
