@@ -55,6 +55,37 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - CSV 열 구성과 스프레드시트 수식 주입 방지
 - 연구기록·CSV에 API 키·토큰이 포함되지 않는지
 
+### research-dataset-tools.js / research-dataset-integration.js
+
+- XLSX 정답지 2시트·19열 구조와 수식 주입 차단
+- 스캔 PDF OCR 표 재구성, 기본 20페이지 제한, 취소 및 worker/캔버스 정리
+- `/research` 화면 설치와 PDF 텍스트 추출 실패 시 로컬 OCR 자동 전환
+- OCR 원문·경고·수정 가능한 구조화 표와 사람 확인 전/후 배치 불러오기 잠금
+- OCR 값을 수정하면 확인 상태가 해제되고 재검증되는지
+- 데이터셋 지우기 시 OCR 검토 내용 제거
+
+### providers.js
+
+연구 공급자 Adapter와 Contract v1을 실제 API 비용 없이 검사한다.
+
+- Registry 등록·조회·목록과 잘못된 provider 거부
+- OpenAI·Anthropic·Gemini 요청 및 이미지 형식 매핑
+- 정상 응답·usage·malformed JSON·인증·quota·timeout 오류 정규화
+- 모든 성공/실패 결과의 공통 `ResearchResult` 적합성
+- correct·partial·wrong·error·slow MockProvider fixture
+- 기존 Arena 5쌍 batch와 인증된 `gptFetch` Worker 호환
+- `/api/research/provider` 서버 프록시 요청에 API key가 포함되지 않는지
+
+### research-platform-integration.js / research-arena-bridge.js
+
+- Dataset 행 → GroundTruth → ResearchInput → MockProvider → ResearchResult 전체 흐름
+- Provider 결과가 자동채점·비용·강건성 Result Dataset으로 이어지는지
+- Dashboard view model과 CSV·XLSX·PDF 보고서 생성
+- 기존 Arena 배치와 Provider Adapter 결과를 Contract v1으로 함께 변환
+- 배치 usage를 샘플에 중복 복제하지 않고 분배하는지
+- 보고서에서 원본 이미지·base64·provider raw 응답이 제거되는지
+- 정적 브라우저 번들이 OpenAI·Anthropic·Gemini·Mock Registry를 노출하는지
+
 ## 테스트가 실제로 작동하는지 확인하는 법 (중요)
 
 통과만 확인하면 의미가 없다. 버그를 일부러 심어 검출되는지 봐야 한다.

@@ -855,7 +855,9 @@ input[type=file]{display:none}
   <div class="viewer-tip">두 손가락으로 확대 · 드래그로 이동</div>
 </div>
 
+<script src="research/platform-browser.js"></script>
 <script src="arena.js"></script>
+<script src="research-dataset-tools.js"></script>
 <script src="deidentify.js"></script>
 <script>
 // ── 의약품 DB (pill_db.json 별도 파일, 비동기 로드) ──
@@ -908,7 +910,7 @@ function ensurePillDb() {
 }
 // ── 앱 버전 & 자동 업데이트 감지 ──
 // 배포 시 이 버전을 올리면, 캐시된 옛 버전을 쓰던 사용자가 자동으로 최신본을 받는다.
-const APP_VERSION = 'v12.10';
+const APP_VERSION = 'v12.11';
 // 헤더 표시는 이 상수에서 채운다 — 버전 문자열의 단일 출처를 유지한다.
 // (마크업에 따로 적어두면 배포 때 한쪽만 올려 화면·감지 버전이 어긋난다)
 document.getElementById('appVer').textContent = APP_VERSION;
