@@ -8,7 +8,7 @@
     "url": "https://github.com/growdaily860-cell/KCSI-MED-main.git"
   },
   "scripts": {
-    "test": "node tests/tdz.js index.html && node tests/dom.js index.html && node tests/deidentify.js && node tests/arena.js && node tests/sample-dataset.js && node tests/worker-auth.mjs && node mark.js",
+    "test": "node tests/tdz.js index.html && node tests/dom.js index.html && node tests/deidentify.js && node tests/arena.js && node tests/sample-dataset.js && node tests/worker-auth.mjs && node tests/research-scoring-report-v2.js && node mark.js",
     "serve": "node tests/dev-server.js"
   },
   "engines": {
