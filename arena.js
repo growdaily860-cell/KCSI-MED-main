@@ -25,6 +25,13 @@
   const AUTO_RUBRIC = root.KCSIArenaRubric || (typeof require === 'function' ? (() => {
     try { return require('./scoring/arena-rubric.js'); } catch (_) { return null; }
   })() : null);
+  const RUN_STORE = root.KCSIRunStore || (typeof require === 'function' ? (() => {
+    try { return require('./research/run-store.js'); } catch (_) { return null; }
+  })() : null);
+  const METRIC_GLOSSARY = root.KCSIMetricGlossary || (typeof require === 'function' ? (() => {
+    try { return require('./research/metric-glossary.js'); } catch (_) { return null; }
+  })() : null);
+  const STORAGE_LIMIT_BYTES = 5 * 1024 * 1024;
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
   const MAX_DATASET_IMAGES = 1000;
   const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -688,11 +695,40 @@
   }
 
   function readRuns() {
-    try { const parsed = JSON.parse(storageGet(STORE_KEY, '[]')); return Array.isArray(parsed) ? parsed : []; }
+    const raw = storageGet(STORE_KEY, '[]');
+    if (RUN_STORE && typeof RUN_STORE.loadRuns === 'function') return RUN_STORE.loadRuns(raw);
+    try { const parsed = JSON.parse(raw); return Array.isArray(parsed) ? parsed : []; }
     catch (_) { return []; }
   }
 
-  function writeRuns(runs) { storageSet(STORE_KEY, JSON.stringify((runs || []).slice(-MAX_RUNS))); }
+  // 저장 결과를 반드시 돌려준다. 예외를 삼키면 화면은 "저장했습니다"라고 말하는데
+  // 실제로는 아무것도 안 남는다 — 연구에서 가장 나쁜 실패다.
+  function writeRuns(runs) {
+    if (!RUN_STORE || typeof RUN_STORE.saveRuns !== 'function') {
+      try {
+        if (!root.localStorage) throw new Error('no storage');
+        root.localStorage.setItem(STORE_KEY, JSON.stringify((runs || []).slice(-MAX_RUNS)));
+        return { ok: true, saved: (runs || []).length, dropped: 0, bytes: 0, runs: runs || [], reason: '' };
+      } catch (error) {
+        return { ok: false, saved: 0, dropped: 0, bytes: 0, runs: runs || [], reason: 'unknown' };
+      }
+    }
+    const result = RUN_STORE.saveRuns(runs, {
+      maxRuns: MAX_RUNS,
+      setItem: payload => {
+        if (!root.localStorage) throw Object.assign(new Error('localStorage를 쓸 수 없습니다'), { name: 'SecurityError' });
+        root.localStorage.setItem(STORE_KEY, payload);
+      },
+    });
+    return result;
+  }
+
+  function saveFailureMessage(result) {
+    if (!result || result.ok) return '';
+    if (result.reason === 'quota') return '브라우저 저장공간이 가득 차 누적 기록을 저장하지 못했습니다. 백업을 내려받은 뒤 오래된 기록을 지우세요';
+    if (result.reason === 'blocked') return '브라우저가 저장을 막았습니다(시크릿 모드 등). 백업 파일로 내려받아 보관하세요';
+    return '누적 기록을 저장하지 못했습니다. 백업 파일로 내려받아 보관하세요';
+  }
 
   function download(name, content, type) {
     const blob = typeof Blob !== 'undefined' && content instanceof Blob ? content : new Blob([content], { type });
@@ -863,7 +899,7 @@
 
   const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
   const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null });
-  const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset() };
+  const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset(), lastSave: null };
   let datasetOcrAbort = null;
 
   function modelForm(number, preset) {
@@ -962,7 +998,10 @@
         <section class="arena-card"><div class="arena-card-h"><div><h2>모델별 누적 성과</h2><p>기존 블라인드 수동 평가를 그대로 보존합니다. 부분정답은 0.5건으로 계산합니다.</p></div></div><div id="arenaModelStats"></div></section>
         <section class="arena-card"><div class="arena-card-h"><div><h2>Contract v1 자동채점</h2><p>제품명·앞/뒤 각인 CER·Brier loss·응답 완성도·비용·강건성을 Provider 공통 결과로 계산합니다.</p></div></div><div class="arena-stat-grid" id="arenaContractStats"></div><div id="arenaContractModelStats"></div></section>
         <section class="arena-card"><div class="arena-card-h"><div><h2>촬영 조건별 정확도</h2><p>기존 선명도 집계와 Contract v1 조도·배경·흐림·각도·variant 집계를 함께 표시합니다.</p></div></div><div id="arenaConditionStats"></div><div id="arenaContractConditionStats"></div></section>
-        <div class="arena-dashboard-actions"><button class="arena-action secondary" id="arenaContractCsv">📊 표준 CSV</button><button class="arena-action secondary" id="arenaXlsx">📗 XLSX 보고서</button><button class="arena-action secondary" id="arenaPdf">📄 PDF 보고서</button><button class="arena-action secondary" id="arenaCsv">원본 배치 CSV</button><button class="arena-action danger" id="arenaClearRuns">누적 기록 전체 삭제</button></div>
+        <div class="arena-store" id="arenaStoreStatus" role="status" aria-live="polite"></div>
+        <div class="arena-dashboard-actions"><button class="arena-action secondary" id="arenaContractCsv">📊 표준 CSV</button><button class="arena-action secondary" id="arenaXlsx">📗 XLSX 보고서</button><button class="arena-action secondary" id="arenaPdf">📄 PDF 보고서</button><button class="arena-action secondary" id="arenaCsv">원본 배치 CSV</button><button class="arena-action secondary" id="arenaBackupSave">💾 누적기록 백업</button><button class="arena-action secondary" id="arenaBackupLoad">📥 백업 복원</button><button class="arena-action danger" id="arenaClearRuns">누적 기록 전체 삭제</button></div>
+        <input type="file" id="arenaBackupFile" accept="application/json,.json">
+        <details class="arena-glossary" id="arenaGlossary"><summary>이 숫자들은 무엇으로 계산했고 무엇을 뜻하나</summary><div id="arenaGlossaryBody"></div></details>
         <section class="arena-card"><div class="arena-card-h"><div><h2>최근 배치</h2></div></div><div class="arena-history" id="arenaHistory"></div></section>
       </div>
     </div>`;
@@ -1037,9 +1076,16 @@
     document.getElementById('arenaContractCsv').addEventListener('click', () => exportContractReport('csv'));
     document.getElementById('arenaXlsx').addEventListener('click', () => exportContractReport('xlsx'));
     document.getElementById('arenaPdf').addEventListener('click', () => exportContractReport('pdf'));
+    document.getElementById('arenaBackupSave').addEventListener('click', exportRunBackup);
+    document.getElementById('arenaBackupLoad').addEventListener('click', () => document.getElementById('arenaBackupFile').click());
+    document.getElementById('arenaBackupFile').addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (file) importRunBackup(file);
+    });
     document.getElementById('arenaClearRuns').addEventListener('click', () => {
       if (!state.runs.length || !root.confirm('누적된 배치 비교 기록을 모두 삭제할까요?')) return;
-      state.runs = []; writeRuns(state.runs); renderDashboard();
+      state.runs = []; state.lastSave = { at: new Date().toISOString(), ...writeRuns(state.runs) }; renderDashboard();
     });
     root.addEventListener('pagehide', () => {
       const tools = root.KCSIResearchDatasetTools;
@@ -1902,10 +1948,18 @@
     catch (error) { return setArenaStatus(error.message, true); }
     state.current.vote = vote;
     state.current.voteSource = voteSource;
-    state.runs.push(state.current); state.runs = state.runs.slice(-MAX_RUNS); writeRuns(state.runs);
+    state.runs.push(state.current);
+    const saved = writeRuns(state.runs);
+    state.lastSave = { at: new Date().toISOString(), ...saved };
+    // 용량이 모자라 덜어낸 배치가 있으면 화면의 누적치도 실제 저장분과 같게 맞춘다.
+    if (saved.ok && Array.isArray(saved.runs)) state.runs = saved.runs;
+    else state.runs = state.runs.slice(-MAX_RUNS);
     const sourceLabel = voteSource === 'automatic_recommendation' ? '자동 추천 채택'
       : voteSource === 'score_recommendation_after_override' ? '수정 점수 추천 채택' : '조사자 선택';
-    revealIdentities(); renderDashboard(); setArenaStatus(`4모델 × 5알약 블라인드 평가를 저장했습니다 · ${sourceLabel}`);
+    revealIdentities(); renderDashboard();
+    if (!saved.ok) setArenaStatus(saveFailureMessage(saved), true);
+    else if (saved.dropped) setArenaStatus(`평가를 저장했습니다 · ${sourceLabel} · 저장공간이 모자라 오래된 배치 ${saved.dropped}건을 덜어냈습니다. 백업을 내려받으세요`, true);
+    else setArenaStatus(`4모델 × 5알약 블라인드 평가를 저장했습니다 · ${sourceLabel}`);
   }
 
   function revealIdentities() {
@@ -1984,6 +2038,35 @@
     }
   }
 
+  // 백업은 브라우저 밖으로 꺼내 두는 유일한 수단이다. 이미지·공급자 원본은 애초에 저장하지 않는다.
+  function exportRunBackup() {
+    if (!state.runs.length) return setArenaStatus('백업할 누적 연구결과가 없습니다', true);
+    if (!RUN_STORE || typeof RUN_STORE.buildBackup !== 'function') return setArenaStatus('백업 모듈을 불러오지 못했습니다', true);
+    const backup = RUN_STORE.buildBackup(state.runs, { appVersion: safeText(root.APP_VERSION) });
+    download(RUN_STORE.backupFileName(), `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
+    setArenaStatus(`누적 연구결과 ${backup.count}배치를 백업 파일로 내려받았습니다`);
+  }
+
+  async function importRunBackup(file) {
+    if (!RUN_STORE || typeof RUN_STORE.parseBackup !== 'function') return setArenaStatus('복원 모듈을 불러오지 못했습니다', true);
+    try {
+      const parsed = RUN_STORE.parseBackup(await file.text());
+      if (!parsed.ok) return setArenaStatus(`복원 실패: ${parsed.reason}`, true);
+      const added = RUN_STORE.countNewRuns(state.runs, parsed.runs);
+      // 덮어쓰지 않고 합친다. 같은 배치(id + 실행시각)는 한 번만 센다.
+      const merged = RUN_STORE.mergeRuns(state.runs, parsed.runs);
+      const saved = writeRuns(merged);
+      state.lastSave = { at: new Date().toISOString(), ...saved };
+      state.runs = saved.ok && Array.isArray(saved.runs) ? saved.runs : merged.slice(-MAX_RUNS);
+      renderDashboard();
+      if (!saved.ok) return setArenaStatus(saveFailureMessage(saved), true);
+      const skipped = parsed.runs.length - added;
+      setArenaStatus(`백업에서 ${added}배치를 복원했습니다${skipped ? ` · 이미 있는 ${skipped}배치는 건너뜀` : ''}${saved.dropped ? ` · 용량 부족으로 오래된 ${saved.dropped}배치 제외` : ''}`, !!saved.dropped);
+    } catch (error) {
+      setArenaStatus(`복원 실패: ${error.message || '파일을 읽지 못했습니다'}`, true);
+    }
+  }
+
   function renderContractDashboard() {
     const statsElement = document.getElementById('arenaContractStats');
     const modelsElement = document.getElementById('arenaContractModelStats');
@@ -2004,6 +2087,53 @@
     }
   }
 
+  function formatBytes(bytes) {
+    const value = Number(bytes) || 0;
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${(value / 1024 / 1024).toFixed(2)} MB`;
+  }
+
+  // 누적 기록이 "지금 어디에 얼마나" 남아 있는지 숨기지 않는다.
+  // 브라우저 저장공간은 언제든 지워질 수 있으므로 백업 시점을 조사자가 판단해야 한다.
+  function renderStoreStatus() {
+    const element = document.getElementById('arenaStoreStatus');
+    if (!element) return;
+    const report = RUN_STORE && typeof RUN_STORE.storageReport === 'function'
+      ? RUN_STORE.storageReport(state.runs, { maxRuns: MAX_RUNS, limitBytes: STORAGE_LIMIT_BYTES })
+      : { runs: state.runs.length, maxRuns: MAX_RUNS, bytes: 0, usedRatio: null, remainingRuns: null };
+    const save = state.lastSave;
+    const remainingText = report.remainingRuns == null ? ''
+      : report.remainingRuns === 0
+        ? (report.limitedBy === 'bytes' ? '저장공간이 가득 찼습니다 — 다음 배치부터 오래된 기록이 밀려납니다' : `보관 상한 ${report.maxRuns}배치입니다 — 다음 배치부터 가장 오래된 기록이 밀려납니다`)
+        : `${report.remainingRuns}배치 더 저장 가능(${report.limitedBy === 'bytes' ? '저장공간 기준' : `보관 상한 ${report.maxRuns}배치 기준`})`;
+    const parts = [
+      `${report.runs}/${report.maxRuns}배치 · ${formatBytes(report.bytes)}`,
+      report.usedRatio != null ? `저장공간 약 ${(report.usedRatio * 100).toFixed(1)}% 사용` : '',
+      remainingText,
+      save && save.at ? `마지막 저장 ${new Date(save.at).toLocaleString('ko-KR')}` : '',
+    ].filter(Boolean);
+    const failed = save && save.ok === false;
+    element.classList.toggle('error', !!failed);
+    element.innerHTML = `<div><b>누적 연구결과</b> ${esc(parts.join(' · '))}${failed ? ` — ${esc(saveFailureMessage(save))}` : ''}</div><span>이 기록은 이 브라우저에만 저장됩니다. 방문기록 삭제·시크릿 모드·기기 변경 시 사라지므로 백업 파일로 보관하세요.</span>`;
+  }
+
+  function renderGlossary() {
+    const body = document.getElementById('arenaGlossaryBody');
+    if (!body) return;
+    if (!METRIC_GLOSSARY || typeof METRIC_GLOSSARY.byGroup !== 'function') {
+      body.innerHTML = '<div class="arena-empty">지표 설명 모듈을 불러오지 못했습니다.</div>';
+      return;
+    }
+    body.innerHTML = METRIC_GLOSSARY.byGroup().filter(group => group.metrics.length).map(group => `
+      <section class="arena-glossary-group"><h4>${esc(group.label)}</h4><p class="arena-glossary-note">${esc(group.note)}</p>
+      ${group.metrics.map(metric => `<article class="arena-glossary-item"><b>${esc(metric.label)}</b>
+        <dl><dt>산출</dt><dd>${esc(metric.formula)}</dd>
+        <dt>의미</dt><dd>${esc(metric.meaning)}</dd>
+        <dt>해석 주의</dt><dd>${esc(metric.caution)}</dd></dl>
+        <small>${esc(metric.source)}</small></article>`).join('')}</section>`).join('');
+  }
+
   function renderDashboard() {
     const summary = summarizeRuns(state.runs);
     const last = state.runs.length ? new Date(state.runs[state.runs.length - 1].createdAt).toLocaleDateString('ko-KR') : '—';
@@ -2013,6 +2143,8 @@
     document.getElementById('arenaConditionStats').innerHTML = conditionRows(summary.conditions.clarity, '각인 선명도') || '<div class="arena-empty">조건별 분석 데이터가 없습니다.</div>';
     document.getElementById('arenaHistory').innerHTML = state.runs.length ? [...state.runs].reverse().slice(0, 12).map(run => `<div class="arena-history-item"><b>${esc(run.id)}</b> · ${run.cases.length}개 알약 · ${run.vote === 'tie' ? '동등' : `${esc(run.vote)} 우수`}<div>${MODEL_LABELS.map(label => esc(run.blindOrder[label].model)).join(' · ')}</div><div class="arena-history-meta">${esc(run.condition.costModeLabel || run.condition.costMode)} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`).join('') : '<div class="arena-empty">최근 배치가 없습니다.</div>';
     renderContractDashboard();
+    renderStoreStatus();
+    renderGlossary();
   }
 
   function ensureProviderAdapters() {
