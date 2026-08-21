@@ -21,6 +21,14 @@ const arena = require('../arena.js');
   assert.equal(sets.FIXED_20.itemIds.length, 20);
   assert.equal(sets.FIXED_20.targetCount, 20);
   assert.ok(sets.EXTENDED_120.targetCount >= 100, '확장 세트 목표는 100건 이상이어야 한다');
+  assert.ok(sets.EXTENDED_240.targetCount >= 200, '큰 확장 세트 목표는 200건 이상이어야 한다');
+  assert.ok(sets.EXTENDED_240.itemIds.length > sets.EXTENDED_240.targetCount);
+  assert.equal(new Set(sets.EXTENDED_240.itemIds).size, sets.EXTENDED_240.itemIds.length, '후보 품목이 중복됐다');
+  // 20 ⊂ 120 ⊂ 240 — 작은 세트로 낸 결과를 큰 세트에서 그대로 이어 보려면 앞부분이 같아야 한다.
+  assert.deepEqual(sets.EXTENDED_240.itemIds.slice(0, sets.EXTENDED_120.itemIds.length), sets.EXTENDED_120.itemIds,
+    '240건 세트가 120건 세트를 같은 순서로 포함하지 않는다');
+  assert.equal(new Set(sets.SAMPLE_SETS.map(item => item.archiveBase)).size, sets.SAMPLE_SETS.length,
+    '세트끼리 같은 파일 이름을 쓴다');
   assert.ok(sets.EXTENDED_120.itemIds.length > sets.EXTENDED_120.targetCount,
     '사진이 빠진 품목을 대비해 후보를 목표보다 넉넉히 둬야 한다');
   assert.equal(new Set(sets.EXTENDED_120.itemIds).size, sets.EXTENDED_120.itemIds.length, '후보 품목이 중복됐다');
@@ -32,11 +40,11 @@ const arena = require('../arena.js');
   // 후보 품목이 실제 pill_db.json에 있고 이미지 URL 형식이 맞는지 —
   // 여기서 걸러 두지 않으면 사용자가 팩을 만들다 중간에 실패한다.
   const database = JSON.parse(fs.readFileSync('pill_db.json', 'utf8'));
-  const selected = builder.selectItems(database, sets.EXTENDED_120);
-  assert.equal(selected.length, sets.EXTENDED_120.itemIds.length);
+  const selected = builder.selectItems(database, sets.EXTENDED_240);
+  assert.equal(selected.length, sets.EXTENDED_240.itemIds.length);
   assert.ok(selected.every(item => builder.IMAGE_URL_PATTERN.test(item.img)));
   assert.ok(selected.every(item => String(item.n || '').trim()), '제품명이 빈 품목은 정답지로 쓸 수 없다');
-  assert.ok(selected.filter(item => String(item.pb || '').trim()).length >= sets.EXTENDED_120.targetCount * 0.7,
+  assert.ok(selected.filter(item => String(item.pb || '').trim()).length >= sets.EXTENDED_240.targetCount * 0.7,
     '양면 각인 품목이 70% 이상이어야 앞·뒤 판독 비교가 의미 있다');
   const shapes = new Set(selected.map(item => String(item.sh || '').trim()));
   const colors = new Set(selected.map(item => String(item.k1 || '').trim()));
@@ -196,7 +204,7 @@ const arena = require('../arena.js');
   }
 
   fs.rmSync(workRoot, { recursive: true, force: true });
-  console.log(`[sample-dataset-builder] PASS — 세트 정의 · 후보 ${sets.EXTENDED_120.itemIds.length}건 검증 · 사진 누락 대응 · 팩 구조/정답지`);
+  console.log(`[sample-dataset-builder] PASS — 세트 ${sets.SAMPLE_SETS.length}종 · 후보 ${sets.EXTENDED_240.itemIds.length}건 검증 · 사진 누락 대응 · 팩 구조/정답지`);
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

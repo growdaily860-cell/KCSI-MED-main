@@ -36,8 +36,10 @@
   // 고정 샘플 세트. 확장 세트는 scripts/build-mfds-sample-dataset.mjs --set=extended120 로 만든다.
   const SAMPLE_DATASETS = [
     { id: 'fixed20', count: SAMPLE_DATASET_COUNT, url: SAMPLE_DATASET_URL, archive: 'KCSI_MED_MFDS_sample_20.zip', label: '고정 샘플 20건' },
-    { id: 'extended120', count: 120, url: '/samples/KCSI_MED_MFDS_sample_120.zip', archive: 'KCSI_MED_MFDS_sample_120.zip', label: '확장 샘플 120건' },
+    { id: 'extended120', count: 120, url: '/samples/KCSI_MED_MFDS_sample_120.zip', archive: 'KCSI_MED_MFDS_sample_120.zip', label: '확장 샘플 120건', size: '약 5MB' },
+    { id: 'extended240', count: 240, url: '/samples/KCSI_MED_MFDS_sample_240.zip', archive: 'KCSI_MED_MFDS_sample_240.zip', label: '확장 샘플 240건', size: '약 10MB' },
   ];
+  const EXTENDED_SAMPLE_SETS = SAMPLE_DATASETS.filter(item => item.id !== 'fixed20');
   const sampleDatasetById = id => SAMPLE_DATASETS.find(item => item.id === id) || SAMPLE_DATASETS[0];
   const DATASET_COLUMNS = [
     { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', '시험번호', '익명시험번호', '검체번호'] },
@@ -908,8 +910,8 @@
           <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad">샘플 20건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload" href="${SAMPLE_DATASET_URL}" download="KCSI_MED_MFDS_sample_20.zip">ZIP 내려받기</a></div>
         </div>
         <div class="arena-sample-dataset arena-sample-extended">
-          <div><span class="arena-sample-eyebrow">MFDS EXTENDED · 120 CASES · RANDOM</span><b>확장 샘플 120건 · 무작위 출제</b><p>모양·색상·약효분류를 흩어 고른 120건입니다. 앞 20건은 고정 샘플과 같아 기존 결과와 이어집니다. 불러온 뒤 <em>랜덤 5건 뽑기</em>로 매번 다른 문제를 받되, 같은 seed면 같은 문제가 다시 나옵니다.</p></div>
-          <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad120">샘플 120건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload120" href="/samples/KCSI_MED_MFDS_sample_120.zip" download="KCSI_MED_MFDS_sample_120.zip">ZIP 내려받기</a></div>
+          <div><span class="arena-sample-eyebrow">MFDS EXTENDED · 120 / 240 CASES · RANDOM</span><b>확장 샘플 · 무작위 출제</b><p>모양·색상·약효분류를 흩어 고른 확장 세트입니다. 240건은 120건을, 120건은 고정 20건을 그대로 포함해 작은 세트로 낸 결과를 큰 세트에서 이어 볼 수 있습니다. 불러온 뒤 <em>랜덤 5건 뽑기</em>로 매번 다른 문제를 받되, 같은 seed면 같은 문제가 다시 나옵니다.</p></div>
+          <div class="arena-sample-actions"><select class="arena-select" id="arenaDatasetSampleSet" aria-label="확장 샘플 세트">${EXTENDED_SAMPLE_SETS.map(item => `<option value="${item.id}">${item.count}건 · 사진 ${item.count * 2}장 · ${item.size}</option>`).join('')}</select><button class="arena-action" type="button" id="arenaDatasetSampleLoadExtended">확장 샘플 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload120" href="/samples/KCSI_MED_MFDS_sample_120.zip" download="KCSI_MED_MFDS_sample_120.zip">ZIP 내려받기</a></div>
         </div>
         <div class="arena-dataset-upload-grid">
           <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · PDF(텍스트·스캔)</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
@@ -996,7 +998,16 @@
     document.getElementById('arenaDatasetTemplateXlsx').addEventListener('click', downloadDatasetTemplateXlsx);
     document.getElementById('arenaDatasetOcrCancel').addEventListener('click', cancelDatasetOcr);
     document.getElementById('arenaDatasetSampleLoad').addEventListener('click', () => loadFixedSampleDataset('fixed20'));
-    document.getElementById('arenaDatasetSampleLoad120').addEventListener('click', () => loadFixedSampleDataset('extended120'));
+    const sampleSetSelect = document.getElementById('arenaDatasetSampleSet');
+    const syncSampleSetLink = () => {
+      const set = sampleDatasetById(sampleSetSelect.value);
+      const link = document.getElementById('arenaDatasetSampleDownload120');
+      link.href = set.url;
+      link.setAttribute('download', set.archive);
+    };
+    sampleSetSelect.addEventListener('change', syncSampleSetLink);
+    syncSampleSetLink();
+    document.getElementById('arenaDatasetSampleLoadExtended').addEventListener('click', () => loadFixedSampleDataset(sampleSetSelect.value));
     document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
     document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
     document.getElementById('arenaDatasetPreview').addEventListener('change', handleDatasetCorrection);
@@ -1206,7 +1217,7 @@
 
   async function loadFixedSampleDataset(setId) {
     const set = sampleDatasetById(setId);
-    const button = document.getElementById(set.id === 'extended120' ? 'arenaDatasetSampleLoad120' : 'arenaDatasetSampleLoad');
+    const button = document.getElementById(set.id === 'fixed20' ? 'arenaDatasetSampleLoad' : 'arenaDatasetSampleLoadExtended');
     button.disabled = true;
     setDatasetStatus(`식약처 ${set.label}을 내려받고 압축을 푸는 중...`);
     try {

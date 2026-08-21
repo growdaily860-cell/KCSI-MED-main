@@ -2,13 +2,15 @@
 
 `/research`는 두 가지 식약처 공식사진 고정 샘플을 제공한다.
 
-| 세트 | 건수 | 사진 | 파일 | 용도 |
-|---|---:|---:|---|---|
-| `fixed20` | 20 | 40장 | `samples/KCSI_MED_MFDS_sample_20.zip` | 빠른 기능 확인, 기존 결과와의 연속성 |
-| `extended120` | 120 | 240장 | `samples/KCSI_MED_MFDS_sample_120.zip` | 무작위 출제 기반 모델 비교 |
+| 세트 | 건수 | 사진 | 배치 | 파일 | 용도 |
+|---|---:|---:|---:|---|---|
+| `fixed20` | 20 | 40장 | 4 | `samples/KCSI_MED_MFDS_sample_20.zip` | 빠른 기능 확인 |
+| `extended120` | 120 | 240장 | 24 | `samples/KCSI_MED_MFDS_sample_120.zip` | 무작위 출제 기반 모델 비교 |
+| `extended240` | 240 | 480장 | 48 | `samples/KCSI_MED_MFDS_sample_240.zip` | 표본을 늘린 비교 |
 
-확장 세트의 앞 20건은 기존 세트와 **같은 품목·같은 순서**다. 그래서 기존 20건으로
-낸 결과를 버리지 않고 이어서 볼 수 있다.
+세 세트는 **포개진다** — `20 ⊂ 120 ⊂ 240`. 앞부분이 같은 품목·같은 순서라서,
+작은 세트로 낸 결과를 버리지 않고 큰 세트에서 그대로 이어 볼 수 있다.
+`scripts/select-mfds-sample-items.mjs --base=<세트>` 가 이 포개짐을 보장한다.
 
 ## 왜 데이터셋은 고정하고 출제만 무작위인가
 
@@ -16,7 +18,7 @@
 비교가 성립하지 않는다. 그래서 문제은행(120건)은 고정하고, **그중 어느 5건을
 풀지**만 무작위로 정한다. 뽑기에는 다음 성질을 보장한다.
 
-- **같은 바퀴에서 중복 없음** — 120건을 다 돌 때까지 같은 알약이 다시 나오지 않는다(24배치).
+- **같은 바퀴에서 중복 없음** — 세트를 다 돌 때까지 같은 알약이 다시 나오지 않는다(120건 24배치, 240건 48배치).
 - **전량 순회** — 한 바퀴가 끝나면 새로 섞어 다음 바퀴를 시작한다.
 - **재현 가능** — 6자리 `seed`가 뽑기 순서를 결정한다. 배치 ID에 `…-RND<seed>-<회차>` 로
   남으므로 나중에 같은 문제를 다시 뽑아 재실험할 수 있다.
@@ -47,8 +49,12 @@ seed 문자는 `0/O`, `1/I`처럼 헷갈리는 글자를 뺀 32자에서 고른�
 npm install --no-save sharp
 node scripts/build-mfds-sample-dataset.mjs
 node scripts/build-mfds-sample-dataset.mjs --set=extended120
+node scripts/build-mfds-sample-dataset.mjs --set=extended240
 npm run build:samples
 ```
+
+240건은 사진 480장을 받으므로 120건의 두 배쯤 걸린다. 이미 만든 작은 팩을 지울 필요는
+없다 — 세 팩은 각각 별도 파일이고 화면에서 골라 쓴다.
 
 `sharp`는 사진을 앞·뒤로 자르는 데 쓴다. `--no-save`를 붙이는 이유는 배포 웹앱에는
 필요 없는 도구라 `package.json`에 남기지 않기 위해서다. 설치하지 않으면
@@ -62,16 +68,18 @@ ZIP은 외부 `zip` 명령 없이 Node만으로 만든다. 윈도우 기본 명�
 `cmd.exe`는 `#` 주석을 이해하지 못한다. 아래 명령을 **주석 없이 한 줄씩** 붙여 넣는다.
 
 ```bat
-cd %USERPROFILE%\Documents
-git clone https://github.com/growdaily860-cell/KCSI-MED-main.git
-cd KCSI-MED-main
-git checkout claude/arena-auto-scoring-integration-vuu05a
+cd %USERPROFILE%\Documents\KCSI-MED-main
+git checkout main
+git pull origin main
 npm install --no-save sharp
-node scripts/build-mfds-sample-dataset.mjs --set=extended120
-git add samples/KCSI_MED_MFDS_sample_120.zip samples/KCSI_MED_MFDS_sample_120.manifest.json
-git commit -m "chore: add extended 120-case MFDS sample pack"
-git push origin claude/arena-auto-scoring-integration-vuu05a
+node scripts/build-mfds-sample-dataset.mjs --set=extended240
+git add samples/KCSI_MED_MFDS_sample_240.zip samples/KCSI_MED_MFDS_sample_240.manifest.json
+git commit -m "chore: add extended 240-case MFDS sample pack"
+git push origin main
 ```
+
+반드시 클론한 폴더 **안에서** 실행한다. 프롬프트가 `...\KCSI-MED-main>` 인지 확인할 것.
+`git push origin main` 은 지금 체크아웃한 브랜치가 `main`일 때만 의도대로 동작한다.
 
 `npm install`이 `package-lock.json`을 건드릴 수 있다. 위처럼 `samples/` 두 파일만
 `git add` 하면 나머지 변경은 커밋되지 않는다.
@@ -85,15 +93,16 @@ git push origin claude/arena-auto-scoring-integration-vuu05a
 
 ## 화면에서 쓰는 법
 
-1. **샘플 120건 자동 불러오기** — ZIP을 받아 브라우저 메모리에서 풀고 정답지·사진을 대조한다.
+1. **확장 샘플 불러오기** — 120건/240건 중 고른 뒤 누르면 ZIP을 받아 브라우저 메모리에서 풀고 정답지·사진을 대조한다.
 2. **🎲 랜덤 5건 뽑기** — 무작위 5건을 비교 화면에 채운다. seed와 회차가 함께 표시된다.
 3. 순서대로 돌리고 싶으면 기존 범위 선택(1–5번, 6–10번 …)을 그대로 쓴다.
 
 ## 비용과 해석 주의
 
-- 배치 1회 = 모델 4개 호출이다. 120건을 한 바퀴 돌면 24배치 × 4 = **96회 호출**이다.
-  일일 기본 한도는 40회이고 충전으로 최대 440회까지 늘어난다. 한 번에 다 돌리지 말고
-  나눠서 진행할 것.
+- 배치 1회 = 모델 4개 호출이다. 한 바퀴를 다 돌면 120건은 24배치 × 4 = **96회**,
+  240건은 48배치 × 4 = **192회** 호출한다. 일일 기본 한도는 40회이고 충전으로 최대
+  440회까지 늘어난다. 한 번에 다 돌리지 말고 나눠서 진행할 것.
+- 240건 ZIP은 약 10MB다. 큰 세트는 Wi-Fi 환경에서 불러오는 편이 낫다.
 - 공식 등록사진은 조명·배경·각도가 고르다. 여기서 나온 정확도는 **기능·기초 성능**이며
   실제 현장에서 찍은 사진의 정확도와 같지 않다.
 - 표본 120건도 모델 성능을 확정하기에는 작다. 촬영 조건을 나눠 반복하고 CSV 원자료와

@@ -111,7 +111,7 @@ try {
 
   // 3) 자동채점 UI와 플랫폼 보고서 UI가 한 화면에 함께 설치되는지
   for (const selector of ['#arenaAutoStatus', '#arenaAutoReasons', '#arenaAcceptAuto', '#arenaContractCsv', '#arenaXlsx', '#arenaPdf',
-    '#arenaDatasetSampleLoad', '#arenaDatasetSampleLoad120', '#arenaDatasetRandomBatch', '#arenaDatasetRandomNote']) {
+    '#arenaDatasetSampleLoad', '#arenaDatasetSampleSet', '#arenaDatasetSampleLoadExtended', '#arenaDatasetRandomBatch', '#arenaDatasetRandomNote']) {
     assert.equal(await page.locator(selector).count(), 1, `${selector} 가 없다`);
   }
 
@@ -132,6 +132,21 @@ try {
   assert.equal(randomDraw.round, 1);
   assert.equal(randomDraw.drawsPerRound, 24);
   assert.equal(randomDraw.seed, 'BROWSE');
+
+  // 3c) 확장 세트 선택이 내려받기 링크와 실제로 연동되는지
+  const setPicker = await page.evaluate(() => {
+    const select = document.getElementById('arenaDatasetSampleSet');
+    const link = document.getElementById('arenaDatasetSampleDownload120');
+    const options = Array.from(select.options).map(option => option.value);
+    const before = link.getAttribute('href');
+    select.value = 'extended240';
+    select.dispatchEvent(new Event('change'));
+    return { options, before, after: link.getAttribute('href'), download: link.getAttribute('download') };
+  });
+  assert.deepEqual(setPicker.options, ['extended120', 'extended240'], '확장 세트 선택지가 다르다');
+  assert.ok(setPicker.before.includes('sample_120.zip'), '기본 선택이 120건이 아니다');
+  assert.ok(setPicker.after.includes('sample_240.zip'), '세트를 바꿔도 내려받기 링크가 그대로다');
+  assert.equal(setPicker.download, 'KCSI_MED_MFDS_sample_240.zip');
 
   // 4) 모바일 폭에서 가로 스크롤이 생기지 않는지 — 자동채점 카드가 390px에서 넘치면 현장에서 못 쓴다.
   // PIN 게이트가 화면을 덮고 있으므로 실제 클릭 대신 핸들러만 호출한다(인증은 그대로 둔다).

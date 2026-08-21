@@ -2,7 +2,10 @@
 // 출력을 scripts/mfds-sample-sets.mjs에 붙여 넣어 "고정 목록"으로 박아 둔다.
 // 매번 무작위로 뽑지 않는 이유: 발표·재실험에서 같은 문제를 써야 비교가 성립한다.
 //
-//   node scripts/select-mfds-sample-items.mjs [--target=120] [--spare=30]
+//   node scripts/select-mfds-sample-items.mjs [--target=120] [--spare=30] [--base=<세트이름>]
+//
+// --base를 주면 그 세트의 후보 목록을 앞에 그대로 두고 뒤에만 덧붙인다.
+// 세트끼리 앞부분이 같아야 작은 세트로 낸 결과를 큰 세트에서 그대로 이어 볼 수 있다.
 //
 // 선정 기준
 //   - 식약처 공식 등록사진 URL이 허용 형식일 것
@@ -23,13 +26,19 @@ const args = new Map(process.argv.slice(2).map(part => {
 }));
 const target = Number(args.get('target') || 120);
 const spare = Number(args.get('spare') || 30);
+const baseSetName = args.get('base') || '';
 
-const BASE_ITEM_IDS = [
+const FIXED_20_IDS = [
   '196000011', '196400037', '197000037', '197000040', '197000050',
   '197400040', '197900277', '198700430', '199801026', '200000796',
   '200100565', '200108429', '200308358', '200401015', '200410082',
   '200410090', '200610660', '201103159', '201106367', '202106092',
 ];
+
+// 확장 세트를 더 키울 때는 기존 세트의 후보 목록 전체를 앞에 그대로 둔다.
+const BASE_ITEM_IDS = baseSetName
+  ? (await import('./mfds-sample-sets.mjs')).findSampleSet(baseSetName).itemIds
+  : FIXED_20_IDS;
 
 const IMAGE_URL = /^https:\/\/nedrug\.mfds\.go\.kr\/pbp\/cmn\/itemImageDownload\/[0-9A-Za-z_-]+$/;
 const text = value => String(value == null ? '' : value).trim();
@@ -125,6 +134,6 @@ process.stderr.write([
   summary('색상', chosen.map(item => text(item.k1))),
   `양면 각인: ${chosen.filter(item => text(item.pb)).length}건 / 앞면만: ${chosen.filter(item => !text(item.pb)).length}건`,
   `약효분류 수: ${new Set(chosen.map(item => text(item.cl))).size}`,
-  `기존 20건 포함: ${BASE_ITEM_IDS.every(id => taken.has(id))}`,
+  `기준 세트(${baseSetName || 'fixed20'} · ${BASE_ITEM_IDS.length}건) 포함: ${BASE_ITEM_IDS.every(id => taken.has(id))}`,
   '',
 ].join('\n'));
