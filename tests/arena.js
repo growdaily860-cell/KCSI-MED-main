@@ -90,10 +90,33 @@ assert(csv.includes('cost_mode') && csv.includes('저비용 연습'), 'CSV must 
 assert.equal(csv.split('\r\n').length, 21, 'one batch must export 20 data rows plus header');
 assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not contain secrets');
 
+const datasetCsv = '\uFEFF시험번호,앞면사진,뒷면사진,제품명,앞면각인,뒷면각인,조도\n"CASE-001","pill_front.jpg","pill_back.jpg","테스트, 정","AB 10","분할선","정상"';
+const datasetTable = arena.parseDelimitedRows(datasetCsv);
+assert.equal(datasetTable.length, 2);
+assert.equal(datasetTable[1][3], '테스트, 정');
+const normalizedDataset = arena.normalizeDatasetTable(datasetTable);
+assert.equal(normalizedDataset.rows.length, 1);
+assert.equal(normalizedDataset.rows[0].case_id, 'CASE-001');
+assert.equal(normalizedDataset.rows[0].front_image, 'pill_front.jpg');
+assert.equal(normalizedDataset.rows[0].drug_name, '테스트, 정');
+const validDataset = arena.validateDatasetRows(normalizedDataset.rows, ['pill_front.jpg', 'pill_back.jpg']);
+assert.equal(validDataset.summary.validRows, 1);
+assert.equal(validDataset.summary.invalidRows, 0);
+assert.equal(validDataset.summary.matchedImages, 2);
+const invalidDataset = arena.validateDatasetRows([
+  normalizedDataset.rows[0],
+  { ...normalizedDataset.rows[0], _sourceRow: 3, back_image: 'missing.jpg' },
+], ['pill_front.jpg', 'pill_back.jpg']);
+assert.equal(invalidDataset.summary.validRows, 0, 'duplicate case ids and missing files must fail validation');
+assert(invalidDataset.rows[1]._errors.some(message => message.includes('찾지 못했습니다')));
+const template = arena.buildDatasetTemplateCsv();
+assert(template.includes('case_id') && template.includes('mfds_item_id') && template.includes('expected_readable'));
+assert.equal(arena.datasetImageKey('folder\\PILL_FRONT.JPG'), 'pill_front.jpg');
+
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
-assert(/APP_VERSION = 'v12\.8'/.test(html));
+assert(/APP_VERSION = 'v12\.9'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(html.includes('id="quotaRefillForm"') && html.includes('id="quotaRefillPin"') && html.includes('+200회 충전'));
 assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
@@ -102,6 +125,9 @@ assert(css.includes('#app.kcsi-research'));
 assert(css.includes('.arena-cases') && css.includes('.arena-votes'));
 const arenaSource = fs.readFileSync('arena.js', 'utf8');
 assert(arenaSource.includes('arenaBatchFiles') && arenaSource.includes('multiple'));
+assert(arenaSource.includes('arenaDatasetAnswer') && arenaSource.includes('arenaDatasetImages'));
+assert(arenaSource.includes('.csv,.tsv,.xlsx,.xls,.pdf'));
+assert(arenaSource.includes('validateDatasetRows') && arenaSource.includes('buildDatasetTemplateCsv'));
 assert(arenaSource.includes('arenaCase${number}${cap}Cam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
 assert(arenaSource.includes("pathname === '/research'"), 'research must have an independent route');
