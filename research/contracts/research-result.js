@@ -2,7 +2,9 @@
 
 const { SCHEMA_VERSION } = require('./ground-truth');
 
-const DEFAULT_PROVIDERS = Object.freeze(['openai', 'anthropic', 'gemini']);
+// Mock is a first-class, cost-free research provider used by the same runner,
+// scorer and report pipeline as upstream providers.
+const DEFAULT_PROVIDERS = Object.freeze(['openai', 'anthropic', 'gemini', 'mock']);
 const text = value => value == null ? '' : String(value).trim();
 const isObject = value => !!value && typeof value === 'object' && !Array.isArray(value);
 

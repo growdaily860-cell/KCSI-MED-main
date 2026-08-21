@@ -18,6 +18,10 @@
     research: { label: '정밀 비교', detail: 'high', maxCompletionTokens: 5000 },
   };
   const PROVIDERS = { openai: { label: 'OpenAI' } };
+  const PROVIDER_SCRIPT_URLS = [
+    'providers/contract.js', 'providers/errors.js', 'providers/shared.js', 'providers/registry.js',
+    'providers/openai.js', 'providers/anthropic.js', 'providers/gemini.js', 'providers/mock.js', 'providers/index.js',
+  ];
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
   const MAX_DATASET_IMAGES = 1000;
   const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -428,12 +432,29 @@
   }
 
   function publicModelSnapshot(config) {
-    return { provider: 'openai', providerLabel: PROVIDERS.openai.label, model: config.model, endpointType: 'authenticated_kcsi_worker' };
+    let providerLabel = PROVIDERS.openai.label;
+    try {
+      const provider = root.KCSIProviders && root.KCSIProviders.getProvider('openai');
+      if (provider && provider.label) providerLabel = provider.label;
+    } catch (_) {}
+    return { provider: 'openai', providerLabel, model: config.model, endpointType: 'authenticated_kcsi_worker' };
   }
 
   function createRequestBody(model, imagePairs, costMode) {
     const mode = COST_MODES[costMode] || COST_MODES.practice;
     const pairs = (imagePairs || []).slice(0, CASE_COUNT);
+    const adapter = root.KCSIProviders && root.KCSIProviders.openai;
+    if (adapter && typeof adapter.mapOpenAIBatchRequest === 'function') {
+      const inputs = pairs.map((pair, index) => ({
+        schema_version: '1.0', run_id: '', sample_id: `CASE-${index + 1}`,
+        images: { front: pair.front, back: pair.back },
+        options: { cost_mode: costMode || 'practice', detail: mode.detail },
+      }));
+      return adapter.mapOpenAIBatchRequest(inputs, {
+        model, cost_mode: costMode || 'practice', detail: mode.detail,
+        max_completion_tokens: mode.maxCompletionTokens, prompt: makePrompt(pairs.length || CASE_COUNT),
+      });
+    }
     const content = [{ type: 'text', text: makePrompt(pairs.length || CASE_COUNT) }];
     pairs.forEach((pair, index) => {
       content.push({ type: 'text', text: `CASE-${index + 1} 앞면` });
@@ -448,6 +469,48 @@
   }
 
   async function callCandidate(config, imagePairs, costMode) {
+    const providers = root.KCSIProviders;
+    if (providers && typeof providers.getProvider === 'function') {
+      const provider = providers.getProvider(config.provider || 'openai');
+      if (provider && typeof provider.runBatch === 'function') {
+        const mode = COST_MODES[costMode] || COST_MODES.practice;
+        const inputs = (imagePairs || []).slice(0, CASE_COUNT).map((pair, index) => ({
+          schema_version: '1.0', run_id: '', sample_id: `CASE-${index + 1}`,
+          images: { front: pair.front, back: pair.back },
+          options: { cost_mode: costMode || 'practice', detail: mode.detail },
+        }));
+        const batch = await provider.runBatch(inputs, {
+          model: config.model,
+          cost_mode: costMode || 'practice',
+          detail: mode.detail,
+          max_completion_tokens: mode.maxCompletionTokens,
+          prompt: makePrompt(inputs.length || CASE_COUNT),
+        });
+        if (batch.error) {
+          const error = new Error(batch.error.message || 'Provider call failed');
+          error.code = batch.error.code;
+          error.status = batch.error.http_status;
+          throw error;
+        }
+        return {
+          raw: batch.text,
+          latencyMs: batch.latency_ms,
+          researchResults: batch.results,
+          cases: batch.results.map((result, index) => ({
+            case_id: result.sample_id || `CASE-${index + 1}`,
+            drug_name: result.prediction.drug_name,
+            imprint_front: result.prediction.front_imprint,
+            imprint_back: result.prediction.back_imprint,
+            shape: result.prediction.shape,
+            color: result.prediction.color,
+            dosage_form: result.meta && result.meta.dosage_form || '',
+            confidence: result.prediction.confidence,
+            evidence: result.prediction.evidence,
+            uncertainty: result.prediction.uncertainty,
+          })),
+        };
+      }
+    }
     const body = createRequestBody(config.model, imagePairs, costMode);
     const started = Date.now();
     if (typeof root.gptFetch !== 'function') throw new Error('KCSI Worker 연결을 찾지 못했습니다');
@@ -634,7 +697,7 @@
 
   const core = {
     PROVIDERS, PROMPT_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
-    createRequestBody, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
+    createRequestBody, callCandidate, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
     computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
     normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
@@ -1249,6 +1312,28 @@
     document.getElementById('arenaHistory').innerHTML = state.runs.length ? [...state.runs].reverse().slice(0, 12).map(run => `<div class="arena-history-item"><b>${esc(run.id)}</b> · ${run.cases.length}개 알약 · ${run.vote === 'tie' ? '동등' : `${esc(run.vote)} 우수`}<div>${MODEL_LABELS.map(label => esc(run.blindOrder[label].model)).join(' · ')}</div><div class="arena-history-meta">${esc(run.condition.costModeLabel || run.condition.costMode)} · ${esc(new Date(run.createdAt).toLocaleString('ko-KR'))}</div></div>`).join('') : '<div class="arena-empty">최근 배치가 없습니다.</div>';
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installUi);
-  else installUi();
+  function ensureProviderAdapters() {
+    if (root.KCSIProviders) return Promise.resolve(root.KCSIProviders);
+    return PROVIDER_SCRIPT_URLS.reduce((pending, url) => pending.then(() => {
+      if (root.KCSIProviders) return null;
+      const existing = document.querySelector(`script[data-kcsi-provider-src="${url}"]`);
+      if (existing) return null;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = false;
+        script.dataset.kcsiProviderSrc = url;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`Provider adapter를 불러오지 못했습니다: ${url}`));
+        document.head.appendChild(script);
+      });
+    }), Promise.resolve()).then(() => root.KCSIProviders || null);
+  }
+
+  function startUi() {
+    ensureProviderAdapters().catch(error => console.warn(error && error.message || error)).finally(installUi);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startUi);
+  else startUi();
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -55,6 +55,18 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - CSV 열 구성과 스프레드시트 수식 주입 방지
 - 연구기록·CSV에 API 키·토큰이 포함되지 않는지
 
+### providers.js
+
+연구 공급자 Adapter와 Contract v1을 실제 API 비용 없이 검사한다.
+
+- Registry 등록·조회·목록과 잘못된 provider 거부
+- OpenAI·Anthropic·Gemini 요청 및 이미지 형식 매핑
+- 정상 응답·usage·malformed JSON·인증·quota·timeout 오류 정규화
+- 모든 성공/실패 결과의 공통 `ResearchResult` 적합성
+- correct·partial·wrong·error·slow MockProvider fixture
+- 기존 Arena 5쌍 batch와 인증된 `gptFetch` Worker 호환
+- `/api/research/provider` 서버 프록시 요청에 API key가 포함되지 않는지
+
 ## 테스트가 실제로 작동하는지 확인하는 법 (중요)
 
 통과만 확인하면 의미가 없다. 버그를 일부러 심어 검출되는지 봐야 한다.
