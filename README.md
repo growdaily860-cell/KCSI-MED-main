@@ -141,6 +141,8 @@ arena.css                  연구 모드 전용 화면 스타일
 research/contracts/        Contract v1 데이터 계약
 research/runner.js         공통 Research Runner
 research/arena-bridge.js   기존 Arena → Contract v1 변환
+research/run-store.js      누적 연구결과 저장·백업·복원
+research/metric-glossary.js 누적 지표의 산출 근거와 해석
 research/platform-browser.js  연구 플랫폼 브라우저 번들
 providers/                 OpenAI·Anthropic·Gemini·Mock Adapter와 Registry
 scoring/                   자동채점·비용·강건성 엔진

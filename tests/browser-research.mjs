@@ -58,6 +58,8 @@ try {
     core: !!globalThis.KCSIArenaCore,
     platform: !!globalThis.KCSIResearchPlatform,
     datasetTools: !!globalThis.KCSIResearchDatasetTools,
+    runStore: !!globalThis.KCSIRunStore,
+    glossary: !!globalThis.KCSIMetricGlossary,
     rubricVersion: globalThis.KCSIArenaRubric && globalThis.KCSIArenaRubric.RUBRIC_VERSION,
   }));
   assert.equal(globals.rubric, true, '자동채점 모듈 전역이 없다');
@@ -65,6 +67,8 @@ try {
   assert.equal(globals.platform, true, '연구 플랫폼 번들 전역이 없다');
   assert.equal(globals.datasetTools, true, '정답지 도구 전역이 없다');
   assert.equal(globals.rubricVersion, 'kcsi-arena-rubric-v1');
+  assert.equal(globals.runStore, true, '누적 기록 저장소 전역이 없다');
+  assert.equal(globals.glossary, true, '지표 설명 전역이 없다');
 
   // 2) 실제 페이지에서 자동채점이 동작하는지 — 로드 순서가 어긋나면 ready:false로 떨어진다.
   const scored = await page.evaluate(() => {
@@ -111,7 +115,8 @@ try {
 
   // 3) 자동채점 UI와 플랫폼 보고서 UI가 한 화면에 함께 설치되는지
   for (const selector of ['#arenaAutoStatus', '#arenaAutoReasons', '#arenaAcceptAuto', '#arenaContractCsv', '#arenaXlsx', '#arenaPdf',
-    '#arenaDatasetSampleLoad', '#arenaDatasetSampleSet', '#arenaDatasetSampleLoadExtended', '#arenaDatasetRandomBatch', '#arenaDatasetRandomNote']) {
+    '#arenaDatasetSampleLoad', '#arenaDatasetSampleSet', '#arenaDatasetSampleLoadExtended', '#arenaDatasetRandomBatch', '#arenaDatasetRandomNote',
+    '#arenaStoreStatus', '#arenaGlossary', '#arenaGlossaryBody', '#arenaBackupSave', '#arenaBackupLoad']) {
     assert.equal(await page.locator(selector).count(), 1, `${selector} 가 없다`);
   }
 
@@ -147,6 +152,43 @@ try {
   assert.ok(setPicker.before.includes('sample_120.zip'), '기본 선택이 120건이 아니다');
   assert.ok(setPicker.after.includes('sample_240.zip'), '세트를 바꿔도 내려받기 링크가 그대로다');
   assert.equal(setPicker.download, 'KCSI_MED_MFDS_sample_240.zip');
+
+  // 3c) 누적 결과 저장이 실제 페이지에서 도는지 — 백업을 만들고 되읽어 같은 배치 수가 나와야 한다.
+  const storeCheck = await page.evaluate(() => {
+    const store = globalThis.KCSIRunStore;
+    const runs = Array.from({ length: 3 }, (_, index) => ({
+      id: `B-${index}`, createdAt: new Date(Date.UTC(2026, 7, 21, 0, index)).toISOString(),
+      cases: [], results: { A: { raw: 'secret raw', rating: { caseVerdicts: ['correct'] } } }, vote: 'A',
+    }));
+    let saved = '';
+    const result = store.saveRuns(runs, { setItem: value => { saved = value; }, maxRuns: 100 });
+    const parsed = store.parseBackup(JSON.stringify(store.buildBackup(runs)));
+    return {
+      ok: result.ok,
+      reloaded: store.loadRuns(saved).length,
+      restored: parsed.ok ? parsed.runs.length : 0,
+      merged: store.mergeRuns(runs, parsed.runs).length,
+      leaksRaw: saved.includes('secret raw'),
+      glossary: globalThis.KCSIMetricGlossary.METRICS.length,
+    };
+  });
+  assert.equal(storeCheck.ok, true, '실제 브라우저에서 누적 기록 저장이 실패했다');
+  assert.equal(storeCheck.reloaded, 3);
+  assert.equal(storeCheck.restored, 3);
+  assert.equal(storeCheck.merged, 3, '같은 백업을 복원했는데 배치가 늘었다');
+  assert.equal(storeCheck.leaksRaw, false, '저장본에 공급자 원본이 남았다');
+  assert.ok(storeCheck.glossary >= 12);
+
+  // 3d) 대시보드에 저장 상태와 지표 설명이 실제로 그려지는지
+  await page.evaluate(() => document.querySelector('[data-arena-view="dashboard"]').click());
+  const dashboard = await page.evaluate(() => ({
+    store: (document.getElementById('arenaStoreStatus').textContent || '').trim().length,
+    glossaryItems: document.querySelectorAll('#arenaGlossaryBody .arena-glossary-item').length,
+    hasFormula: (document.getElementById('arenaGlossaryBody').textContent || '').includes('산출'),
+  }));
+  assert.ok(dashboard.store > 10, '저장 상태 줄이 비어 있다');
+  assert.ok(dashboard.glossaryItems >= 12, `지표 설명이 ${dashboard.glossaryItems}개만 그려졌다`);
+  assert.equal(dashboard.hasFormula, true, '산출 근거가 표시되지 않는다');
 
   // 4) 모바일 폭에서 가로 스크롤이 생기지 않는지 — 자동채점 카드가 390px에서 넘치면 현장에서 못 쓴다.
   // PIN 게이트가 화면을 덮고 있으므로 실제 클릭 대신 핸들러만 호출한다(인증은 그대로 둔다).
