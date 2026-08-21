@@ -21,8 +21,11 @@
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
   const MAX_DATASET_IMAGES = 1000;
   const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
   const PDF_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
+  const SAMPLE_DATASET_URL = '/samples/KCSI_MED_MFDS_sample_20.zip';
+  const SAMPLE_DATASET_COUNT = 20;
   const DATASET_COLUMNS = [
     { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', '시험번호', '익명시험번호', '검체번호'] },
     { key: 'pill_id', label: '알약번호', aliases: ['pill_id', 'pill id', '알약번호', '약물번호'] },
@@ -524,6 +527,7 @@
   }
 
   let xlsxPromise = null;
+  let zipPromise = null;
   let pdfPromise = null;
 
   function loadArenaScript(url, ready) {
@@ -546,6 +550,11 @@
   function ensureXlsxLib() {
     if (!xlsxPromise) xlsxPromise = loadArenaScript(XLSX_URL, () => !!root.XLSX).then(() => root.XLSX);
     return xlsxPromise;
+  }
+
+  function ensureZipLib() {
+    if (!zipPromise) zipPromise = loadArenaScript(JSZIP_URL, () => !!root.JSZip).then(() => root.JSZip);
+    return zipPromise;
   }
 
   function ensurePdfLib() {
@@ -677,6 +686,10 @@
   function datasetViewMarkup() {
     return `<div class="arena-view active" id="arenaDataset">
       <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>정답지와 이미지 데이터셋</h2><p>정답지의 이미지 파일명과 실제 사진을 브라우저 안에서 대조합니다. 원본은 서버나 연구기록에 저장하지 않습니다.</p></div><button class="arena-preset" type="button" id="arenaDatasetTemplate">CSV 템플릿 받기</button></div>
+        <div class="arena-sample-dataset">
+          <div><span class="arena-sample-eyebrow">MFDS FIXED BASELINE · 20 CASES</span><b>식약처 공식사진 고정 샘플</b><p>같은 20건을 반복 사용해 모델별 기본 식별 성능을 비교합니다. 공식 등록사진 기반 결과는 실제 현장사진 정확도와 구분해서 해석해야 합니다.</p></div>
+          <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad">샘플 20건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload" href="${SAMPLE_DATASET_URL}" download="KCSI_MED_MFDS_sample_20.zip">ZIP 내려받기</a></div>
+        </div>
         <div class="arena-dataset-upload-grid">
           <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · 텍스트형 PDF</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
           <input class="arena-file-input" type="file" id="arenaDatasetAnswer" accept=".csv,.tsv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
@@ -746,6 +759,7 @@
     document.getElementById('arenaDatasetAnswer').addEventListener('change', handleDatasetAnswer);
     document.getElementById('arenaDatasetImages').addEventListener('change', handleDatasetImages);
     document.getElementById('arenaDatasetTemplate').addEventListener('click', () => download('KCSI_MED_dataset_template.csv', buildDatasetTemplateCsv(), 'text/csv;charset=utf-8'));
+    document.getElementById('arenaDatasetSampleLoad').addEventListener('click', loadFixedSampleDataset);
     document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
     document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
     document.getElementById('arenaDatasetLoadBatch').addEventListener('click', loadDatasetBatch);
@@ -788,6 +802,53 @@
   function datasetFileByName(name) {
     const key = datasetImageKey(name);
     return state.dataset.imageFiles.find(file => datasetImageKey(file.name) === key) || null;
+  }
+
+  async function loadFixedSampleDataset() {
+    const button = document.getElementById('arenaDatasetSampleLoad');
+    button.disabled = true;
+    setDatasetStatus('식약처 고정 샘플 20건을 내려받고 압축을 푸는 중...');
+    try {
+      const response = await fetch(SAMPLE_DATASET_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`샘플 데이터 다운로드 오류 ${response.status}`);
+      const JSZip = await ensureZipLib();
+      const archive = await JSZip.loadAsync(await response.arrayBuffer());
+      const answerEntry = archive.file('answer_sheet.csv');
+      if (!answerEntry) throw new Error('샘플 ZIP에서 answer_sheet.csv를 찾지 못했습니다');
+      const imageEntries = Object.values(archive.files).filter(entry => !entry.dir && /^images\/.+\.(?:jpe?g|png|webp)$/i.test(entry.name));
+      if (imageEntries.length !== SAMPLE_DATASET_COUNT * 2) throw new Error(`샘플 사진 수가 예상과 다릅니다: ${imageEntries.length}장`);
+      const answerFile = new File([await answerEntry.async('blob')], 'KCSI_MED_MFDS_sample_20_answer_sheet.csv', { type: 'text/csv;charset=utf-8' });
+      const imageFiles = await Promise.all(imageEntries.map(async entry => {
+        const name = entry.name.split('/').pop();
+        const type = /\.png$/i.test(name) ? 'image/png' : /\.webp$/i.test(name) ? 'image/webp' : 'image/jpeg';
+        return new File([await entry.async('blob')], name, { type });
+      }));
+      const parsed = await readAnswerKeyFile(answerFile);
+      if (parsed.rows.length !== SAMPLE_DATASET_COUNT) throw new Error(`샘플 정답지 행이 예상과 다릅니다: ${parsed.rows.length}건`);
+      state.dataset = {
+        answerFile,
+        sourceType: parsed.sourceType,
+        rows: parsed.rows,
+        imageFiles,
+        validation: null,
+        confirmed: true,
+        importMeta: parsed,
+      };
+      document.getElementById('arenaDatasetAnswerName').textContent = answerFile.name;
+      document.getElementById('arenaDatasetImageName').textContent = `${imageFiles.length.toLocaleString('ko-KR')}장 · 식약처 고정 샘플`;
+      document.getElementById('arenaPdfConfirmWrap').hidden = true;
+      document.getElementById('arenaPdfConfirm').checked = false;
+      refreshDatasetValidation();
+      if (state.dataset.validation.validRows.length !== SAMPLE_DATASET_COUNT) {
+        throw new Error(`샘플 자체 검증 실패: ${state.dataset.validation.validRows.length}/${SAMPLE_DATASET_COUNT}건 통과`);
+      }
+      setDatasetStatus('식약처 고정 샘플 20건과 앞·뒷면 사진 40장을 불러왔습니다 · 아래에서 5건씩 선택하세요');
+    } catch (error) {
+      clearDataset();
+      setDatasetStatus(error.message || '고정 샘플을 불러오지 못했습니다', true);
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function handleDatasetAnswer(event) {
