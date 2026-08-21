@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kcsi-med.local/schemas/research-input.schema.json",
+  "title": "KCSI-MED ResearchInput Contract v1",
+  "type": "object",
+  "required": ["schema_version", "run_id", "sample_id", "images", "options"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string" },
+    "sample_id": { "type": "string", "minLength": 1 },
+    "images": {
+      "type": "object",
+      "required": ["front", "back"],
+      "properties": { "front": { "type": "string" }, "back": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "options": {
+      "type": "object",
+      "required": ["cost_mode", "detail"],
+      "properties": {
+        "cost_mode": { "enum": ["practice", "research"] },
+        "detail": { "enum": ["low", "high", "auto"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

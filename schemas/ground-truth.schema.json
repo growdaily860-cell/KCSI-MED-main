@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kcsi-med.local/schemas/ground-truth.schema.json",
+  "title": "KCSI-MED GroundTruth Contract v1",
+  "type": "object",
+  "required": ["schema_version", "sample_id", "pill_id", "images", "answer", "condition", "notes"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "sample_id": { "type": "string", "minLength": 1 },
+    "pill_id": { "type": "string" },
+    "images": {
+      "type": "object",
+      "required": ["front", "back"],
+      "properties": { "front": { "type": "string" }, "back": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "answer": {
+      "type": "object",
+      "required": ["mfds_item_id", "drug_name", "front_imprint", "back_imprint", "shape", "color"],
+      "properties": {
+        "mfds_item_id": { "type": "string" },
+        "drug_name": { "type": "string" },
+        "front_imprint": { "type": "string" },
+        "back_imprint": { "type": "string" },
+        "shape": { "type": "string" },
+        "color": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "condition": {
+      "type": "object",
+      "required": ["expected_readable", "light", "background", "blur", "angle", "variant"],
+      "properties": {
+        "expected_readable": { "type": "boolean" },
+        "light": { "type": "string" },
+        "background": { "type": "string" },
+        "blur": { "type": "string" },
+        "angle": { "type": "string" },
+        "variant": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}
