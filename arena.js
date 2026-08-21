@@ -306,13 +306,26 @@
     return verdict === 'correct' ? 40 : verdict === 'partial' ? 20 : verdict === 'wrong' ? 0 : null;
   }
 
-  function averageAccuracy(verdicts) {
-    const scores = (verdicts || []).map(accuracyFromVerdict).filter(Number.isFinite);
-    return scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : null;
+  // 조사자가 알약별로 직접 적은 점수가 있으면 그 값을 쓴다.
+  // 없으면 예전처럼 판정(정답 40 · 부분정답 20 · 오답 0)에서 가져온다 —
+  // 이미 저장된 기록은 caseScores가 없으므로 이 폴백으로 그대로 계산된다.
+  function accuracyPoints(verdict, score) {
+    // 공백만 든 값은 빈칸으로 본다. Number(' ')가 0이라 그냥 두면 "0점"으로 둔갑한다.
+    if (score == null || (typeof score === 'string' && score.trim() === '')) return accuracyFromVerdict(verdict);
+    const value = Number(score);
+    if (Number.isFinite(value) && value >= 0 && value <= 40) return value;
+    return accuracyFromVerdict(verdict);
+  }
+
+  function averageAccuracy(verdicts, scores) {
+    const points = (verdicts || [])
+      .map((verdict, index) => accuracyPoints(verdict, scores && scores[index]))
+      .filter(Number.isFinite);
+    return points.length ? points.reduce((sum, score) => sum + score, 0) / points.length : null;
   }
 
   function computeBatchTotal(rating) {
-    const accuracy = averageAccuracy(rating && rating.caseVerdicts);
+    const accuracy = averageAccuracy(rating && rating.caseVerdicts, rating && rating.caseScores);
     const evidence = Number(rating && rating.evidence);
     const hallucination = Number(rating && rating.hallucination);
     const clarity = Number(rating && rating.clarity);
@@ -390,7 +403,7 @@
       const stat = models.get(key);
       stat.batches += 1;
       (rating.caseVerdicts || []).forEach((verdict, index) => {
-        const score = accuracyFromVerdict(verdict);
+        const score = accuracyPoints(verdict, rating.caseScores && rating.caseScores[index]);
         if (score == null) return;
         const eq = score / 40;
         stat.tests += 1; stat.rated += 1; stat.correct += eq;
@@ -442,7 +455,7 @@
           model.providerLabel || model.provider, model.model, testCase.mfdsItemId || testCase.answer && testCase.answer.mfds_item_id,
           testCase.truthName, testCase.truthFront, testCase.truthBack,
           parsed.drug_name, parsed.drug_code, parsed.imprint_front, parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched',
-          db.candidate, verdict, accuracyFromVerdict(verdict), rating.evidence, rating.hallucination, rating.clarity,
+          db.candidate, verdict, accuracyPoints(verdict, rating.caseScores && rating.caseScores[index]), rating.evidence, rating.hallucination, rating.clarity,
           computeBatchTotal(rating), rating.source || 'manual', rating.evaluationMode || rating.rubricVersion || 'manual-v1',
           result.autoRating && result.autoRating.total, (rating.overrideFields || []).join('|'), run.vote, run.voteSource || 'manual',
           result.latencyMs, result.error,
@@ -886,7 +899,7 @@
   const core = {
     PROVIDERS, PROMPT_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
     createRequestBody, callCandidate, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
-    computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
+    computeBatchTotal, computeTotal, accuracyPoints, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
     scoreBatchWithRubric, determineAutomaticWinner,
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
     normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
@@ -931,7 +944,7 @@
   }
 
   function verdictSelect(label, index) {
-    return `<select data-score-label="${label}" data-case-index="${index}" data-score-field="verdict"><option value="">평가 선택</option><option value="correct">정답 · 40</option><option value="partial">부분정답 · 20</option><option value="wrong">오답 · 0</option></select>`;
+    return `<div class="arena-case-score"><select data-score-label="${label}" data-case-index="${index}" data-score-field="verdict" aria-label="모델 ${label} 알약 ${index + 1} 판정"><option value="">평가 선택</option><option value="correct">정답 · 40</option><option value="partial">부분정답 · 20</option><option value="wrong">오답 · 0</option></select><input class="arena-number arena-case-points" type="number" min="0" max="40" step="0.1" placeholder="0–40" data-score-label="${label}" data-case-index="${index}" data-score-field="points" aria-label="모델 ${label} 알약 ${index + 1} 점수"></div>`;
   }
 
   function scoreInput(label, field, max) {
@@ -981,7 +994,7 @@
 
   function rootMarkup() {
     const modelHeads = MODEL_LABELS.map(label => `<th>모델 ${label}</th>`).join('');
-    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 정확성 (0/20/40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
+    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 정확성 (0–40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
     const rubricRow = (title, field, max) => `<tr><td>${title}</td>${MODEL_LABELS.map(label => `<td>${scoreInput(label, field, max)}</td>`).join('')}</tr>`;
     return `<div class="arena-shell">
       <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Blind Evaluation</div><h1>4개 OpenAI 모델 · 알약 5개 일괄 비교</h1><p>알약 5개의 앞·뒷면 사진 10장을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 채점 전까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 20회로 쪼개지 않고 각 모델이 사진 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
@@ -1061,6 +1074,8 @@
     document.getElementById('arenaRun').addEventListener('click', runExperiment);
     document.querySelectorAll('[data-score-label]').forEach(element => element.addEventListener('input', () => {
       element.dataset.scoreEdited = 'true';
+      // 판정을 고르면 배점(40/20/0)을 점수칸에 채운다. 그 숫자를 그대로 두거나 고쳐 쓰면 된다.
+      if (element.dataset.scoreField === 'verdict') syncCasePoints(element);
       refreshTotals();
     }));
     document.getElementById('arenaAcceptAuto').addEventListener('click', () => {
@@ -1781,7 +1796,7 @@
       const voteButton = document.querySelector(`[data-vote="${label}"]`);
       if (voteButton) voteButton.disabled = !!result.error;
       for (let index = 0; index < CASE_COUNT; index += 1) {
-        const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
+        const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`);
         select.value = '';
         select.title = '';
         delete select.dataset.scoreAuto;
@@ -1802,12 +1817,20 @@
 
   function applyAutomaticRatingToControls(label, rating) {
     rating.caseVerdicts.forEach((verdict, index) => {
-      const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
+      const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`);
       const metric = rating.caseMetrics[index];
       if (!select) return;
       select.value = verdict;
       select.dataset.scoreAuto = 'true';
       select.title = metric && metric.reasons && metric.reasons.accuracy ? metric.reasons.accuracy.join(' · ') : '';
+      const points = casePointsInput(label, index);
+      if (points) {
+        const auto = metric && Number.isFinite(metric.accuracy_score) ? metric.accuracy_score : accuracyFromVerdict(verdict);
+        points.value = auto == null ? '' : auto;
+        points.dataset.scoreAuto = 'true';
+        delete points.dataset.scoreEdited;
+        points.title = select.title;
+      }
     });
     ['evidence','hallucination','clarity'].forEach(field => {
       const input = document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`);
@@ -1842,7 +1865,7 @@
       } else {
         (rating.missing_ground_truth || []).forEach(item => issues.push(`${item.sample_id || '알약'}: ${item.error}`));
         for (let index = 0; index < CASE_COUNT; index += 1) {
-          const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
+          const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`);
           if (select) select.value = suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
         }
       }
@@ -1857,21 +1880,39 @@
 
   function ratingFor(label, strict) {
     if (!state.current || state.current.results[label].error) return null;
-    const caseVerdicts = Array.from({ length: CASE_COUNT }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`).value);
-    const get = field => document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`).value;
+    const caseVerdicts = Array.from({ length: CASE_COUNT }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`).value);
+    const caseScores = Array.from({ length: CASE_COUNT }, (_, index) => {
+      const input = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="points"]`);
+      const raw = input ? input.value : '';
+      return raw === '' ? null : Number(raw);
+    });
+    const get = field => document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]:not([data-case-index])`).value;
     const result = state.current.results[label];
     const automatic = result.autoRating && result.autoRating.ready ? result.autoRating : null;
     const rating = {
       caseVerdicts,
+      caseScores,
       evidence: get('evidence') === '' ? null : Number(get('evidence')),
       hallucination: get('hallucination') === '' ? null : Number(get('hallucination')),
       clarity: get('clarity') === '' ? null : Number(get('clarity')),
     };
-    const valid = caseVerdicts.every(Boolean) && Number.isFinite(rating.evidence) && rating.evidence >= 0 && rating.evidence <= 25 && Number.isFinite(rating.hallucination) && rating.hallucination >= 0 && rating.hallucination <= 20 && Number.isFinite(rating.clarity) && rating.clarity >= 0 && rating.clarity <= 15;
-    if (strict && !valid) throw new Error(`모델 ${label}의 알약 5개 정확성과 나머지 3개 점수를 모두 입력하세요`);
+    // 점수칸은 비워 둘 수 있다(그러면 판정 값을 쓴다). 다만 적었다면 0~40이어야 한다.
+    const scoresValid = caseScores.every(score => score == null || (Number.isFinite(score) && score >= 0 && score <= 40));
+    const valid = scoresValid && caseVerdicts.every(Boolean) && Number.isFinite(rating.evidence) && rating.evidence >= 0 && rating.evidence <= 25 && Number.isFinite(rating.hallucination) && rating.hallucination >= 0 && rating.hallucination <= 20 && Number.isFinite(rating.clarity) && rating.clarity >= 0 && rating.clarity <= 15;
+    if (strict && !valid) {
+      throw new Error(scoresValid
+        ? `모델 ${label}의 알약 5개 정확성과 나머지 3개 점수를 모두 입력하세요`
+        : `모델 ${label}의 알약별 점수는 0~40 사이여야 합니다`);
+    }
     const overrideFields = [];
     if (automatic) {
-      caseVerdicts.forEach((verdict, index) => { if (verdict && verdict !== automatic.caseVerdicts[index]) overrideFields.push(`case_${index + 1}`); });
+      caseVerdicts.forEach((verdict, index) => {
+        const changedVerdict = verdict && verdict !== automatic.caseVerdicts[index];
+        const autoPoints = accuracyFromVerdict(automatic.caseVerdicts[index]);
+        const usedPoints = accuracyPoints(verdict, caseScores[index]);
+        const changedPoints = Number.isFinite(usedPoints) && Number.isFinite(autoPoints) && Math.abs(usedPoints - autoPoints) > 0.05;
+        if (changedVerdict || changedPoints) overrideFields.push(`case_${index + 1}`);
+      });
       ['evidence','hallucination','clarity'].forEach(field => {
         if (Number.isFinite(rating[field]) && Math.abs(rating[field] - automatic[field]) > 0.05) overrideFields.push(field);
       });
@@ -1925,6 +1966,20 @@
       return rating && rating.source !== 'automatic';
     });
     return hasOverride ? 'score_recommendation_after_override' : 'automatic_recommendation';
+  }
+
+  function casePointsInput(label, index) {
+    return document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="points"]`);
+  }
+
+  function syncCasePoints(select) {
+    const input = casePointsInput(select.dataset.scoreLabel, select.dataset.caseIndex);
+    if (!input) return;
+    const points = accuracyFromVerdict(select.value);
+    input.value = points == null ? '' : points;
+    // 판정에서 방금 채운 값이므로 "사람이 고친 점수" 표시는 지운다.
+    delete input.dataset.scoreEdited;
+    input.dataset.scoreAuto = select.dataset.scoreAuto === 'true' ? 'true' : 'false';
   }
 
   function refreshTotals() {

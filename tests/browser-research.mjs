@@ -190,6 +190,38 @@ try {
   assert.ok(dashboard.glossaryItems >= 12, `지표 설명이 ${dashboard.glossaryItems}개만 그려졌다`);
   assert.equal(dashboard.hasFormula, true, '산출 근거가 표시되지 않는다');
 
+  // 3e) 알약별 점수칸 결선 — 판정을 고르면 배점이 채워지고, 점수를 고쳐도 판정은 남아야 한다.
+  //     (총점 산식 자체는 배치 실행 상태가 필요하므로 tests/case-points.js가 단위로 검증한다.)
+  const casePoints = await page.evaluate(() => {
+    document.getElementById('arenaResults').classList.add('show');
+    const pick = (label, index, field) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="${field}"]`);
+    const verdicts = ['correct', 'partial', 'wrong', 'correct', 'partial'];
+    verdicts.forEach((verdict, index) => {
+      const select = pick('A', index, 'verdict');
+      select.value = verdict;
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const filled = verdicts.map((_, index) => pick('A', index, 'points').value);
+    const points = pick('A', 0, 'points');
+    points.value = '31.5';
+    points.dispatchEvent(new Event('input', { bubbles: true }));
+    return {
+      filled,
+      edited: points.value,
+      verdictKept: pick('A', 0, 'verdict').value,
+      editedFlag: points.dataset.scoreEdited === 'true',
+      min: points.min, max: points.max,
+      countPerCase: document.querySelectorAll('[data-score-label="A"][data-case-index="0"]').length,
+    };
+  });
+  assert.deepEqual(casePoints.filled, ['40', '20', '0', '40', '20'], '판정을 골라도 점수칸이 채워지지 않는다');
+  assert.equal(casePoints.edited, '31.5', '알약별 점수를 직접 적을 수 없다');
+  assert.equal(casePoints.verdictKept, 'correct', '점수를 고쳤다고 판정까지 바뀌면 근거를 잃는다');
+  assert.equal(casePoints.editedFlag, true, '사람이 고친 점수가 표시되지 않는다');
+  assert.equal(casePoints.min, '0');
+  assert.equal(casePoints.max, '40');
+  assert.equal(casePoints.countPerCase, 2, '알약 한 칸에 판정과 점수 두 입력이 있어야 한다');
+
   // 4) 모바일 폭에서 가로 스크롤이 생기지 않는지 — 자동채점 카드가 390px에서 넘치면 현장에서 못 쓴다.
   // PIN 게이트가 화면을 덮고 있으므로 실제 클릭 대신 핸들러만 호출한다(인증은 그대로 둔다).
   await page.evaluate(() => document.querySelector('[data-arena-view="experiment"]').click());
