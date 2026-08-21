@@ -1,0 +1,4577 @@
+{
+  "version": 1,
+  "set": "extended240",
+  "sample_count": 240,
+  "image_count": 480,
+  "candidate_count": 300,
+  "skipped_items": [],
+  "image_splitter": "sharp",
+  "source_data_date": "2026-08-01",
+  "source_api": "1471000/MdcinGrnIdntfcInfoService03/getMdcinGrnIdntfcInfoList03",
+  "source_page": "https://www.data.go.kr/data/15057639/openapi.do",
+  "archive": "KCSI_MED_MFDS_sample_240.zip",
+  "archive_bytes": 10321437,
+  "archive_sha256": "0460e5f594a3c061e3b2c569aa15bef621ed7530e53b764c7c76e2f7b361a311",
+  "items": [
+    {
+      "case_id": "MFDS-001",
+      "mfds_item_id": "196000011",
+      "drug_name": "페니라민정(클로르페니라민말레산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Orz9gcUHnw",
+      "original_sha256": "1cf91dc3f86bb3bdaee5439a4d3ed7a41bee7bae97837c7d103cf38d3175fa19",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-001_front.jpg",
+        "back": "MFDS-001_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bb86349faa1fe04ba4e075fdbd987d2e885ad625f34e1ab4f784758fb1746d26",
+        "back": "79f8789d73f5c38c9bddcd5d7d2a50f0e7f3886c900f374492fe34220b934f13"
+      }
+    },
+    {
+      "case_id": "MFDS-002",
+      "mfds_item_id": "196400037",
+      "drug_name": "라식스정(푸로세미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OlTcytjZJY",
+      "original_sha256": "59fd2e3d979479c59c412d3ddfaeb202ac588cab8ad55ad98b39bf766779e015",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-002_front.jpg",
+        "back": "MFDS-002_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f2dc8da772fec467147f3c12fb4a08b5e740396bec300c097654e6edb05b89ad",
+        "back": "a930c91d52f1dbdd5ceb18fdbf1c4e68120d5b7ccbffeda5decc0808136a3f2c"
+      }
+    },
+    {
+      "case_id": "MFDS-003",
+      "mfds_item_id": "197000037",
+      "drug_name": "아로나민골드정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609810414600027",
+      "original_sha256": "8699b32807f491c2323e01d69c86b088faffce68d3353b8b7b75f4408fe9dece",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-003_front.jpg",
+        "back": "MFDS-003_back.jpg"
+      },
+      "file_sha256": {
+        "front": "63d13290d46163211df5a220865365255cff523eab3a9cbc0db95ca7638899a4",
+        "back": "a5c31fd37b1b3ff7de7103e02b667f42e92b785284d2c0601055118c21d2bc9c"
+      }
+    },
+    {
+      "case_id": "MFDS-004",
+      "mfds_item_id": "197000040",
+      "drug_name": "대웅우루사연질캡슐",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcd74",
+      "original_sha256": "4500fe61154c1dcc73710c81212ed04bc39973e739fa710b4bb3024f01d77423",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-004_front.jpg",
+        "back": "MFDS-004_back.jpg"
+      },
+      "file_sha256": {
+        "front": "7c5d944fe5c9acfeb27b46b2397ce4952fb469b43f01175890bfc1e31b61da40",
+        "back": "6d188a047c079aebca7650a4b3932a054a4220e355e5175357c3d94b80229bd8"
+      }
+    },
+    {
+      "case_id": "MFDS-005",
+      "mfds_item_id": "197000050",
+      "drug_name": "자이로릭정(알로푸리놀)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/151317992996500014",
+      "original_sha256": "4bff87f2776a4d73e9b178d5ca1099a90278ee2f39eddd427382c493a2c24675",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-005_front.jpg",
+        "back": "MFDS-005_back.jpg"
+      },
+      "file_sha256": {
+        "front": "34451cdec560ac94279f1a3209cc5901737782ef5325a0444f407a6df769367a",
+        "back": "0b874e6a25f8f647627c9a6497ab6adf9823dd87213bffb81e46618eb0a15b22"
+      }
+    },
+    {
+      "case_id": "MFDS-006",
+      "mfds_item_id": "197400040",
+      "drug_name": "인데놀정10mg(프로프라놀롤염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PukAYE-Q7j",
+      "original_sha256": "53ecf0bbc633fcad19547dcb9bf8a544ab04f4ae4367b6d247929148bab62ca5",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-006_front.jpg",
+        "back": "MFDS-006_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8cf18303d64081b416cb876ed1071348ea497f40ad67ba65cbd7947f282f9a55",
+        "back": "e0d4dd9d08f5c3748d87db4f0af23f963bb41c602daddf226a9c6d4251368001"
+      }
+    },
+    {
+      "case_id": "MFDS-007",
+      "mfds_item_id": "197900277",
+      "drug_name": "게보린정(수출명:돌로린정)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N5PLuAiUvi",
+      "original_sha256": "280480dc21daff1f2a137e09ee382bcafb375789a334d739a723fd7f98793760",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-007_front.jpg",
+        "back": "MFDS-007_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a7cd20aab156961263148a472f14a43b0f2bac4974f53d8fa7921871f4e73356",
+        "back": "89dbb167f148e6ee1b1ffc40e9768f5af8037915bbcf3a0b5c111c9d9e404cb0"
+      }
+    },
+    {
+      "case_id": "MFDS-008",
+      "mfds_item_id": "198700430",
+      "drug_name": "알마겔정(알마게이트)(수출명:유한가스트라겔정)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148609556259100119",
+      "original_sha256": "eff02b5596e55d4d9751020585b892e82f493805e4469c8ce9342ef124174f10",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-008_front.jpg",
+        "back": "MFDS-008_back.jpg"
+      },
+      "file_sha256": {
+        "front": "85b7e8b88acf671d9424a83f203d62261cfe30d2dd2dd1e97590091ff2f1d68e",
+        "back": "293db969b8708671dae75d0800b391d7798277286efcf272b04477246b06d412"
+      }
+    },
+    {
+      "case_id": "MFDS-009",
+      "mfds_item_id": "199801026",
+      "drug_name": "훼스탈플러스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Os8pyE54Rj",
+      "original_sha256": "597a1d1c8a876e43440dba97c7c054159ed916888b2fab2ead610c55819e10bc",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-009_front.jpg",
+        "back": "MFDS-009_back.jpg"
+      },
+      "file_sha256": {
+        "front": "7f9e13982198d568f40d8501c1f2f2d3f0116973b6f221bd1a0e07857ebf3759",
+        "back": "01f0215ffbb88dceb393a4eade1f057f152a37852ef37704bd197a28f07a1f90"
+      }
+    },
+    {
+      "case_id": "MFDS-010",
+      "mfds_item_id": "200000796",
+      "drug_name": "아리셉트정5밀리그램(도네페질염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OIqL7qNEU1",
+      "original_sha256": "045eaccf297c654da21ca984225b6a5666fe4f6bc5b00cf5ea8c5c2df0d9b5a3",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-010_front.jpg",
+        "back": "MFDS-010_back.jpg"
+      },
+      "file_sha256": {
+        "front": "017426b4efee6f042780f2efb28653121b511d20abbac94c59d63acce77c80ed",
+        "back": "559be7002670afcfc2e087188c0cb16db6116e9824af5f7ca552eddb541af805"
+      }
+    },
+    {
+      "case_id": "MFDS-011",
+      "mfds_item_id": "200100565",
+      "drug_name": "가스모틴정5밀리그램(모사프리드시트르산염수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Orz9gcUHHI",
+      "original_sha256": "4875c90e1752588bb1998d491cdfb07ac4e1034fe8dbc567b61bbf2e257e6326",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-011_front.jpg",
+        "back": "MFDS-011_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3f46414288b8df308a0650055eae95cb1e4d3d223fdc492f282369f19f18e89d",
+        "back": "2f65c732392c8c0aeb2eff5e3d7f288b3fd9aba8e577b62eb6d3f6c744de7f41"
+      }
+    },
+    {
+      "case_id": "MFDS-012",
+      "mfds_item_id": "200108429",
+      "drug_name": "아스피린프로텍트정100밀리그람",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427668455400184",
+      "original_sha256": "37b40bcc6d539dd45e331c42330521d500ead5e23977c4f36d00a279c81cf875",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-012_front.jpg",
+        "back": "MFDS-012_back.jpg"
+      },
+      "file_sha256": {
+        "front": "14b4b55601a4132902e1125c5206c3755f8721e172eea22183e8b382dd741baa",
+        "back": "b08723a325b8cb9d961582e9509a2c04b5297203e6653c4d8092f99080c77c43"
+      }
+    },
+    {
+      "case_id": "MFDS-013",
+      "mfds_item_id": "200308358",
+      "drug_name": "센트룸정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154601167157200093",
+      "original_sha256": "9d0b782f0d7adbe275e421499d766f91124f1877d56f9c0ac1f9984fe0787434",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-013_front.jpg",
+        "back": "MFDS-013_back.jpg"
+      },
+      "file_sha256": {
+        "front": "afa32ed90849dc3ebeecfe15fc6fd313e11b893055ad1cc628bf487cd4f9018d",
+        "back": "7d7413532d1a266766c8c5bef8684e184c63c31ef60c023e35f87c698082f449"
+      }
+    },
+    {
+      "case_id": "MFDS-014",
+      "mfds_item_id": "200401015",
+      "drug_name": "글루코파지정500밀리그램(메트포르민염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Oa2BrqwGGF",
+      "original_sha256": "03db8f89c2026a14dd09712ea9dcfa9e53868da7f81051f9eab9729f29c1cf73",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-014_front.jpg",
+        "back": "MFDS-014_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a43ddd02f5fe1b1d4c7a29cd9377bb33c01a90d3befb06d1f48b9128015446bf",
+        "back": "1e36670babfdc87859cfd75000e779a8162276768c9134826eca0a5585a61279"
+      }
+    },
+    {
+      "case_id": "MFDS-015",
+      "mfds_item_id": "200410082",
+      "drug_name": "비아그라정50밀리그람(실데나필시트르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PbU672IZes",
+      "original_sha256": "eb9e77eb6b12d2f15f049c49731d6f9b0296195b1576e2d96ab8863dbdddf168",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-015_front.jpg",
+        "back": "MFDS-015_back.jpg"
+      },
+      "file_sha256": {
+        "front": "668a4ffcc2461be3f40d1b72c9c5a05306c04decbc2440fbf85d87925a9ef868",
+        "back": "4872ecd12487ab5b930c83956d2e4d637c6dd6823386e1fffd9f39f037c82953"
+      }
+    },
+    {
+      "case_id": "MFDS-016",
+      "mfds_item_id": "200410090",
+      "drug_name": "리피토정10밀리그램(아토르바스타틴칼슘삼수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1O0bxj5Fj_F",
+      "original_sha256": "c59d65d84aae4c7dbc271b4856ee62f80df7650ec02f371aa3e580ab397f8192",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-016_front.jpg",
+        "back": "MFDS-016_back.jpg"
+      },
+      "file_sha256": {
+        "front": "55a7922267e8e97dfa9747007f07096c447109c2d0ca23532f569e40d43ad6ec",
+        "back": "dcd15c978562456db6a10140b7d8d4d3fa563dc8ada5fc19dd6315ccc1854610"
+      }
+    },
+    {
+      "case_id": "MFDS-017",
+      "mfds_item_id": "200610660",
+      "drug_name": "노바스크정5밀리그람(암로디핀베실산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pm1vy6QK2x",
+      "original_sha256": "eadfdc2608230b10110ff4b59333ecd2874f82030a5f35adce77b5cbeaf471c6",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-017_front.jpg",
+        "back": "MFDS-017_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9424056095279662d8b0918b941582933c477b47f1d6c9b596901fc780dae60c",
+        "back": "89c40bd21753c21430891d0d6f9a949d10730eb10e5b2db65837019da98fe552"
+      }
+    },
+    {
+      "case_id": "MFDS-018",
+      "mfds_item_id": "201103159",
+      "drug_name": "모티리톤정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1mK4",
+      "original_sha256": "25ca6c75e780cd2e096e97f8013b596044649ae9b79e49f30d398261355572b0",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-018_front.jpg",
+        "back": "MFDS-018_back.jpg"
+      },
+      "file_sha256": {
+        "front": "39a3a837405cd18f1da1d8ca17a0948f46974ed3bfb2b825eff7fb7ed78fa3f2",
+        "back": "e327fdbb0ce955f1850662d28299ff0eda5f79c52d0b0b925d0462d780db4f34"
+      }
+    },
+    {
+      "case_id": "MFDS-019",
+      "mfds_item_id": "201106367",
+      "drug_name": "트라젠타정(리나글립틴)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MnfO1MVz3z",
+      "original_sha256": "569f9635b7c84a7f282e257eaac7b912ae2ad00b85b6e3f6aa6a0b631138c7fd",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-019_front.jpg",
+        "back": "MFDS-019_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ad13ad6a016d580c436aa217eef428d11a3533d82fb7064c0207b3784b4fea66",
+        "back": "4dea156a2a67a3afa20870f4464e252ac043b191534ae7ef1f1da172cdd5f7fb"
+      }
+    },
+    {
+      "case_id": "MFDS-020",
+      "mfds_item_id": "202106092",
+      "drug_name": "타이레놀정500밀리그람(아세트아미노펜)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OKRXo9l4D5",
+      "original_sha256": "60fc9042ab6c44eef63d8d82fd544e4fdb7987249d8a39ba64a97aa12659eb2f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-020_front.jpg",
+        "back": "MFDS-020_back.jpg"
+      },
+      "file_sha256": {
+        "front": "35ddeedc2b8b755e9a151bbd4743422cd2a84fef4e82d52c3c5c9258bffdbd93",
+        "back": "e9776bb932e68c391d547ac8944fd022895b5ded8820c0ceb8a8921fecfcd067"
+      }
+    },
+    {
+      "case_id": "MFDS-021",
+      "mfds_item_id": "201604018",
+      "drug_name": "오코마릴엠정2/500밀리그램",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147618964405600010",
+      "original_sha256": "1f8311fe2c333ea09090c4a6ac5503a3c7c48e3fc7c429890c78c3d6383a0958",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-021_front.jpg",
+        "back": "MFDS-021_back.jpg"
+      },
+      "file_sha256": {
+        "front": "09e4e9b1f384e4bd9fc6feefd20fcb30532013470909ea60e6616afa1c7c7908",
+        "back": "b1b54bdc358baa12f05d492543889468ea4f4cb6697c7bfb48f59ff66331374d"
+      }
+    },
+    {
+      "case_id": "MFDS-022",
+      "mfds_item_id": "199302443",
+      "drug_name": "광동타목시펜정10밀리그램(타목시펜시트르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427587462000032",
+      "original_sha256": "dfdf38082cb3b1ad43dcc9c27549437e6a5ec1dd62f8e46fdc027c58a369d423",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-022_front.jpg",
+        "back": "MFDS-022_back.jpg"
+      },
+      "file_sha256": {
+        "front": "fc870e4abfc56bafb98a2b661075d3c2246cd05932d06077ac53b6918fc845b8",
+        "back": "65cb58fe4547339a1bac260d389557f85138485816fdec7c98b2034814d0249d"
+      }
+    },
+    {
+      "case_id": "MFDS-023",
+      "mfds_item_id": "202001995",
+      "drug_name": "리사반정2.5밀리그램(아픽사반)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcjbL",
+      "original_sha256": "8ed7481d00154afdf66770d00d0b07aa0713b1a730d88afadbe3f56dccd7a8d7",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-023_front.jpg",
+        "back": "MFDS-023_back.jpg"
+      },
+      "file_sha256": {
+        "front": "eb8c1f8b0a5b4129fa8f8dd1ae998ffbc5b1e9f12a5f14f6d0330f8b48877362",
+        "back": "1b36fe30635176c294e322913712503d4734b9bec4a0c1459608f98928b8fa79"
+      }
+    },
+    {
+      "case_id": "MFDS-024",
+      "mfds_item_id": "199701294",
+      "drug_name": "로바콜정(로바스타틴)(수출용)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mxwka5v3Pk",
+      "original_sha256": "52566774b9670400958dbb4d30666d4e9d5ebdc0ba1857562d6a14d485d547ef",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-024_front.jpg",
+        "back": "MFDS-024_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4d36bbbba3236e2975ed3852290c76896447ceb119e21955db963ce942df96c2",
+        "back": "57c8911c44c0cb6fef529b76b264e3d9f8b5c5504646b81e2cef5d8e193e9a4b"
+      }
+    },
+    {
+      "case_id": "MFDS-025",
+      "mfds_item_id": "201908083",
+      "drug_name": "다모테리드정1밀리그램(피나스테리드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NrCxVBml8J",
+      "original_sha256": "73ceea0ef7029dace40bb99ac2165617f141b830306a1362a5955ba5e6a5581b",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-025_front.jpg",
+        "back": "MFDS-025_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c2680f2c5d8316679f284048ad0809cec825da660f6e4f9fe8753a5c761d5b77",
+        "back": "6d0163258f427535522ac123b48fa3c82808e5e66717083d474b356d12a58e92"
+      }
+    },
+    {
+      "case_id": "MFDS-026",
+      "mfds_item_id": "200706597",
+      "drug_name": "에이트라정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152035087394000094",
+      "original_sha256": "e04e1b62106f765b1221616af87c5ba76708bbe1281fb0bdb237568f74e75ce2",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-026_front.jpg",
+        "back": "MFDS-026_back.jpg"
+      },
+      "file_sha256": {
+        "front": "afc1ecd5d0ac253433a0205b8213ed25d0c2e664df88c0dddc7a0ef917a3ca54",
+        "back": "44f2ad5960a27c114f5a5718045ca5ded86d1e265ab4bc47ad0711bcf30b1457"
+      }
+    },
+    {
+      "case_id": "MFDS-027",
+      "mfds_item_id": "201112299",
+      "drug_name": "레파넘정0.5밀리그램(레파글리니드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426592401600143",
+      "original_sha256": "0aac7cf23ef613e128ab8fe9deed635ecfb1aaae9276e804f6442874102e32c9",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-027_front.jpg",
+        "back": "MFDS-027_back.jpg"
+      },
+      "file_sha256": {
+        "front": "5625d048ba96273eeee618fd143e1b0f156567dea3e31c746f23b778bc94d22b",
+        "back": "5c7b4c165228ed4f5db55ff5832e9be1f724d49b50e8b7d6029b05e04a1cac93"
+      }
+    },
+    {
+      "case_id": "MFDS-028",
+      "mfds_item_id": "201602237",
+      "drug_name": "우리몬정(리마프로스트알파덱스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427232964000083",
+      "original_sha256": "6155a5b464f1ce3050a0c369a292bd81b59e8cd1704a0d28b0e397947179f1ea",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-028_front.jpg",
+        "back": "MFDS-028_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3800cf742a10df4ef33270dce684eadbe03a4272f21495c5b4c419d0ec86cd0c",
+        "back": "2dd48ef75cbf6682e9315b6ce227d98e80eb43745d60cfd235a1dc6be1d500df"
+      }
+    },
+    {
+      "case_id": "MFDS-029",
+      "mfds_item_id": "202002539",
+      "drug_name": "프레징정(폴라프레징크)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6L7F",
+      "original_sha256": "08ab7ff38552522446d76e7cb6f81c35097a3e779143bd632f80c043c74e6c4c",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-029_front.jpg",
+        "back": "MFDS-029_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bf0b623ea2c40fc4eb8bd25de4c3a278a01f287759774db0ad2dfa06538040da",
+        "back": "99063e430c8911758d4d6d0da5d6d0226efc15d3205ca39ae9502b31ff3e35e3"
+      }
+    },
+    {
+      "case_id": "MFDS-030",
+      "mfds_item_id": "199701908",
+      "drug_name": "알러텍정(세티리진염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OflX036ck0",
+      "original_sha256": "9e5cc08ce30680971d40b02237bdf9ea47c5877c87a69aadce3839e48a1b79e1",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-030_front.jpg",
+        "back": "MFDS-030_back.jpg"
+      },
+      "file_sha256": {
+        "front": "0718b9e5d2faf79faa2de602592d5458bb9732e49d8605001891933917dd24f5",
+        "back": "ca226639030e039b344fd77655c9d2cffbaf72e30d9e6e7c08755079efed6644"
+      }
+    },
+    {
+      "case_id": "MFDS-031",
+      "mfds_item_id": "199800725",
+      "drug_name": "아타칸정8밀리그램(칸데사르탄실렉세틸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OdEcoU0sBZ",
+      "original_sha256": "80761c76af7b67e991004d2faad62e5e309902f0ea14cbaa3383d8ca929c1466",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-031_front.jpg",
+        "back": "MFDS-031_back.jpg"
+      },
+      "file_sha256": {
+        "front": "44ad24beec03628c57254c6297e60bfd82c6102c1498e97e28cbeb8f2b2319cb",
+        "back": "ae9b9ddbedaaf2e0461ff85701c0fd1631db4f94d1db587d0377315a1b3234de"
+      }
+    },
+    {
+      "case_id": "MFDS-032",
+      "mfds_item_id": "199302093",
+      "drug_name": "메술란정(니메술리드)(수출명:DANKALTab.)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427552750100049",
+      "original_sha256": "f5a631676404ffde1ffedf142ef6a841962da65c154b23d5c30ac63918b77630",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-032_front.jpg",
+        "back": "MFDS-032_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8692441bf3e17489f5d7f27f611d569409ff2c4c71ffbb9638bfaa048af57a0b",
+        "back": "219b3f073f452e6f6b3b0432fd89eb12baf6070d10a1492bcf3ad0ef47598df5"
+      }
+    },
+    {
+      "case_id": "MFDS-033",
+      "mfds_item_id": "201705755",
+      "drug_name": "솔리스탑정5밀리그램(솔리페나신숙신산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1yoA",
+      "original_sha256": "e2921b08d43b5fe18194f82009fcd75e0f12d967ec6dda1add167970cb8ca30f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-033_front.jpg",
+        "back": "MFDS-033_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c5c68818f5a0c39bb425fd41da3935f4aa09c6333949f77703001d79a2ce7423",
+        "back": "c9c80c24f4917620d7434572c4d7ab262b8b0961fe2beed7fcfbbba537bf5b1c"
+      }
+    },
+    {
+      "case_id": "MFDS-034",
+      "mfds_item_id": "201907401",
+      "drug_name": "몬테큐츄정4밀리그램(몬테루카스트나트륨)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Nq4XM4gmbe",
+      "original_sha256": "5741d97994acf519e582eee64b6a30808812ef8f4748bf46514c980471759c57",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-034_front.jpg",
+        "back": "MFDS-034_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6c30b81b76ecc1e3177f912df99096e64dc3b5e2f5435766d4af06f4c5750f37",
+        "back": "b57d464ed5c51e394503bbe797f757778bc715ad6b32914aaaa6195957fda02b"
+      }
+    },
+    {
+      "case_id": "MFDS-035",
+      "mfds_item_id": "202001094",
+      "drug_name": "세네트정(세푸록심악세틸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N88ah-Pjc5",
+      "original_sha256": "e3e5e3827651335bd10595d6d1a0c1481bda4be1c16dead1ea50427c5faf29cf",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-035_front.jpg",
+        "back": "MFDS-035_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4653a80846502c202048c02783a8cce6e8d3594b16338aeef022fcf698000d48",
+        "back": "ee3efc9aa9a84368428afdfad46f309d4833263f81a1210cbedd5d2ff8b24b4b"
+      }
+    },
+    {
+      "case_id": "MFDS-036",
+      "mfds_item_id": "201708048",
+      "drug_name": "투투스타정40/5밀리그램",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154817162448400077",
+      "original_sha256": "3e458e2b29ffa89e440ba9cfe508440a5fcf3acaa24f3e0892f809037997a61c",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-036_front.jpg",
+        "back": "MFDS-036_back.jpg"
+      },
+      "file_sha256": {
+        "front": "078e8e4aa026686ab956be2a901d83a5995f329bbe19e7cd0c90762b539c51d6",
+        "back": "50c8c693cbc60a674303bee63254a9f5e60becc288eac07a556ef1470e71d613"
+      }
+    },
+    {
+      "case_id": "MFDS-037",
+      "mfds_item_id": "199000141",
+      "drug_name": "동광케토코나졸정(수출용:카나졸정)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427311457100077",
+      "original_sha256": "ba523a18d58470925ff7551094feb0b1985edb2629cef104f85547f93f11c493",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-037_front.jpg",
+        "back": "MFDS-037_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2339b92dcb35a7795fb88c7435f2cf3dbd1a9758ac02b6a75135fae307cf9271",
+        "back": "d61e26f1b55c8454fb5300561064c54dbcaa58ee41b8ec16535e48d50273890e"
+      }
+    },
+    {
+      "case_id": "MFDS-038",
+      "mfds_item_id": "200808715",
+      "drug_name": "리포액틴정40밀리그램(아토르바스타틴칼슘삼수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427950681500090",
+      "original_sha256": "4ef389c41f1158708b91c20639dda39bcd1518f2e8003e1637cc7c48d754d2e0",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-038_front.jpg",
+        "back": "MFDS-038_back.jpg"
+      },
+      "file_sha256": {
+        "front": "0b4859a7a6f2aa7aa5a1198c73fa679c115a7c5a3ab01e5f414541402a90667d",
+        "back": "e36f2f16a05a1d7cd00ed35d8b77677b871fca5af089e1ee714e1ec912f2a40b"
+      }
+    },
+    {
+      "case_id": "MFDS-039",
+      "mfds_item_id": "200608388",
+      "drug_name": "이로텐플러스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428243808800177",
+      "original_sha256": "f859e70734df8f5f91e76599cc0da3cb123e372ff960699d9a6961faab43250f",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-039_front.jpg",
+        "back": "MFDS-039_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4c147dd041b45ea706bed74d0f097100250ec428235fd1da2fc308d1ef9566ec",
+        "back": "23948c488033fb8a57959d51de49978e8b02ecb8454d44702dda9bec91a4c76f"
+      }
+    },
+    {
+      "case_id": "MFDS-040",
+      "mfds_item_id": "201508116",
+      "drug_name": "토피칸정25밀리그람(토피라메이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427158517500065",
+      "original_sha256": "6b52626f31a96c13f53b0f3a174b56812b10972a9ed650b9898ee84baa7d84f2",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-040_front.jpg",
+        "back": "MFDS-040_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ce24eb9cac2a4d25034c013a6959fe3492256f9fd8036da750db055bb60472cf",
+        "back": "867fa537b0a7bf1ee9f3d8ee4bb20263d151dfaaf45955435ca0931102dcab7e"
+      }
+    },
+    {
+      "case_id": "MFDS-041",
+      "mfds_item_id": "197800390",
+      "drug_name": "티니다진정500밀리그램(티니다졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609813331300163",
+      "original_sha256": "23f25f0bc4eef1b1b0454f96d791f8c6acf2014e6f7ea46deda6490e88f25669",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-041_front.jpg",
+        "back": "MFDS-041_back.jpg"
+      },
+      "file_sha256": {
+        "front": "22e14752395ff4108765368edda5dfb7287b2b817cf73d4a95d6d45748477669",
+        "back": "89b4030a8192b1a6c0cdc1f07a26c8bc73d090e35d210a6c085d1adf3b09b290"
+      }
+    },
+    {
+      "case_id": "MFDS-042",
+      "mfds_item_id": "200403411",
+      "drug_name": "아제타민정(아젤라스틴염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Nx4Buwxt6l",
+      "original_sha256": "32f02b00ce81eeaad9c335bd2f3f703c8c78e2e4a929eb762bbf3bd694bb20a0",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-042_front.jpg",
+        "back": "MFDS-042_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1cec975600007fa2f43a452318a44158afd96ade26a6c9b59acef6726fa4546d",
+        "back": "364ca1a03ba6d008974680b34f95a6a3c37732459dfc601dd64c520ac787bb6b"
+      }
+    },
+    {
+      "case_id": "MFDS-043",
+      "mfds_item_id": "201707241",
+      "drug_name": "카보메틱스정40밀리그램(카보잔티닙)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154307400984500056",
+      "original_sha256": "527a9a59d8b5cba320f929fc7a4b9efd127da3ef5786e6ac3188921e2c8fc0cd",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-043_front.jpg",
+        "back": "MFDS-043_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4adac907961c48fe9f43cf1e2da3b409f2f5563c08d7e5eefce098b6686f91d7",
+        "back": "1b737ea7b81df50de5e4fa5db5cd77f2130445af757e8d03435a00b4bb48a924"
+      }
+    },
+    {
+      "case_id": "MFDS-044",
+      "mfds_item_id": "202501331",
+      "drug_name": "레바지서방정150밀리그램(레바미피드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pz4GqsLDGu",
+      "original_sha256": "1b9749d6b76ddc58c1569c914cd2e25114e94a5ebee26e941324e4b2c7f01813",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-044_front.jpg",
+        "back": "MFDS-044_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c51b6ba2a6f9e6530fe98115fb917653cc33c48ecbac6ea61eee6b46ac23093b",
+        "back": "840e6c2ed07c5d7112a1f38616a58709f60352df81ad9318e79eba673c26cc78"
+      }
+    },
+    {
+      "case_id": "MFDS-045",
+      "mfds_item_id": "200809081",
+      "drug_name": "카세핀정300밀리그램(쿠에티아핀푸마르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1g3K",
+      "original_sha256": "f65c7a04d38ef6492f3e46ef1d29670dbb6fe73922761ec2bc02982a29eecd16",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-045_front.jpg",
+        "back": "MFDS-045_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2cc8a9a04bf4a31a75516e298353191eccf8eff4744c2508f688c633a6820dfe",
+        "back": "a2329d6e44029f8eb627396d3ce6ef1f11ce79869296bc82c29b98b5c38bde70"
+      }
+    },
+    {
+      "case_id": "MFDS-046",
+      "mfds_item_id": "200713906",
+      "drug_name": "리세트정(리세드론산나트륨2.5수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1ntR",
+      "original_sha256": "35f571f1163e502288f8303bda246f8525eef0f05e298bb3c6db9352930b1e6c",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-046_front.jpg",
+        "back": "MFDS-046_back.jpg"
+      },
+      "file_sha256": {
+        "front": "819fe6aed71b3b240fe6ce5b71e8ae31b22fc4ed4b28f1a2231691529c0387b2",
+        "back": "a8656a1a987394d730d77aef2d5860d05db1e75a69f5822d37ab81bcfa7c70f4"
+      }
+    },
+    {
+      "case_id": "MFDS-047",
+      "mfds_item_id": "200800316",
+      "drug_name": "포스넬정35밀리그램(리세드론산나트륨2.5수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/146032025723400192",
+      "original_sha256": "f88ea1f34639609c5e4046f342680f8c1be19afcd3ca3b297042d39acccb0510",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-047_front.jpg",
+        "back": "MFDS-047_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f2b812677a1a32f480bf9a881b2a6e416a962617ceaa8aaa8000e63a9808fa0f",
+        "back": "8ad6bec598dbb17d9b02bf7492da919223641f173a314b900ad7ebd020195d64"
+      }
+    },
+    {
+      "case_id": "MFDS-048",
+      "mfds_item_id": "201507094",
+      "drug_name": "크레빅스정(클로피도그렐황산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427122590700185",
+      "original_sha256": "ded10f7abc5e9da15859c789964de969cfea67fa54dabdd3690d33893b47db5c",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-048_front.jpg",
+        "back": "MFDS-048_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c40bfae8dca90245e9685715b90ebc3f456b5e50d342fb69cd320251df56dd29",
+        "back": "6b393e63402450f89914a674c7d1ce43e835d34d8acf74b2ba9744d3371142c6"
+      }
+    },
+    {
+      "case_id": "MFDS-049",
+      "mfds_item_id": "199703129",
+      "drug_name": "설리드정(록시트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mxwka5v2GD",
+      "original_sha256": "bca448a2716e654bb10c37d3146d5b5abb74ea77b74febac6ffd6ea746d1ac85",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-049_front.jpg",
+        "back": "MFDS-049_back.jpg"
+      },
+      "file_sha256": {
+        "front": "5a2de37564cb8acd072b4e87b6594d4995cf916efc42a132123a593767004f8b",
+        "back": "61b7fbb5bba35e7a204c11355f7037d8decc71e4f299b0f99dfbd1a1d2c88732"
+      }
+    },
+    {
+      "case_id": "MFDS-050",
+      "mfds_item_id": "202001339",
+      "drug_name": "유징코정80밀리그램(은행엽건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N_ONkylBky",
+      "original_sha256": "13eec3de251ccdc5a90ef88c993ff17a898d7e4f25b31e971d0880e2b7ae7d02",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-050_front.jpg",
+        "back": "MFDS-050_back.jpg"
+      },
+      "file_sha256": {
+        "front": "02b331693041b65cf45daf17f5e5042c9207913691629b735ed7852661667926",
+        "back": "98d6fdc7525cece406f13882676c22296dd0f0c6870003adce1412756d130dd9"
+      }
+    },
+    {
+      "case_id": "MFDS-051",
+      "mfds_item_id": "201803443",
+      "drug_name": "실로진정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MbnHD7rxZ6",
+      "original_sha256": "a3caf42ccd0ce928251bac7dfd7d2d019272446859905ca59f38465d95ee42ac",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-051_front.jpg",
+        "back": "MFDS-051_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ef826d88b547927b314edd4aa749791a939ce101670ee3c69fffc7f16dad8edb",
+        "back": "3c4a2be10b1a1ffe66cbd0cc0ef3de82f41bea14e370f95f1468c6515a963e04"
+      }
+    },
+    {
+      "case_id": "MFDS-052",
+      "mfds_item_id": "201801493",
+      "drug_name": "크라멘틴정375mg (아목시실린-클라불란산칼륨)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Nq4XM4gmRn",
+      "original_sha256": "8aeeb8de9f5bd97d916c4f23e9fc43efcdd69b3456ba99d98ae2312a30a7ebc0",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-052_front.jpg",
+        "back": "MFDS-052_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8cb5a8e3480558b868951db25272a07204e96d715a20c56bd5a096948fe6e9e1",
+        "back": "b76bac7dfecbd1a07fce0b43821e7a407296aa3674a2973a1ab5b61c775a7b4c"
+      }
+    },
+    {
+      "case_id": "MFDS-053",
+      "mfds_item_id": "201306167",
+      "drug_name": "크래리스정250밀리그램(클래리트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426683772100147",
+      "original_sha256": "0763f7bfb1b5c374565c7495d65deffe7c16125b405baa3ac98c2e073865a594",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-053_front.jpg",
+        "back": "MFDS-053_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9389d4c61b602a4cdba71046ba1a0f4df43eea511bfce1c037e4c9ebc9a9196b",
+        "back": "2c05e42deda06cb13fd2080a227e1e74ec20b4c67eb65f55633a44863d8fdaa6"
+      }
+    },
+    {
+      "case_id": "MFDS-054",
+      "mfds_item_id": "201004207",
+      "drug_name": "비타린에프정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426502377200108",
+      "original_sha256": "deb6f0937aadbb455fb67558b94992eb005fd8399d0896e678b0dc2fc39ea7ae",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-054_front.jpg",
+        "back": "MFDS-054_back.jpg"
+      },
+      "file_sha256": {
+        "front": "cfb7f8713713dbac01f37541bbf44aac5b3c87b17e0454ba563ef24d6fa089c3",
+        "back": "b12a80294a012c9d1e1d4451913451108cd67dde869d30b6b59b25e3a8ec5cae"
+      }
+    },
+    {
+      "case_id": "MFDS-055",
+      "mfds_item_id": "200400045",
+      "drug_name": "크라목신현탁정250밀리그람(아목시실린·클라불란산칼륨(4:1))(수출명:SHINACIN Dispersible Tablet 250mg)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OpUNcKXiuI",
+      "original_sha256": "7f0dfa6740515def618c5d28700fe374660d2330dd714d6aee84f668ce70d565",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-055_front.jpg",
+        "back": "MFDS-055_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a5b0897624972706e4a3b6337bd056632659bc5c4a282817fe2d33ff98266486",
+        "back": "12333c3bd858049a6335d1cb70f46948dab68c42376dd6440fbf679c2f866c96"
+      }
+    },
+    {
+      "case_id": "MFDS-056",
+      "mfds_item_id": "200704407",
+      "drug_name": "코큐텐비타알부정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/151853651029700028",
+      "original_sha256": "8f86c6e5579f5eb05951874e593954e0a19e9a2f1a9f280fabb83f3071d42e3d",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-056_front.jpg",
+        "back": "MFDS-056_back.jpg"
+      },
+      "file_sha256": {
+        "front": "db2149c68e3ab824dc47a4d8aaa5fab67093327393fdfc67a22570aec8f49d64",
+        "back": "0ee28aacf2293cac32f722545ca97a05f62f47d00985d5930db3240c528b2604"
+      }
+    },
+    {
+      "case_id": "MFDS-057",
+      "mfds_item_id": "202302457",
+      "drug_name": "글루디톡정(글루타티온(환원형))",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OqoN-3zWwk",
+      "original_sha256": "073a7893e6af1c7e1d0b54724b8c7d6ef6a0b9b41ab0bc5c762ec258ae51c2a1",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-057_front.jpg",
+        "back": "MFDS-057_back.jpg"
+      },
+      "file_sha256": {
+        "front": "903c5af9a482d653adaca00250f1da7023b9565f8447f732812511ae32213167",
+        "back": "6442cda4f01a4faa5784dc3e9c1e3c36c059c0715c15f8df111c3fda3a735b36"
+      }
+    },
+    {
+      "case_id": "MFDS-058",
+      "mfds_item_id": "201906411",
+      "drug_name": "케이레어정10밀리그램(몬테루카스트나트륨)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OWap0p6EEW",
+      "original_sha256": "4bac188badc4847feb963b3f4268e316bbf9587cc64917869bb897a505bffafd",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-058_front.jpg",
+        "back": "MFDS-058_back.jpg"
+      },
+      "file_sha256": {
+        "front": "d5cc6b62a965eca7cc79f0590f8bea7861c5bcade0154d99b27114ee624adc0a",
+        "back": "4fa02ce394fb4e759793f5ca5d9b31a7a2ef8442bfc024c3958f0f8a974b78c1"
+      }
+    },
+    {
+      "case_id": "MFDS-059",
+      "mfds_item_id": "201905588",
+      "drug_name": "렉사콜드정10밀리그램(에스시탈로프람옥살산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1M-CjqQQRYq",
+      "original_sha256": "5039a774e97961b0247d8ee4ba3c99680cda34ef324202cb3813622a89525129",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-059_front.jpg",
+        "back": "MFDS-059_back.jpg"
+      },
+      "file_sha256": {
+        "front": "5d0d7ccf4db303845dbccd02a247a723b2bd09482fb544a1a507f9dab315c2e9",
+        "back": "8f318d2ca1d2741605a830f17e6e2e5e38f8f3a1eb4cc04b0ecbdfc1ee51656b"
+      }
+    },
+    {
+      "case_id": "MFDS-060",
+      "mfds_item_id": "201701436",
+      "drug_name": "영진멀타자핀정30밀리그램(미르타자핀)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/149805964888000079",
+      "original_sha256": "26ca699dac10ea28041b84fe8e690a375706dc584f59ac2e9da1cd59b4627ddd",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-060_front.jpg",
+        "back": "MFDS-060_back.jpg"
+      },
+      "file_sha256": {
+        "front": "23879692269e4992befa3be1efc0e7addc5ab8ae2c31cbac3083c6f02f1d9aef",
+        "back": "dab3a62d9b3611bf0ab0ef6c6ec6251d24655bfad4f8c82814bb7d1c26191443"
+      }
+    },
+    {
+      "case_id": "MFDS-061",
+      "mfds_item_id": "201100775",
+      "drug_name": "멀티플러스비타정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152285645249800113",
+      "original_sha256": "9202b130c853f8478825ab57da502e4944b0125ba92ca7f2c0fb6147d8617963",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-061_front.jpg",
+        "back": "MFDS-061_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f1800574810792a9afc3c9fbdd9444633406d35553654ac68e1a16a41718ad7e",
+        "back": "be2807d9a580227d02495cd19c4bece94c3a7b98f75862ad256154bd860b757d"
+      }
+    },
+    {
+      "case_id": "MFDS-062",
+      "mfds_item_id": "199200490",
+      "drug_name": "타록시드정100밀리그램(오플록사신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OBVa0o7c2M",
+      "original_sha256": "76e0224f0c4e1900e3c3a5c17c5afd41efc0076efff051577e15150ee7090610",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-062_front.jpg",
+        "back": "MFDS-062_back.jpg"
+      },
+      "file_sha256": {
+        "front": "193fe5839f62137dd29af445ecca0653a3133f61f145cb40c301a958967bb1fe",
+        "back": "1376f27500826e7d5ae9fc652d0114149d5da0e89812d06c32002c1e2f91bf13"
+      }
+    },
+    {
+      "case_id": "MFDS-063",
+      "mfds_item_id": "201404006",
+      "drug_name": "젠프라그정(사르포그렐레이트염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152795410353100025",
+      "original_sha256": "dc5fdf01571e009bfdc9032a1e1edb1004503be22da3792decd964081870143a",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-063_front.jpg",
+        "back": "MFDS-063_back.jpg"
+      },
+      "file_sha256": {
+        "front": "af2497b7553204253bb7cfe77b403cd368c7ede432221186ac74a25f66a1c818",
+        "back": "cb2e2537b8f9c5d3d2f23c9146b33368dcfb105eec53695647374667731969df"
+      }
+    },
+    {
+      "case_id": "MFDS-064",
+      "mfds_item_id": "199902012",
+      "drug_name": "메스티논정(피리도스티그민브롬화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NdSqA-16xo",
+      "original_sha256": "ece6cd1edd8739d5e7a00518d08dc8edb82ee9d8793a203a397e72eb31019126",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-064_front.jpg",
+        "back": "MFDS-064_back.jpg"
+      },
+      "file_sha256": {
+        "front": "0c372d822ae08f70a93412528d651b8058c15486d1f83d7127e3aaef81a9dfa4",
+        "back": "9a8432c93abcef326350e30201d2c9c229b079649846ecd0e4ced0d4537707b6"
+      }
+    },
+    {
+      "case_id": "MFDS-065",
+      "mfds_item_id": "201902399",
+      "drug_name": "푸루코날정150밀리그램(플루코나졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N0L6J0YIAS",
+      "original_sha256": "f76f7643465ce6e93f6b46c3be4c057bf2753978e352c4143ce816a280e426d9",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-065_front.jpg",
+        "back": "MFDS-065_back.jpg"
+      },
+      "file_sha256": {
+        "front": "965e8f193b8c1443777fd0e3dd9bd169edb44fdbc284089bb832097889736940",
+        "back": "8e85bcd9093e497685d473f6cc01859fc00302930df9bb4014b9303618360e2d"
+      }
+    },
+    {
+      "case_id": "MFDS-066",
+      "mfds_item_id": "201907138",
+      "drug_name": "넬슨라베프라졸정20밀리그램(라베프라졸나트륨)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Py1I7lNBck",
+      "original_sha256": "e3a7de0a413357f37dd7d1c7f77e32ab3f3971d0b615b196ee29f2289ed0894c",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-066_front.jpg",
+        "back": "MFDS-066_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9872132f2c263fc45c27db44fea7c2367a2a267bd0b3970ecc4e2f21a42a2559",
+        "back": "3630ba2db67bc2f281ebb5698b9cf42677420b035aa1934d681470e454135d63"
+      }
+    },
+    {
+      "case_id": "MFDS-067",
+      "mfds_item_id": "201600454",
+      "drug_name": "옥시크로린정400밀리그램(히드록시클로로퀸황산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150065049949800030",
+      "original_sha256": "dda94cb219adf21f3e021860c1dde0ede13e6b810c966dd3bc95c82a9eaaef2b",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-067_front.jpg",
+        "back": "MFDS-067_back.jpg"
+      },
+      "file_sha256": {
+        "front": "18b45dc8a5605f0c405947e5cc6a2e5afa94e15e9226c732c0d685971f7038fd",
+        "back": "7fa9a8b62f28af2b3ac8e77df84cb6649ae08b8d6a29025485f0201d75f08648"
+      }
+    },
+    {
+      "case_id": "MFDS-068",
+      "mfds_item_id": "202100786",
+      "drug_name": "리바코르정20밀리그램(리바록사반)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Nk2K_pikdH",
+      "original_sha256": "68262460f11369d88ad469794e54c9cb4f13ff393c65f63cec983105739d8aee",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-068_front.jpg",
+        "back": "MFDS-068_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6db6866c3b4c2b67c147b19074ee1c385e00b3637b82589f2ed93f0c05400add",
+        "back": "86ef3f26f539d72bd058ff7c0df78d01e4a674b2c46eab7a1ffd01005cc2002c"
+      }
+    },
+    {
+      "case_id": "MFDS-069",
+      "mfds_item_id": "201004413",
+      "drug_name": "대화노브제정(펜터민염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/149520842210400088",
+      "original_sha256": "1449d8f141ca57b9e63c578b9db441418f1008bb16149080c2b3e712ee817816",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-069_front.jpg",
+        "back": "MFDS-069_back.jpg"
+      },
+      "file_sha256": {
+        "front": "47eb09390ae58bf588e5084a8f1cc65001e570943f6029b583ebb1c05e59d8a7",
+        "back": "79430aedf4a0d31a735428cbfd5556679279ec3dbb310aa246b6b1aaef0fb3ef"
+      }
+    },
+    {
+      "case_id": "MFDS-070",
+      "mfds_item_id": "198400900",
+      "drug_name": "에로딘정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427562825900051",
+      "original_sha256": "991a4706876b93f3220a4deb46be26af3a6e471b097551b0875285a1a3f0253c",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-070_front.jpg",
+        "back": "MFDS-070_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4679db071576498d4679f131055fd1273f49ed6a1c36a407fd9007f9be8d6c68",
+        "back": "cc522a809255789c4ac994e763a631be3fd9eb1bc13f3ecf54cc829e660aef98"
+      }
+    },
+    {
+      "case_id": "MFDS-071",
+      "mfds_item_id": "201211108",
+      "drug_name": "대웅바이오클래리트로마이신정500mg(클래리트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1O597tTUEqd",
+      "original_sha256": "485d58e0aa69b0e17f3b1c06e50e815c5a0431abd0bdcc2d24520bbb57ea7955",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-071_front.jpg",
+        "back": "MFDS-071_back.jpg"
+      },
+      "file_sha256": {
+        "front": "25b7495168d57ef512ee37826140bc6720906977c715011a4fc9afd2583c00ed",
+        "back": "92bae8b3731663eabf13f6ed04a25f651bb4da22297d9776eba81fea7d5abfde"
+      }
+    },
+    {
+      "case_id": "MFDS-072",
+      "mfds_item_id": "200502219",
+      "drug_name": "목사멘틴정[아목시실린·클라불란산칼륨(7:1)]",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1psD",
+      "original_sha256": "f745fa2a7eb9abbd8c0e236c68b3d2beab2ef424cac1560b6bf319560fe6f7f7",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-072_front.jpg",
+        "back": "MFDS-072_back.jpg"
+      },
+      "file_sha256": {
+        "front": "afe4d423b37b075470b49adccdce65e4015c62e8a78e550f4952de9684000c8e",
+        "back": "5b79b25631948f1b82855cbb0ebfc1a956be35b8627255bb721a87ea5de93bff"
+      }
+    },
+    {
+      "case_id": "MFDS-073",
+      "mfds_item_id": "200804995",
+      "drug_name": "미르탁스정15mg(미르타자핀)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1ObtnU0cxaQ",
+      "original_sha256": "2241861634bfc58778c377e8c137aea709e61968148bc965aca361f2da8787ff",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-073_front.jpg",
+        "back": "MFDS-073_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8f8624643a20a03904e5b367e3937940f621259e1e740d0a253a291d2d53b5e8",
+        "back": "6569bc2decfa524c933af9a3d3621dee52721d782e85cf7f232ac9147e980234"
+      }
+    },
+    {
+      "case_id": "MFDS-074",
+      "mfds_item_id": "202002109",
+      "drug_name": "휴네페질정5밀리그램(도네페질염산염수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PNKqjx1p7L",
+      "original_sha256": "c489e10aec9576eb6e4d898443109de4704f1f69bda715311d770ce6d79d6c96",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-074_front.jpg",
+        "back": "MFDS-074_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c470cb01ef240094344f8a321f547e8b02143d894816a7bc9e5290b85bba3203",
+        "back": "e59962b2d159675c5d93165e09e1c63d97b11c4b1cb604d1d6662ce2f16979cf"
+      }
+    },
+    {
+      "case_id": "MFDS-075",
+      "mfds_item_id": "201801810",
+      "drug_name": "하시버정(아시클로버)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/153261969197700067",
+      "original_sha256": "44190a9a3908af1d2df76e853b207484a2e6c307884fee84d79ad8282132f1f9",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-075_front.jpg",
+        "back": "MFDS-075_back.jpg"
+      },
+      "file_sha256": {
+        "front": "092c1e840ffe35f7adf51cb979c3985e9e5a7dcf9a348c2b47d924db7831e558",
+        "back": "489df59b44c78b603cf0b0b5557e734af7fb4317c3ff891790e9854dd59440b3"
+      }
+    },
+    {
+      "case_id": "MFDS-076",
+      "mfds_item_id": "200502902",
+      "drug_name": "토피론정25밀리그램(토피라메이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mxwka5v1_-",
+      "original_sha256": "286a5b688704f4c2fd4e535a3acec18b77ce9ee865453ba025bf65ecb8de0812",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-076_front.jpg",
+        "back": "MFDS-076_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2ed7aabc66cd8a86cdda865d2b2bd42560f671f92519d3f0f4964bf5396fb69c",
+        "back": "4e6299ace5a19711025b2dac56311ada6bcb65934df6110385469848a0aad5fe"
+      }
+    },
+    {
+      "case_id": "MFDS-077",
+      "mfds_item_id": "202007451",
+      "drug_name": "리복사반정15밀리그램(리바록사반)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Nn1XXjswYm",
+      "original_sha256": "3b53b6493dae9786b1e088dc729dbc4a0cdbe070a29bb2724a252dfc2731fff5",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-077_front.jpg",
+        "back": "MFDS-077_back.jpg"
+      },
+      "file_sha256": {
+        "front": "cf29f16b3caa3529c3f7701da8c14d837dfc0d565c8beb4c3b38464844dad39b",
+        "back": "c802bfe73da30b940d0a6624067a104faee835e9f2d544dc7ef9bbf11ef086f3"
+      }
+    },
+    {
+      "case_id": "MFDS-078",
+      "mfds_item_id": "201502341",
+      "drug_name": "시벡스트로정200밀리그램(테디졸리드포스페이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427043543100179",
+      "original_sha256": "e514cd679936aa214234e4cc3fd9da727a598346b41b874b89983a636dc905af",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-078_front.jpg",
+        "back": "MFDS-078_back.jpg"
+      },
+      "file_sha256": {
+        "front": "315b9bd65e63fadff484bde1a0371d13cf2159ed949a6def12d32a060cd7309f",
+        "back": "88cee34417cba13294a61b8a5bc951dc8b579ec32ba777ff7ba3f6cba3bc1864"
+      }
+    },
+    {
+      "case_id": "MFDS-079",
+      "mfds_item_id": "201401398",
+      "drug_name": "비씨오플록사신정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152795402126800041",
+      "original_sha256": "fe392b485ff7f65ee305f6e47d9f0ede60aa1d09380d46fdb6db4d82a6e3806e",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-079_front.jpg",
+        "back": "MFDS-079_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9abd507235087dcaf415089bf09500d77cb46c1122e2bd8366025049b1a001fa",
+        "back": "9144deb19e7ae9b45df5b8acef8adb5943a766b32a59ff6cfaeca5a13246333c"
+      }
+    },
+    {
+      "case_id": "MFDS-080",
+      "mfds_item_id": "201908159",
+      "drug_name": "메믹사정(메만틴염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N34MmQGH3F",
+      "original_sha256": "6c3b56aa4ed1a7a38a44098c2acf189038198612617432857041ff48af571c4a",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-080_front.jpg",
+        "back": "MFDS-080_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1f657eb5027a6b7bc383cc29b58c17a245178ba8e2a27b5adb5303419d77a7a8",
+        "back": "1e0fa1af8fa11794be05136375efc5bbfbb1011eaae181caa8e51337ae05870d"
+      }
+    },
+    {
+      "case_id": "MFDS-081",
+      "mfds_item_id": "200902753",
+      "drug_name": "유코빅골드정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427955462100037",
+      "original_sha256": "592e7df76bd180ff07726253a64fcbc2575b2cfe43eb9230c0b160f00b60b4f9",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-081_front.jpg",
+        "back": "MFDS-081_back.jpg"
+      },
+      "file_sha256": {
+        "front": "92598ca58e9ee082df9e546815ed8a98bf204db71a66fc7ad63b78471d9f6e9a",
+        "back": "5f1229ff9a2508afaf417f4a46ec388b59b6bbebe49034d55b3fb67ec8957c7e"
+      }
+    },
+    {
+      "case_id": "MFDS-082",
+      "mfds_item_id": "201701551",
+      "drug_name": "피나시딜정5밀리그램(피나스테리드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mp3yEn24fU",
+      "original_sha256": "b57960f8a4e573e129e139150f85ad0354f1761b755c28a3fc9f53ccab974b53",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-082_front.jpg",
+        "back": "MFDS-082_back.jpg"
+      },
+      "file_sha256": {
+        "front": "0b672c323c85e55a03f4c8be1618f955af4f65d312b507e720ea09a2355dc3c9",
+        "back": "832939efd04d1744fede24a120851cf94b7d72fd713b0bc4962425aacb827d8a"
+      }
+    },
+    {
+      "case_id": "MFDS-083",
+      "mfds_item_id": "202001338",
+      "drug_name": "다모사정(모사프리드시트르산염수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NB7nLey5kP",
+      "original_sha256": "ff6da4b0e4710d42a61f660c09319008e2c65525a1244be9f834517a4471c53d",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-083_front.jpg",
+        "back": "MFDS-083_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1ec8449f21f64a209c4b88cff524e09bb4d92db249a457432583486b39976fad",
+        "back": "a08b4ceef2a671d504c015cb2cb6f0b16069062bfbb54e1bbaaff86dd9d766ac"
+      }
+    },
+    {
+      "case_id": "MFDS-084",
+      "mfds_item_id": "200710888",
+      "drug_name": "부로바정20밀리그램(레프루노미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427916805700033",
+      "original_sha256": "ee3273a3b9f8f3e0a404f9ec4d87034e8f71ededad826918d25e03900a576ebd",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-084_front.jpg",
+        "back": "MFDS-084_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ee58db242545c6746e57e029a0a7f1ed3473598697b55bb479da6985177f18dd",
+        "back": "4e78cb81bd66acec3b236c5b26cf46d20107e8956b2340a37c95bdf0b215493e"
+      }
+    },
+    {
+      "case_id": "MFDS-085",
+      "mfds_item_id": "200307647",
+      "drug_name": "싸이토텍정200마이크로그램(미소프로스톨100배산) ",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OGKGbIalmq",
+      "original_sha256": "6a0470105bcf2397af83d08968b1868e831785ddec7ac241d11ac286a10414f3",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-085_front.jpg",
+        "back": "MFDS-085_back.jpg"
+      },
+      "file_sha256": {
+        "front": "af0809acbf9d77fd391888bad9410432118f46da9402c85cd18d3539e0b32c78",
+        "back": "ea3566ca32dd159545b27b6b92aaa4e06072ea580eee259d978214a1f4dfefdc"
+      }
+    },
+    {
+      "case_id": "MFDS-086",
+      "mfds_item_id": "201003483",
+      "drug_name": "헬스조인트400정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426497267800060",
+      "original_sha256": "813b973707c26d26ad41b98220afa35b22b4b21bcccfe518afc2d43208e4e5a0",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-086_front.jpg",
+        "back": "MFDS-086_back.jpg"
+      },
+      "file_sha256": {
+        "front": "95371d7cde852a82f6fd0892375dc6a54ef0d5262ca2939d317a0a4e5717288d",
+        "back": "8b231bdc666bc5e523c8b7c81945901f3ae00a8502ddbfbb432dcba448c57e7f"
+      }
+    },
+    {
+      "case_id": "MFDS-087",
+      "mfds_item_id": "200301069",
+      "drug_name": "마이부틴정(트리메부틴말레산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OlGSH7jtDN",
+      "original_sha256": "eec4e7a3874ffb7f8cf10ccd78208cd944e471ebc23d58f541e808c08b88902f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-087_front.jpg",
+        "back": "MFDS-087_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f23890a8e9e965023e1979a2085bcf9e8e4bcacd0bb90deb771a81738074ac25",
+        "back": "bc3f8aeb73fa4562cc5a4858f90fcbefbf05c6818314168b82fadd2ec62affd9"
+      }
+    },
+    {
+      "case_id": "MFDS-088",
+      "mfds_item_id": "202105342",
+      "drug_name": "자렉스정15밀리그램(리바록사반(미분화))",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NlqFJEgBZY",
+      "original_sha256": "94ab944aa7becbcd8f23df140b0bbee746280c97568eb5295e6c91c0c7d72529",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-088_front.jpg",
+        "back": "MFDS-088_back.jpg"
+      },
+      "file_sha256": {
+        "front": "64d0ee3dc4445903c8b57e6445f2166a07f1170b2a517747a92a95eb11ac3802",
+        "back": "23321a3cede18457fece56a61efe402b3e931301dcfc6de755c82a25aeab6f9e"
+      }
+    },
+    {
+      "case_id": "MFDS-089",
+      "mfds_item_id": "201310318",
+      "drug_name": "파라몬정(리마프로스트알파덱스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426806030600027",
+      "original_sha256": "91dd8c83e57c7d590843ff64396cc86d70fd0dd40425cecf60c52be96f3b3705",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-089_front.jpg",
+        "back": "MFDS-089_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ae7c7beb4db6cfa8d04e1df5293ee2c315999330386f005813b75d1fc9db73d3",
+        "back": "71e1e9a70c5d127e7f5e223680f412cd10968a35998fa5b95c4acc527051b697"
+      }
+    },
+    {
+      "case_id": "MFDS-090",
+      "mfds_item_id": "201902859",
+      "drug_name": "프로콘틴600정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1O7oG5g7jgh",
+      "original_sha256": "59df35763c96ac8240473de4ce0795e379b26f8c2cd74c220b7fcaa30b27cf33",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-090_front.jpg",
+        "back": "MFDS-090_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2aff398c39c030b72b56de3dfc354eeb7fe2427ae07e9aa92c22691a7f423f2b",
+        "back": "3b82ddaa34f8f8c62ccccc60805d3f28f6d8b1eb79c0d751692d92af7def610a"
+      }
+    },
+    {
+      "case_id": "MFDS-091",
+      "mfds_item_id": "202302896",
+      "drug_name": "다나그라정100밀리그램(실데나필시트르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OnUY_VtDIX",
+      "original_sha256": "49719273236f480ce5e7c08850ee388fd71e1ec14c0ad8135f89ac1cc8e8400e",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-091_front.jpg",
+        "back": "MFDS-091_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2482f1da14eec567e9d5486927e48f3b8c0b5408fae9fffa3ffe6a9240975d16",
+        "back": "6ad8aa1aeaf1c2d5008a9e6ea56fd9fda1f72041065860ccc67aca908edd1a81"
+      }
+    },
+    {
+      "case_id": "MFDS-092",
+      "mfds_item_id": "202002938",
+      "drug_name": "니코챔스정1밀리그램(바레니클린살리실산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6Ibe",
+      "original_sha256": "13d7bba462c2e35cdfd3f1d915388ff418513bb61ead8142fee65d172094e688",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-092_front.jpg",
+        "back": "MFDS-092_back.jpg"
+      },
+      "file_sha256": {
+        "front": "e165910993b3e850b2a2ac93e7b175228fc09184d1c749eb4dda3fefcd8fa39b",
+        "back": "31c026238bd40661b41f183eba8b2d788311ccb7097234b6f0e6321ef92f6246"
+      }
+    },
+    {
+      "case_id": "MFDS-093",
+      "mfds_item_id": "200606183",
+      "drug_name": "뉴론틴정800밀리그램(가바펜틴)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1O0bxj5Fj-f",
+      "original_sha256": "a63e3adbc428b36f837cc9f980a92de27403ad77c14786a86a099aa5986ae6b9",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-093_front.jpg",
+        "back": "MFDS-093_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1ad40e37a86df1461ba6a28abc61d0e8cf8ed32ecf0c7a786632d481c5019584",
+        "back": "ba926de29c13e4662a85b435dd51cf18af23e0bed4c6fd7ab2de3321db395636"
+      }
+    },
+    {
+      "case_id": "MFDS-094",
+      "mfds_item_id": "202601150",
+      "drug_name": "셀바디정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pyl1hEUMuF",
+      "original_sha256": "cf1c76323b461a84d5ce72db26d0f207cce4dc46d2f09f97df99978ed086852d",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-094_front.jpg",
+        "back": "MFDS-094_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4e75a9d36709b04b8049120f349b4d5ae73cdb1d4b7c16646f65beb581147c3e",
+        "back": "0d7f04bd6cdd5ff210ef6675cf4a48249ccbd1a9b39b18db884616c41c6188f0"
+      }
+    },
+    {
+      "case_id": "MFDS-095",
+      "mfds_item_id": "202204500",
+      "drug_name": "판시자임정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OSWzHKsTtj",
+      "original_sha256": "cc0e81f8d7f4ae53c5454180220ff88d58a55ccf41fd1e5e0b9e430dc9b35544",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-095_front.jpg",
+        "back": "MFDS-095_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2c320723cba2cb8970163cd97d25cbdc7c1f273c2c322dc34a2c59f56f5345cb",
+        "back": "dc7b3bc524022554de17537ee2c160b65c8f156dd38fa2a962dff4a5d5567b44"
+      }
+    },
+    {
+      "case_id": "MFDS-096",
+      "mfds_item_id": "201402138",
+      "drug_name": "엠티콜론정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/146032766433100136",
+      "original_sha256": "25d77ffa01fd976a6852e11eb7a5ecf12f359c707a8d420b992a68b091f1662f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-096_front.jpg",
+        "back": "MFDS-096_back.jpg"
+      },
+      "file_sha256": {
+        "front": "42b7f9c7bc2c3a167c2f44b3741ba062879f44ad39bcc449f4fc2b23a680a1a3",
+        "back": "2101a8cb259ae53bfe3cc1ab7ee9362b440e4dc69e15fe30cdf38cd9555c78db"
+      }
+    },
+    {
+      "case_id": "MFDS-097",
+      "mfds_item_id": "200700634",
+      "drug_name": "스틸녹스정10밀리그램(졸피뎀타르타르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Opnl07NLdP",
+      "original_sha256": "c946499e16ed7842a5bd42c692e350b6d42a5acf11125dffe0c8f1b9e849de0d",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-097_front.jpg",
+        "back": "MFDS-097_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8b007d6b2cad959fe6b342170f118c6ee91fe53a249a37cab2cd38416bb55a0d",
+        "back": "f4e65bf8e22c1d6ee391f3a87c0ca7f411fbd3dd3f30874d391ffc260a947690"
+      }
+    },
+    {
+      "case_id": "MFDS-098",
+      "mfds_item_id": "198300718",
+      "drug_name": "모노신정(독시사이클린하이클레이트수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OneiO4vTiQ",
+      "original_sha256": "9f6000819baf2e4a5d76d095356b52fcaf532976378914e66a69dd526f62523b",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-098_front.jpg",
+        "back": "MFDS-098_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b00ffc290a73cd67455e0fbe4adb0ef06d0cb971f17e80e48319e79a61b471c5",
+        "back": "a0121811be0dc60ba1bee2ee121acbd35672001760f4eba9c5106c36037c87c4"
+      }
+    },
+    {
+      "case_id": "MFDS-099",
+      "mfds_item_id": "201607019",
+      "drug_name": "헤모나민정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150186122556700012",
+      "original_sha256": "c2f2ddf28acbd2283b700ca93aad6cc03a07abee7525eea427d0d9201386a7a3",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-099_front.jpg",
+        "back": "MFDS-099_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ff43f63f65cfb1dbb4d1913a9b1149a582d82ad1ca649a5f5a191f8e63bc081f",
+        "back": "dd2f8687994df91ab51252ac5ff1f9cdf0046fe2b3e7811f7317bb6d73076ef9"
+      }
+    },
+    {
+      "case_id": "MFDS-100",
+      "mfds_item_id": "201900850",
+      "drug_name": "클래투정500밀리그램(클래리트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MksuF0DXnI",
+      "original_sha256": "60e8f92000a891d814aeb3dc770d50d93a5e830cca73ef5c0f2f599b1c49062a",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-100_front.jpg",
+        "back": "MFDS-100_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2c67a31a03a55500f464ddf82bd59fd4f1cff2b7666ee176f6b61f571771dafa",
+        "back": "6bd26d01984ff0989aa643d4ae874cfddb66ccb9f0b9a2f0bfe9dd1370aca151"
+      }
+    },
+    {
+      "case_id": "MFDS-101",
+      "mfds_item_id": "201307821",
+      "drug_name": "동광몬테루카스트츄정4밀리그램(몬테루카스트나트륨)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N3ivmErsnG",
+      "original_sha256": "1ef53896c02770e52a321270e89b8e815d2234305463d13af5a7b96aff7f3763",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-101_front.jpg",
+        "back": "MFDS-101_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8bb4cc32a629624def1fcb40ef1a9c33812a3712eea164892c2189901d64a7bb",
+        "back": "3ad1fca280d2ad74bff57076e060f3f068df53a42385609e3d253050c9622b2f"
+      }
+    },
+    {
+      "case_id": "MFDS-102",
+      "mfds_item_id": "200008796",
+      "drug_name": "젤로다정150밀리그램(카페시타빈)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OnWl157lbM",
+      "original_sha256": "883a84162642ed7d61e5f85f494a11f7afa9c1f1f17fe337aaf171084f90ce85",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-102_front.jpg",
+        "back": "MFDS-102_back.jpg"
+      },
+      "file_sha256": {
+        "front": "09bc17ea3e3f6562df7b30a059d19576c74b55f2452fe6737c05462c60d13a2b",
+        "back": "78ec04a85347b5b29712c73d53d5c770b616c86557625e86b750867a91bc6fa3"
+      }
+    },
+    {
+      "case_id": "MFDS-103",
+      "mfds_item_id": "201700399",
+      "drug_name": "라코팻정50밀리그램(라코사미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148682304213600147",
+      "original_sha256": "680518c1ee120e54dd2f5af45cd1963670938fab25776da0768e8cc69f00916a",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-103_front.jpg",
+        "back": "MFDS-103_back.jpg"
+      },
+      "file_sha256": {
+        "front": "811806bd1cf13c8e146633d53aae7361a83309faf42fa57bda8678fce90d0d76",
+        "back": "83f28fde680d77f5e609b25be7bf8bcfc7831a2683f2f3fb1d26de646d193b4f"
+      }
+    },
+    {
+      "case_id": "MFDS-104",
+      "mfds_item_id": "202300884",
+      "drug_name": "바다넴정300밀리그램(바다두스타트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pm1vy6QK4v",
+      "original_sha256": "98fe2416c692f71913ae18b42f93ccd7568b07b417a2c45a4d298c2a249852d7",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-104_front.jpg",
+        "back": "MFDS-104_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a8af12497ac0940da98de357a9cd93a43b9b2c3bb0fe98a20334e59101781af2",
+        "back": "fe76baa9bf8a8e3b7f20ab14e439f6be3619dd55b7ed27839523b32090245dc9"
+      }
+    },
+    {
+      "case_id": "MFDS-105",
+      "mfds_item_id": "201706804",
+      "drug_name": "위클린정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150852483214500007",
+      "original_sha256": "30f0817ee24d6db0340477c5f9c20a8187568e924f6d022cb6fa466b9e2d15f1",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-105_front.jpg",
+        "back": "MFDS-105_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f8d8848fe30bbf897c94efcd3a42a581b1950f7bea1562ef1c4a0771c3712301",
+        "back": "5785213c08ddac691f30de102c7d60d0c75cd03042fbf1b6a426bcbae15326e0"
+      }
+    },
+    {
+      "case_id": "MFDS-106",
+      "mfds_item_id": "201404361",
+      "drug_name": "클래린정(클래리트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426928131000118",
+      "original_sha256": "9eca2bc1ce10f96d3f7035a3c053f457784eb37e41eed7107a4555d97995282c",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-106_front.jpg",
+        "back": "MFDS-106_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bbbdbb44b871f9c05466d486ab36fed4ee7762a040d07eecf9cfbc2f15d3e2ac",
+        "back": "e1109845df391532d1cd0e7c51556b83fff2ad256eaeff9c7fc49f02bbeb7ff7"
+      }
+    },
+    {
+      "case_id": "MFDS-107",
+      "mfds_item_id": "201003398",
+      "drug_name": "리세토정150밀리그램(리세드론산나트륨2.5수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154333336303000026",
+      "original_sha256": "dc1167060fd97d791864bf393791751e1a7bbd1591368cd11bd5c885971e9ed2",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-107_front.jpg",
+        "back": "MFDS-107_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f57843caea462588a63a9062f3247e46302ce37954265e5d8f298fd9d168bc19",
+        "back": "657960ce732dd5ee73a585c32b9a46586e86c04124272e00f4e7dccf381113b2"
+      }
+    },
+    {
+      "case_id": "MFDS-108",
+      "mfds_item_id": "201908019",
+      "drug_name": "프로아모정1밀리그램(피나스테리드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MyJO_nSzn1",
+      "original_sha256": "13964d2d9d42f9bdb0723839f4bacd038390e388ccaf0ec7c9d4263685f41912",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-108_front.jpg",
+        "back": "MFDS-108_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1dd41bd63d4655376c16bed775c1ceb2c6912e42d4cb011f95c414a68cb03dd6",
+        "back": "996617e57d109687465b5fba9be5d4e5fadde23b322710729b9878fd7cf4a076"
+      }
+    },
+    {
+      "case_id": "MFDS-109",
+      "mfds_item_id": "202401820",
+      "drug_name": "펠로정20밀리그램(메만틴염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PqCjCpvNIU",
+      "original_sha256": "c3af950c42161c553b48a3058546abaed6bd5b0d456d5c38e06707677ac2293b",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-109_front.jpg",
+        "back": "MFDS-109_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4378d4430604cd021cb700b9fa1a4e53f8bb9915cb5f325bdf3b3164b6e2cb7f",
+        "back": "38d6a6b91ef13f4d1826b2ac9cbe9fd0f758ef9957bf254c8a87a9bff20ef903"
+      }
+    },
+    {
+      "case_id": "MFDS-110",
+      "mfds_item_id": "201705472",
+      "drug_name": "경방작약엑스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1yrm",
+      "original_sha256": "2ce59e54366a5b6ba4d0e067593c4a346598b9e1a5fd8bfad0b8719b8583d7ea",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-110_front.jpg",
+        "back": "MFDS-110_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a7489367290790622af7b39df716c252db72b97c5f5a7ee838737b8c01df5d48",
+        "back": "bccf77ca2829398ce30fafb2e68769e111c232c727dab1b470987d66ea1f01ad"
+      }
+    },
+    {
+      "case_id": "MFDS-111",
+      "mfds_item_id": "202000147",
+      "drug_name": "마그네정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N8jUtEiHag",
+      "original_sha256": "fdae7b798343bd48dabf828c31fe662a49483a3c68c4da62e095b1516d1624ab",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-111_front.jpg",
+        "back": "MFDS-111_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b826ea814b40a170dd82dc2836c5e026e927e86b3c03adb708bffe56253164d3",
+        "back": "205d2b15fdb141e057680ecb72b540ee1166601f54b894a86a174c8e093859f1"
+      }
+    },
+    {
+      "case_id": "MFDS-112",
+      "mfds_item_id": "201605093",
+      "drug_name": "경방평위산정(단미엑스혼합제)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148794218042700161",
+      "original_sha256": "0c5946585a45db6ceed03e2a49fdef14b8ab98543040f76b5d0578842ea7d445",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-112_front.jpg",
+        "back": "MFDS-112_back.jpg"
+      },
+      "file_sha256": {
+        "front": "919cd5551a00f59ae719aac03b24f7a81a9ece802308a74b6af561bb8abfab88",
+        "back": "71ab9e88e4d4d872636f2f267171fde68f86057da144049c98ae982d3f098c47"
+      }
+    },
+    {
+      "case_id": "MFDS-113",
+      "mfds_item_id": "201604973",
+      "drug_name": "경방소청룡탕정(단미엑스혼합제)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148794218042700173",
+      "original_sha256": "a3c197d1a6cef1004fd56365cd03b06a0b6fddfbd10c971ee4b5bfe4c35a7406",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-113_front.jpg",
+        "back": "MFDS-113_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8c492c65c3e46f7e7307bbd97ff75c3345dc3eae196576af164b55e974cfde80",
+        "back": "93de350efbed14c281a552f0722a32b0768a64403e0cb2cb2546c9c802db1ce9"
+      }
+    },
+    {
+      "case_id": "MFDS-114",
+      "mfds_item_id": "201803800",
+      "drug_name": "신신피나스테리드정1밀리그램",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154730760479500094",
+      "original_sha256": "394ba416d54d83e1e78d9f92d43bee2244b6981f057ab404d82cca382aa2071c",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-114_front.jpg",
+        "back": "MFDS-114_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3374a1846fe41cb0e85d3acea6cd85a23cc823fe37958b25f0151903bf2d892f",
+        "back": "7b32ffc53f15b9a733928bc7e9a4f0ba8a07800090831009642db084cdf48864"
+      }
+    },
+    {
+      "case_id": "MFDS-115",
+      "mfds_item_id": "202502257",
+      "drug_name": "실로듀오서방정200/10밀리그램(실로스타졸, 로수바스타틴)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PjXUza3c_6",
+      "original_sha256": "c6b3c9cfa1dd32b96bb2e117b6254c0a77b1e3f4636e40d5e6aaac35f0f4cfbe",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-115_front.jpg",
+        "back": "MFDS-115_back.jpg"
+      },
+      "file_sha256": {
+        "front": "5918e0981e3737987c54f414ee4afb4443a31b43f723e3b510f652ce74dd2327",
+        "back": "19fbc15a48155842dbc733d0834e252b415e1d8d74fdf98577c74e0c6be35659"
+      }
+    },
+    {
+      "case_id": "MFDS-116",
+      "mfds_item_id": "200200928",
+      "drug_name": "제이알히드로코르티손정5밀리그램",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MwjLoFp4Vs",
+      "original_sha256": "deab5fb4223f8c1126202ac0bd5f9eee9ce092267a64721e6a250e1c66af3083",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-116_front.jpg",
+        "back": "MFDS-116_back.jpg"
+      },
+      "file_sha256": {
+        "front": "0fb6492b7f4621f009798104fa8f46877ec6ce178639f84ece3eb4040691e523",
+        "back": "5ebb2cb311bd0e7640a809b8a68b7e9c2cbfbbe9e839e65e3e23a85ca1fdf62b"
+      }
+    },
+    {
+      "case_id": "MFDS-117",
+      "mfds_item_id": "200201554",
+      "drug_name": "에이치엘비알벤다졸400정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NgH462H54O",
+      "original_sha256": "56c0991125b8171c56abe4010bd4998e11528f49b1f153e800748505ca9b84a1",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-117_front.jpg",
+        "back": "MFDS-117_back.jpg"
+      },
+      "file_sha256": {
+        "front": "974642231362195a0954932035299952e22c0b080b5d142f50baad1555fa8095",
+        "back": "d5849266a854bce70bdac0a469be8ae9f85afb52e056cbc2307c2674071deae3"
+      }
+    },
+    {
+      "case_id": "MFDS-118",
+      "mfds_item_id": "201600425",
+      "drug_name": "모페시아정(피나스테리드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OrQqo5V9f_",
+      "original_sha256": "c2273d9169a1f0132da5cbafcd5d14a80d17ce6a74e0d14cbc47807b472bad20",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-118_front.jpg",
+        "back": "MFDS-118_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6da8ac3f90e2eca241e79afeeb365e530abe0c90df0ee323f1c9278bcdb3a2cf",
+        "back": "afc128cfb010cd11fa792d9de03ea88c95f77084f2d23772e9c4857d5248e7e7"
+      }
+    },
+    {
+      "case_id": "MFDS-119",
+      "mfds_item_id": "201604699",
+      "drug_name": "리세드론플러스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcibs",
+      "original_sha256": "b629427b2c93ac31ed6181bc0acf955b24e97288b84cf3b99115d6467805e023",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-119_front.jpg",
+        "back": "MFDS-119_back.jpg"
+      },
+      "file_sha256": {
+        "front": "e98064cd676cbd99613c26defa252a88c14dce480f1b86bf5cf610c327bdf533",
+        "back": "0a259861f42d827a95d9a4d09eead3c446eabea7b4bd8c51ea566dffcaf1eae6"
+      }
+    },
+    {
+      "case_id": "MFDS-120",
+      "mfds_item_id": "201802764",
+      "drug_name": "비카페롤정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1O0bxj5Fjo-",
+      "original_sha256": "7df0ec7b9af65e04771f48836e839291b97d31e1a0ecf8488add2a75d4855155",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-120_front.jpg",
+        "back": "MFDS-120_back.jpg"
+      },
+      "file_sha256": {
+        "front": "be35b218d989b752d22030e580827e124f21bdd8c835fdede462b6a4dbe592db",
+        "back": "1e6ee76fb950062c4fb18dcad0277d607c719172471f44d47bd2fae4bfa3ce29"
+      }
+    },
+    {
+      "case_id": "MFDS-121",
+      "mfds_item_id": "202400825",
+      "drug_name": "그라톤정240밀리그램(은행엽건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PamqCHLjkQ",
+      "original_sha256": "262d7cbc93f972c6a44df5f1edda157bc07fd74f76cfdc856538ab9d07baa07f",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-121_front.jpg",
+        "back": "MFDS-121_back.jpg"
+      },
+      "file_sha256": {
+        "front": "02e457927df75d644f88384a00db4ad5683ec1e8c9d0ab64ac800167c7be5875",
+        "back": "b00e24a73bb112046cb99c21f1a78eb1ce5210bf07012676fbdcdb1d9bf071c2"
+      }
+    },
+    {
+      "case_id": "MFDS-122",
+      "mfds_item_id": "198000572",
+      "drug_name": "베노라제정(배농산급탕건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MnfO1MVz-u",
+      "original_sha256": "a74d54afcf27849e315dc4a515d3fcfe7f073e35760655f750a4040377f20571",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-122_front.jpg",
+        "back": "MFDS-122_back.jpg"
+      },
+      "file_sha256": {
+        "front": "339148145061412ce1d32d0145c74ac81b28c84fbf9d840e3cf3677532bbe7c0",
+        "back": "4a02ab7907bab04f2a108e7608a11530f7846fae7d7de403f64d7e241a7826b2"
+      }
+    },
+    {
+      "case_id": "MFDS-123",
+      "mfds_item_id": "198700581",
+      "drug_name": "카미신정(미데카마이신아세테이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427430091800066",
+      "original_sha256": "8e8ca223bdf588b59860f4db07b40423e2d31356c0f46bc4cfdc7985c6773fad",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-123_front.jpg",
+        "back": "MFDS-123_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f807418acb87fe1ec3de3b86229c046eed0cb8f6f98695745fff8160887c7cf7",
+        "back": "bc1c6c2cb896fdbe4cdd768ba33fc487dace50b68ea75e1049395ae70b0dd56d"
+      }
+    },
+    {
+      "case_id": "MFDS-124",
+      "mfds_item_id": "201901360",
+      "drug_name": "페북스정80밀리그램(페북소스타트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MhfYG_kzhH",
+      "original_sha256": "96f5f792729c0e4e3c5b1cf8c60bcdf4ed308a2ca7a7eb78301ca6177dfa72e4",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-124_front.jpg",
+        "back": "MFDS-124_back.jpg"
+      },
+      "file_sha256": {
+        "front": "235b0288246923885356ebbed3a4f431cf726a2b0291e4ecaf26fbaecda6009c",
+        "back": "24a924fb9258db2560d4d96020c15fb24da15bc1711c3f471a01d4ebbafcf929"
+      }
+    },
+    {
+      "case_id": "MFDS-125",
+      "mfds_item_id": "200402547",
+      "drug_name": "메토펜정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428162236600108",
+      "original_sha256": "587c2d7cc58b5da09c22135c68b11385ad6a10a04314b6876daf555ba5da44cf",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-125_front.jpg",
+        "back": "MFDS-125_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1f6ed8baaa9348fee16ab424261d5d6e80011b09a9d6613e5ab57379f579f38f",
+        "back": "256c209e2b730ebeb3c914c60f341b864d5e21f756410634439424aac19e45e8"
+      }
+    },
+    {
+      "case_id": "MFDS-126",
+      "mfds_item_id": "202600977",
+      "drug_name": "아미노바정(니코틴산아미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pwu-cb5ok_",
+      "original_sha256": "1d1125a47211088956191fe668082a006aca9dc0c70a2d641cdfc2d0e3176418",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-126_front.jpg",
+        "back": "MFDS-126_back.jpg"
+      },
+      "file_sha256": {
+        "front": "34383d7ece63e083703898fdfe935fda6da09d32041bb1210819d6e6a9ae13d5",
+        "back": "c7e6d124f101d5fc598330c11a1c8abec9eac17cb0b0569ef1bef4cef516f549"
+      }
+    },
+    {
+      "case_id": "MFDS-127",
+      "mfds_item_id": "202401475",
+      "drug_name": "푸레파센600정(디오스민)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcjME",
+      "original_sha256": "2addcff136dd2f6d889099a42222f88f11d9b10b8f72b04e9415c46dc5f986e1",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-127_front.jpg",
+        "back": "MFDS-127_back.jpg"
+      },
+      "file_sha256": {
+        "front": "fe4799fff992151d1c837d870f09ec29a8eeddcd02b44c3a7a462ac9fd5d3683",
+        "back": "7c8c1076967362b28fb9a87d1776b2f8a84dd126ea512f2868d62751956efce6"
+      }
+    },
+    {
+      "case_id": "MFDS-128",
+      "mfds_item_id": "201102543",
+      "drug_name": "콘비400정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N1Z0LZLCX0",
+      "original_sha256": "2a0434e078dfcb811d1d6fae2fb4670fe65b467c714d2ffcd3ad610059a97f60",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-128_front.jpg",
+        "back": "MFDS-128_back.jpg"
+      },
+      "file_sha256": {
+        "front": "684b35ddfa8673d91871e79db5c712635a971f97d0c77a0ca69124a557b539cf",
+        "back": "8e46bc981e4e868107bfe9463ed53c71abd67bf999ac20f9dc2486f56fad992f"
+      }
+    },
+    {
+      "case_id": "MFDS-129",
+      "mfds_item_id": "200904615",
+      "drug_name": "알벤졸정(알벤다졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NCzXnoXF6u",
+      "original_sha256": "cf6842e9c28ef592136fd031f443e2d45fbe327f6eeb9213e77f98617587043f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-129_front.jpg",
+        "back": "MFDS-129_back.jpg"
+      },
+      "file_sha256": {
+        "front": "754a9f21071f2c20ad74860dc649ed332dd227750f011d9e41017bc9dc3113b2",
+        "back": "836c93de47350ad263b558f8e865c125b5917a56e92b116248b022853358ea4b"
+      }
+    },
+    {
+      "case_id": "MFDS-130",
+      "mfds_item_id": "201401493",
+      "drug_name": "바라카비어정1.0밀리그램(엔테카비르)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426852464500052",
+      "original_sha256": "9ffa682f653b75b22912d2dc0d051af479e80cc408d7708a268769f1f13299ba",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-130_front.jpg",
+        "back": "MFDS-130_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bb8e609b1a7084ef0c6865f8e8b6099c3ad1603ff344679347f62d30a4d4eed2",
+        "back": "148543bcb59d96c050b213cd12ffbf5a39851d4b05a1b3d85d47e976e97a1784"
+      }
+    },
+    {
+      "case_id": "MFDS-131",
+      "mfds_item_id": "200606297",
+      "drug_name": "날트렉신정(날트렉손염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OneiO4vTlI",
+      "original_sha256": "8045535e6151d40dff3c49b69586f2c0297fee88f2228946ced237269b36897a",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-131_front.jpg",
+        "back": "MFDS-131_back.jpg"
+      },
+      "file_sha256": {
+        "front": "de181c87870e8bc94e2ab71f29f33f8f0781af85d50fab204ad86a9e1a208a62",
+        "back": "dc712f2a983c3d3d2e5a2d693881daa7e52d1cbbcdf4cd6656ac975a3093cadd"
+      }
+    },
+    {
+      "case_id": "MFDS-132",
+      "mfds_item_id": "202107912",
+      "drug_name": "실리스칸정(밀크시슬열매건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PNZZOu6vvF",
+      "original_sha256": "03e1dd2f53b22048b30b6e09e1e84be5d508eceb38966da2054af307d146d5b7",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-132_front.jpg",
+        "back": "MFDS-132_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8fafe2770a53a954bbb6072df3a7b7d3bcf2aeccdcaa6effc402785b8a28d2d2",
+        "back": "f758117ae2c4042df1f18a9dbe20ef55cd17bb877100c71ab61c7e34ebff75d7"
+      }
+    },
+    {
+      "case_id": "MFDS-133",
+      "mfds_item_id": "202402298",
+      "drug_name": "옴짜라정150밀리그램(모멜로티닙염산염수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pm1vy6QK0Y",
+      "original_sha256": "9b44cee85282af0a6410c5edc7adfe4504fd0dd378e7217d2b442f555a3aaefd",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-133_front.jpg",
+        "back": "MFDS-133_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c8f45a1f5c9f669965d986127164e910f6ecdf9d0c5cb0d4480cdb97551e5890",
+        "back": "eaddac86672a4c87a1e43d2f54cb50a777bfc55f9f1072ef983c54dd7e66cb24"
+      }
+    },
+    {
+      "case_id": "MFDS-134",
+      "mfds_item_id": "201501004",
+      "drug_name": "엔테케어정1밀리그램(엔테카비르)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427011143100006",
+      "original_sha256": "926b2f9ec223bed06c187bae5a29f85cf40a72724b87fafafa5a57d27f4fb209",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-134_front.jpg",
+        "back": "MFDS-134_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1fcebc9e572fc30a8b9bc74b03bf1558cb9636b33d011793991784d8e2b7b801",
+        "back": "4d5cfc6e3c1b2903e107ea9c3577941e96970539b839d224d4a3dfc35398a316"
+      }
+    },
+    {
+      "case_id": "MFDS-135",
+      "mfds_item_id": "202400870",
+      "drug_name": "오테밀라정(아프레밀라스트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUccRX",
+      "original_sha256": "fa3a866d8c4ad812444de5779df6cb2110b849d376447493cf84650dba12b9ec",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-135_front.jpg",
+        "back": "MFDS-135_back.jpg"
+      },
+      "file_sha256": {
+        "front": "34b417399e0759cffd543756f8385b68a3c2cce1eac70843bf7c3db8b91e00ec",
+        "back": "d01e0b6733c22dc0ef743beaf0e57a4d14da29e808a0653183730ab44eb148e4"
+      }
+    },
+    {
+      "case_id": "MFDS-136",
+      "mfds_item_id": "198500856",
+      "drug_name": "미놀트로키",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MbTTkkq5WW",
+      "original_sha256": "02a480ffbfce379d84a2398239c34ed46f3eb9114f7acd13054c5deba38074ce",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-136_front.jpg",
+        "back": "MFDS-136_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b64baaf093ac152d5ec944126025b824ffd421e395be6b5a3b4cb2a381824fb9",
+        "back": "c1792ff9fea5832b886fb45775932d925a3198baf939ada83e17d046a500adb6"
+      }
+    },
+    {
+      "case_id": "MFDS-137",
+      "mfds_item_id": "199600950",
+      "drug_name": "칼앤비츄정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427748827800170",
+      "original_sha256": "d8e9361b8b7969c8876cd7de27ab0020fdc1bd2e6260cefddd1bdd0416476485",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-137_front.jpg",
+        "back": "MFDS-137_back.jpg"
+      },
+      "file_sha256": {
+        "front": "461488c6acc605cf67d5a57ba6dac2ee0e3abb093c560ca5962edb49dd8c3345",
+        "back": "cc80e9234f40e3927b665b37708dd956dece10f1bf0d93b7ef8e6dee6cee1428"
+      }
+    },
+    {
+      "case_id": "MFDS-138",
+      "mfds_item_id": "202400867",
+      "drug_name": "압솔라정(아프레밀라스트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PDhL8rva07",
+      "original_sha256": "b02d7fde849e32ba66d0737404cdac085f605e2f03853e8d5563de21f0816336",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-138_front.jpg",
+        "back": "MFDS-138_back.jpg"
+      },
+      "file_sha256": {
+        "front": "30042dd6fc779406921e7e6019ee96a435ac840ce561fcfbbb9e065762b54582",
+        "back": "c44fca9bc7098ecab4e27b89d3efe6a8eda152755f6a96bc7a39571b602bf265"
+      }
+    },
+    {
+      "case_id": "MFDS-139",
+      "mfds_item_id": "201401685",
+      "drug_name": "푸리민정18.75밀리그램(펜터민염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6Emf",
+      "original_sha256": "e958a0c4f6a0303b29e0c8b6180ba1ae3527b5a2d4a496a8d04a8aba79bfc1a3",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-139_front.jpg",
+        "back": "MFDS-139_back.jpg"
+      },
+      "file_sha256": {
+        "front": "e1d25e5791525b8bb41bc925d92d6db21860b5f6dbb84775faa8c28f1a222041",
+        "back": "e7257ef2c84e7baefae278f82b6d7ce55d80dbdb130b0d05022c0ac5daf52a69"
+      }
+    },
+    {
+      "case_id": "MFDS-140",
+      "mfds_item_id": "201708034",
+      "drug_name": "미스림정25밀리그램(날트렉손염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MfSEl6hMH8",
+      "original_sha256": "deb89e29cc9e108087368d957031002f87dff11eeb38e3b7f8be541bb3ae313c",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-140_front.jpg",
+        "back": "MFDS-140_back.jpg"
+      },
+      "file_sha256": {
+        "front": "cd1dc8c8649c8f73bf58dc70cf08f128ee7380831fa7fe08a0bc2c09534db0f2",
+        "back": "046f29e8a3b91cef4a7fde029f7299c741e07026f36bbde1a4cd31a3dde529d5"
+      }
+    },
+    {
+      "case_id": "MFDS-141",
+      "mfds_item_id": "197900378",
+      "drug_name": "신일베타메타손정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6OdN",
+      "original_sha256": "1e413b43912bd254c76e63ba41dcbd0cafc0a6d996051ecf054fbef7a05fea02",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-141_front.jpg",
+        "back": "MFDS-141_back.jpg"
+      },
+      "file_sha256": {
+        "front": "05edb413d1571da244af500fd7b5a6836075b2c92b3346282cecb1f30319a848",
+        "back": "ba48cd9e54ee1e3102a8d7802982045b98ffb8a4830ca59763143ab6e59c1ae0"
+      }
+    },
+    {
+      "case_id": "MFDS-142",
+      "mfds_item_id": "202400906",
+      "drug_name": "소프레정(아프레밀라스트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcem3",
+      "original_sha256": "25aa48c495597d6f5539ac776cf7b4fa71a979f56eb088b7c4491af731cc2165",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-142_front.jpg",
+        "back": "MFDS-142_back.jpg"
+      },
+      "file_sha256": {
+        "front": "dcd54c04fc878cf695eb160b57a023d97491a31a152890bbe4a42a1c6703359c",
+        "back": "fdc252e99381d69dfdb69f8e9a5bad12a6bc0ba5c05c5f2d3b1b19acebb492e5"
+      }
+    },
+    {
+      "case_id": "MFDS-143",
+      "mfds_item_id": "200908745",
+      "drug_name": "클로미딘플러스정(건조레드클로버엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MwjLoFp4_o",
+      "original_sha256": "5a9f4e14d49de9532bb6813d696855270173ad21b47aae2497c2d3ce624a3d12",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-143_front.jpg",
+        "back": "MFDS-143_back.jpg"
+      },
+      "file_sha256": {
+        "front": "cb5f732d665d8e4eb5a38ac6361fdea36c758305ce389a31ce38c64429633512",
+        "back": "2f04c45ee2a096bdfb676a611f0b7927872817a599d8a1769cc51b8fca1e63c4"
+      }
+    },
+    {
+      "case_id": "MFDS-144",
+      "mfds_item_id": "202002390",
+      "drug_name": "요를레이트로키",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NB7nLey5lb",
+      "original_sha256": "bcd464b97c38d05a9d802d535eb77dec52b5b9b98f52d2c064f25614f97cd920",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-144_front.jpg",
+        "back": "MFDS-144_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b07131f8cae7d3bc62b053b0cc8d827212265e132490142eebeff4cb24d72d56",
+        "back": "f8a1d0ac59c91875e171b669f006dc2edd7647cb559f850a3479e1b157c56d6d"
+      }
+    },
+    {
+      "case_id": "MFDS-145",
+      "mfds_item_id": "202000214",
+      "drug_name": "리놀에스트로키(플루르비프로펜)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1P2JYwFsANj",
+      "original_sha256": "14bfad94e62fea13394d4a51844b19fb71b1b8b75d8b7059bb710d330a20a798",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-145_front.jpg",
+        "back": "MFDS-145_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f57bf620ce4732dfb0d9fadfd961bf2da7707545f2f7ac2f61bd6f954a0c0631",
+        "back": "3da7b0005a6a158edfbe1b39fa1d0a3b072570a6ee15ad449221de63189c923f"
+      }
+    },
+    {
+      "case_id": "MFDS-146",
+      "mfds_item_id": "202006992",
+      "drug_name": "콜콜트로키",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NRID60LgJc",
+      "original_sha256": "1ee20228603c797645d60da3b52c27ca9e03fbe182f0f776c44b1642c29ecde6",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-146_front.jpg",
+        "back": "MFDS-146_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b60d659781c56a208a195e91d1c103dcac6ddc5f816bbcc7a171f3a804332749",
+        "back": "bc060a528ef8f040fbec5df39075da0eec8cfc291a76b41b766788578e51a807"
+      }
+    },
+    {
+      "case_id": "MFDS-147",
+      "mfds_item_id": "196500051",
+      "drug_name": "지엘타이밍정(카페인무수물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NAT_bwbZd9",
+      "original_sha256": "c792a433d4fa7572fdea135110c1414f267fcb8bf29f38fa86aa8711904cf203",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-147_front.jpg",
+        "back": "MFDS-147_back.jpg"
+      },
+      "file_sha256": {
+        "front": "fea4c3ebdb6a3cbbd2546fa9cccdbf53fed7315149746c82db12ead337da11e5",
+        "back": "67f79020016029fce07b4b37780f1e99a6956079beefbab7c1de6ce2c7d8ebd7"
+      }
+    },
+    {
+      "case_id": "MFDS-148",
+      "mfds_item_id": "201309969",
+      "drug_name": "휴터민세미정(펜터민염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1rAX",
+      "original_sha256": "2febc7e012be0a7928a94905a7f3d21baab13749dff85e3cdb897c3af3bf519a",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-148_front.jpg",
+        "back": "MFDS-148_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b2a0cf99db55fa456ed369404193c3a05537d3cfa17141665b8f3d0952539a39",
+        "back": "554f3dd5bd7aecc45eb5c6b84b75fe2d4a4be661f05c01c82a9f15ccce1a5d71"
+      }
+    },
+    {
+      "case_id": "MFDS-149",
+      "mfds_item_id": "199400891",
+      "drug_name": "알콤정(플루벤다졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147809049909500022",
+      "original_sha256": "351ae92eb6b86c3b1679a5ae53900b10c305ad63837967d50e27436c80b821a1",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-149_front.jpg",
+        "back": "MFDS-149_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c6a6cf1bc0a351e50fe75d2b56f6787c96712d92c1ff359ec346dc9698e306f0",
+        "back": "caa5c24934561e0bcd138b3c957fc71666e8e2e174e45ede91cfb5246d9f47ef"
+      }
+    },
+    {
+      "case_id": "MFDS-150",
+      "mfds_item_id": "200301846",
+      "drug_name": "아루진정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428307461400010",
+      "original_sha256": "db8a6d1276bec56dd7b27379f1e538a9c206480f148bbcb8ecd4a370de01823f",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-150_front.jpg",
+        "back": "MFDS-150_back.jpg"
+      },
+      "file_sha256": {
+        "front": "31c2a766e34140692d4bd8cc42c7474ab3c8135396c608ac6fa51968e4e2b7c0",
+        "back": "5a9e9c46c538509fccd6236294c0285d9d6e885e6394791aa033a7a98296513e"
+      }
+    },
+    {
+      "case_id": "MFDS-151",
+      "mfds_item_id": "198901574",
+      "drug_name": "디아코론정(수출용)(수출명:암브로테롤정)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NXVKYFvlHv",
+      "original_sha256": "e158ee6120077a5611523fbffefa3e711d43e56dadb440e57d3ad191f31b8dde",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-151_front.jpg",
+        "back": "MFDS-151_back.jpg"
+      },
+      "file_sha256": {
+        "front": "644a33b5c24c01d87e35c8d328dd90e0a5378d5fa882e26b3cb41cbb4f0cf030",
+        "back": "37ccfb9d9f01c78f19e3c54f0bb9731d11762c2a566da54a46a99b380cfac54c"
+      }
+    },
+    {
+      "case_id": "MFDS-152",
+      "mfds_item_id": "197900575",
+      "drug_name": "슈다페드정(슈도에페드린염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PEPKBUcmBO",
+      "original_sha256": "3d9b9d35adbb95c171951122cf9217e1d4649399b2c686420fa967139a878a5d",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-152_front.jpg",
+        "back": "MFDS-152_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c4c2c7395a33ad2c6326d4a9e937ebc041bb28b8c208723b2132e1b7d033848f",
+        "back": "1de01c041a52b6f28ec1f478bb2735bcf58be3ad545af6a69726bdcd146fa9e2"
+      }
+    },
+    {
+      "case_id": "MFDS-153",
+      "mfds_item_id": "200002822",
+      "drug_name": "티로메드정(티로프라미드염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OeD8xwO4hA",
+      "original_sha256": "355350eccf1ff21ca526c407e2a24c7da09398c2f9b43d7ac46150418de4ce89",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-153_front.jpg",
+        "back": "MFDS-153_back.jpg"
+      },
+      "file_sha256": {
+        "front": "17e833c547c8025d55fbefc74ebdd940f0cbd4de9c50469ce8bae4074570bd99",
+        "back": "69548af78b50d81beda16c4a50d94d0e4f7149c6068d809b2c9003b0fe10a075"
+      }
+    },
+    {
+      "case_id": "MFDS-154",
+      "mfds_item_id": "201606577",
+      "drug_name": "대화산화마그네슘정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NS5ZX4TpZH",
+      "original_sha256": "397f65c9e5fb18777838690aaa884aa92d738e90648b58ed86857587700a8995",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-154_front.jpg",
+        "back": "MFDS-154_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8939b64fee54bf4c5b96015a36ca11d94b32bc1b234257d582fcef4c5cecc343",
+        "back": "7f24a1ab038112a9d9b2ce0959e857e0d7ce094893385b2a5895fa2963c4d7f8"
+      }
+    },
+    {
+      "case_id": "MFDS-155",
+      "mfds_item_id": "200804287",
+      "drug_name": "이텍스비타민씨정1000mg(아스코르빈산97%과립)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427883772600005",
+      "original_sha256": "17576c7dbce33d23f04f86e0b32d18fbdac2908d513df9e36222e7ed8f7f5966",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-155_front.jpg",
+        "back": "MFDS-155_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4ae15e87aad1ab7e0b329a9f57e1997f8d9d85e8c2e7e3f943c8a86f65260249",
+        "back": "2e7bd91a3ad3055cd7fd6ff56a76d323db244f5b5cda445f9e7590a07f67fa09"
+      }
+    },
+    {
+      "case_id": "MFDS-156",
+      "mfds_item_id": "197800132",
+      "drug_name": "유한피라진아미드정500밀리그램(피라진아미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154601167157200141",
+      "original_sha256": "7ee531eb5387d94fa2730da5271087f42cca40ca918340ba4bd0e0e80f2522de",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-156_front.jpg",
+        "back": "MFDS-156_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f762dad97ca497d0882ba74af17b157660ff7414976f9c430fae0c5c3a80e763",
+        "back": "d62cf664340180bf03ef9b7a2ba10618988f8e0cf15891179153710a2a4ac45b"
+      }
+    },
+    {
+      "case_id": "MFDS-157",
+      "mfds_item_id": "201805203",
+      "drug_name": "알게텍정(알마게이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mgr_7YvP9Y",
+      "original_sha256": "92a38a1a7c9fffe0d94fda4d9cb7dc5301c0c5e480fef3cfdfb854bb5ea85e0e",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-157_front.jpg",
+        "back": "MFDS-157_back.jpg"
+      },
+      "file_sha256": {
+        "front": "09dabc4add01745f10f5eba2350141feb691ffec8775e04b4b7f2bad1848ad01",
+        "back": "d174edfdf90423f78b888437722ca5cdaa6c56f049dabedf4ab514c7f2f69341"
+      }
+    },
+    {
+      "case_id": "MFDS-158",
+      "mfds_item_id": "197400059",
+      "drug_name": "파무정(프랄리독심염화물,수출명:PralidoximChlorideTab.)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427329578900108",
+      "original_sha256": "084220085f2bee3fcc5a536acdadf4375cc26e707c72d4dfc222496ec49542d9",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-158_front.jpg",
+        "back": "MFDS-158_back.jpg"
+      },
+      "file_sha256": {
+        "front": "63e553596e5f16b7c982e63d4ebf6b63617dbcdbcf9d27a2d1ca21bb73366143",
+        "back": "44e0579a7e471627f6ec1b7be702037e9fc4c62865eab9c4dad3b5fd92dc43b3"
+      }
+    },
+    {
+      "case_id": "MFDS-159",
+      "mfds_item_id": "201205251",
+      "drug_name": "애드민포르테정(콜레칼시페롤과립)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1neO",
+      "original_sha256": "956e7e4c47d21cbde9dcfd6c384d24ad1059b855266f8eaea3e8c2ada03b502b",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-159_front.jpg",
+        "back": "MFDS-159_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3f8f1228bdea956e404522b16372ecae52d1213cab768468b3a0b179280d383d",
+        "back": "77d12ab38d070e4fa6221816c1d5573344a951cd403873b2dcdb8162323c6c46"
+      }
+    },
+    {
+      "case_id": "MFDS-160",
+      "mfds_item_id": "201106789",
+      "drug_name": "폴엔정(폴산)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154298778984500057",
+      "original_sha256": "f408c59cea08d7a063205906b5a0e8489bd060e8cdf28424301ea30862c89b26",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-160_front.jpg",
+        "back": "MFDS-160_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b1308553aa3d0290b6eff29cd09f30e788eff5f64d12732e41bfba482c94a437",
+        "back": "bc64bda735cbbaae87ffb01ec57024ba2e959819142429a8a753bfefdfb6ac0d"
+      }
+    },
+    {
+      "case_id": "MFDS-161",
+      "mfds_item_id": "201605409",
+      "drug_name": "트리람정0.125밀리그램(트리아졸람)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147759760473100170",
+      "original_sha256": "58cd99de7e860f42b3ec154977c7d0bfffb6a4cd1a6ac085dc117f851263ff21",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-161_front.jpg",
+        "back": "MFDS-161_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b261d0f2baaaf844af9593c14de87e0ab3b004b3e31fdbe9dafa15f7fb5a7584",
+        "back": "30d96bc0fa1b97c71fec51884f7b398173c133d6c7d6287c7d5bd0be2398a771"
+      }
+    },
+    {
+      "case_id": "MFDS-162",
+      "mfds_item_id": "200200332",
+      "drug_name": "락토큐정(락토바실루스아시도필루스균틴달화립)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147765846933000026",
+      "original_sha256": "4af5abc2dc3f8df50e96ff13c23f4342db85df725be96fe36c7d7f5cf3eca516",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-162_front.jpg",
+        "back": "MFDS-162_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a154cb0fcac30d8479e2c41a18abf404e0cc3ece7e8bc37e409dd5082c80e125",
+        "back": "a9b734ed3266ffbf7a1560f769ccd7f2646d63866861200d519b8a0c7ad2b61a"
+      }
+    },
+    {
+      "case_id": "MFDS-163",
+      "mfds_item_id": "201601595",
+      "drug_name": "메솔롬정(메틸프레드니솔론)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147290642243800148",
+      "original_sha256": "b80461a8288b35b3863182480e97f2d36c98bb8547569feadc2b736d78dd4e7d",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-163_front.jpg",
+        "back": "MFDS-163_back.jpg"
+      },
+      "file_sha256": {
+        "front": "1adb6ab45573ca12149220c3619f420e1d07eaafa2e48dbd6a39646fbd24eb11",
+        "back": "4ffe747fa6cf856662204e2abcc7d1305efc23d16245e1b95a276914fd152c0f"
+      }
+    },
+    {
+      "case_id": "MFDS-164",
+      "mfds_item_id": "199900929",
+      "drug_name": "니모톱정30밀리그램(니모디핀)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148609534390200197",
+      "original_sha256": "01e7fe908929fa98af233e1e929bddb62645f9ca862909c05567dc64f353a300",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-164_front.jpg",
+        "back": "MFDS-164_back.jpg"
+      },
+      "file_sha256": {
+        "front": "98dc61d05f15dd203c4f95d7dd1f0dd1bbf035cb7e382d785b8440e2f087a31e",
+        "back": "e2921a50b84152c7079a58304c85cc038fd2e9e1a261ddcee8a80da501cd72a3"
+      }
+    },
+    {
+      "case_id": "MFDS-165",
+      "mfds_item_id": "200301742",
+      "drug_name": "매프론정(메틸프레드니솔론)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427970624300126",
+      "original_sha256": "ed72c408f66561b00cc71cf00b83ab0fcd7d11729b7a86f4262e1c0d7c560c90",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-165_front.jpg",
+        "back": "MFDS-165_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b2ccaac0328e79f1157da06f25e5b8b886202a9fd79b61932a0b8e8d57f0d566",
+        "back": "f9d848902555aa5a1df9e4ad2d033fa165102d6ff7155158f8461649e19841cc"
+      }
+    },
+    {
+      "case_id": "MFDS-166",
+      "mfds_item_id": "201500653",
+      "drug_name": "후로닐정(나프로닐옥살산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427000324100081",
+      "original_sha256": "30203f6bad0cb31911ba42d8321b0a44f3bf8ce36582562e8127c7b2191dc5e2",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-166_front.jpg",
+        "back": "MFDS-166_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3ad0fd57685378bb04b4aa47e7b5625ac348f1cf14485c8c4d4d5c37fef2a7d2",
+        "back": "df1bc6ac1169a3f817b55a7578a7139054e01f7bd33648b0853e1dc499896584"
+      }
+    },
+    {
+      "case_id": "MFDS-167",
+      "mfds_item_id": "199901136",
+      "drug_name": "비바퀸정(프리마퀸인산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1akW",
+      "original_sha256": "28818812881ad57e17e695964de430a13692ef771f13310038a96379b7b2dc08",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-167_front.jpg",
+        "back": "MFDS-167_back.jpg"
+      },
+      "file_sha256": {
+        "front": "68f68c18f990d1e29fdb77dba3b836b41445f713f65858330ac7c6e1405a08e0",
+        "back": "8a84fd0df4c96e9ad92dd5189060d1f0651c7a5625ed6a2a8c2d822ece966c38"
+      }
+    },
+    {
+      "case_id": "MFDS-168",
+      "mfds_item_id": "201602542",
+      "drug_name": "티프로드정(티로프라미드염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148855560624900082",
+      "original_sha256": "74eb24125806075d264f67aee590c1c979224253655857a22c60241f98b5d364",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-168_front.jpg",
+        "back": "MFDS-168_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6c48765f0b26a7d82b87eb45518b064331c5fa7571d68da383cd1bb0002df411",
+        "back": "e482d9d4165ccd3079eb874bf93089977b66faabf7b143d246b2720041d07827"
+      }
+    },
+    {
+      "case_id": "MFDS-169",
+      "mfds_item_id": "199806333",
+      "drug_name": "살라겐정(필로카르핀염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pqda2Ed3GI",
+      "original_sha256": "f196e69b49a61ecfd3f8ee8f2542edddc8e271f4847624336d2c4a47d7297f48",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-169_front.jpg",
+        "back": "MFDS-169_back.jpg"
+      },
+      "file_sha256": {
+        "front": "52c7697f94d18841d2a68776606a7da23ba0a6f82273678465393f6f4f160606",
+        "back": "6ee1f71dde07e891f285b287bbcb63aae621ebdd015e6b223dbd4f0d47168d21"
+      }
+    },
+    {
+      "case_id": "MFDS-170",
+      "mfds_item_id": "200302201",
+      "drug_name": "산노겔정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428013710600050",
+      "original_sha256": "2eeaea8da6a1866e1de4da8a7db8b231c6ce208d0f16e43252c9ae7dd32369a3",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-170_front.jpg",
+        "back": "MFDS-170_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2066245bc4c0f2e22ea4a40719c5604e01f1daf69df207f571c6264cc3cf0390",
+        "back": "62de253b1940b07c9afaba8e679b2e46a001ede96ce5e9135ccf605da490d0e6"
+      }
+    },
+    {
+      "case_id": "MFDS-171",
+      "mfds_item_id": "202402710",
+      "drug_name": "수프렙미니에스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pw9ua7ApDC",
+      "original_sha256": "f827e3697c9e79cd979372f911399be4bc2d1ca9a0dd17053477f6777d6f1373",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-171_front.jpg",
+        "back": "MFDS-171_back.jpg"
+      },
+      "file_sha256": {
+        "front": "2a703c6d2db357e77e0b42e024c6a6b4f78b093d012397159aa7a9ba02d04534",
+        "back": "eeb667e676134e0ff2f674815dce66f0fbec58f2b0a0430e89a7f2fc3c2214ea"
+      }
+    },
+    {
+      "case_id": "MFDS-172",
+      "mfds_item_id": "201902057",
+      "drug_name": "바클펜정10밀리그램(바클로펜)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mm5TBIV29S",
+      "original_sha256": "75253849b0237134704f7d5f25087745ff1e585dc26f4645057a5b56a69302b5",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-172_front.jpg",
+        "back": "MFDS-172_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9549adf1ae9e08faec24c0bb3616c9f58f561bba4194308c25c3f19157742456",
+        "back": "c899548bda7a70c68d9855957b24d317967a382b06d906e3e5b017c84d1082ec"
+      }
+    },
+    {
+      "case_id": "MFDS-173",
+      "mfds_item_id": "199400394",
+      "drug_name": "네오나제정(스트렙토키나제.스트렙토도르나제)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148829647856400068",
+      "original_sha256": "977659bf5b8bf57e083184dcf7c7ae4a19b10bed89b5f73154e263ddb08ad96e",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-173_front.jpg",
+        "back": "MFDS-173_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a33d696478b57a10af61a30ee7678fa49ff9d0fd786ce0a655ed3f31cdc835fb",
+        "back": "73e5c255c23d3169cbf8bfbbdd42391421b930e7ff82de98ed07154e0013019b"
+      }
+    },
+    {
+      "case_id": "MFDS-174",
+      "mfds_item_id": "202204282",
+      "drug_name": "하이퍼벤서방정90밀리그램(딜티아젬염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OOCzMHkjH3",
+      "original_sha256": "4b7a1ad471619e66df28fbd7314fadd1402388f4148c67efdeddfa3a4d65a53f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-174_front.jpg",
+        "back": "MFDS-174_back.jpg"
+      },
+      "file_sha256": {
+        "front": "487c526971060bea34c49f7ee7e49422ee264b9aec333dcf56817d73f7d1cc51",
+        "back": "12ba0a4db7055061d86e70c6d559776c59c8871b80335ba1da8c26cee40e0bdf"
+      }
+    },
+    {
+      "case_id": "MFDS-175",
+      "mfds_item_id": "198901887",
+      "drug_name": "싸이베린정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147884083011900045",
+      "original_sha256": "bddf746794f0a2aca93a9c19e04c8f8eef4ce8346e709270be64bca4a56a2c48",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-175_front.jpg",
+        "back": "MFDS-175_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a3ae4b9a1d0289cfe6dcea9e76f80195534b47acc6bc2bc22e5595231aacef7e",
+        "back": "e3ed4b12e566b34559eb10422850642916b6ccc1a34895e67b9a212a611e1e1b"
+      }
+    },
+    {
+      "case_id": "MFDS-176",
+      "mfds_item_id": "198800154",
+      "drug_name": "젤콤정(플루벤다졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PrLR0IL_4k",
+      "original_sha256": "41447d3fec7aa690b4e4522e61ec8cc6c67443bd34977eb6e780156bc4e7304e",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-176_front.jpg",
+        "back": "MFDS-176_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9f9665de7878524383905cd9a4390f989543c2ac68f5c7652b8f699bcb1c941b",
+        "back": "45cdca54dab83e69586a518222fd418cce3877448c0ea0fcb8c92b2f2a256121"
+      }
+    },
+    {
+      "case_id": "MFDS-177",
+      "mfds_item_id": "198802575",
+      "drug_name": "무스켈정250밀리그람(카르바민산클로르페네신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mxwka5v2HP",
+      "original_sha256": "e43d9d4cc458aecd9e92077708ee1190b6dde0f6680510daf09a0860aac89ad1",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-177_front.jpg",
+        "back": "MFDS-177_back.jpg"
+      },
+      "file_sha256": {
+        "front": "179c98869ccd6d5e0772312a409bce3fd6d31e3ddaa3edaf3c0e1f94b0b2b39a",
+        "back": "a7902615993b7abe15ef0f0b6e2c903e3350f83392ff45a5a4b4f30201caccf1"
+      }
+    },
+    {
+      "case_id": "MFDS-178",
+      "mfds_item_id": "200410861",
+      "drug_name": "졸피드정10밀리그램(졸피뎀타르타르산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OsDC9sjoJC",
+      "original_sha256": "021c0522b46b8c08d9e328ec28b07e8de6967971753758bfcb7877722a5ed4e6",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-178_front.jpg",
+        "back": "MFDS-178_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b8e9ade732e2cc51584dded6817705cd5015be2c3feb58a6f9be71809957ae72",
+        "back": "413d4b48d2c39ab9d63717bf4f583b45cdb149a8c2c8690552db5e42a8ce169e"
+      }
+    },
+    {
+      "case_id": "MFDS-179",
+      "mfds_item_id": "201403875",
+      "drug_name": "에페노정(에페리손염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MksuF0DXg1",
+      "original_sha256": "65e0a2763ef3f6ce2ef32a07abde2a646888a983e891629092b83ecdfe26c409",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-179_front.jpg",
+        "back": "MFDS-179_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c0a9da67502f453c6d0615acaaf6e3ea56b69946645d577f9ed65bf4b7458781",
+        "back": "1999176143934c0de3b3baf1cad50ce94536be60a919f3da8a7556b6bf263a98"
+      }
+    },
+    {
+      "case_id": "MFDS-180",
+      "mfds_item_id": "198100425",
+      "drug_name": "신일리소짐정90밀리그램(리소짐염산염)(수출명:SIKOZYM Tab.)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154599011651200032",
+      "original_sha256": "87e964003f61e0ee8b2e6a7a0ff16fdbca6bec1e6e2d5cbfcd7bbfb8655e932e",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-180_front.jpg",
+        "back": "MFDS-180_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b91e58d460532829045d9ac88b075b8ddee8ecdec6aeb9c65a04eef421215965",
+        "back": "6d182257a2291c001b669c19161d52bab16ac169f5a435d901a3d1e7e809780e"
+      }
+    },
+    {
+      "case_id": "MFDS-181",
+      "mfds_item_id": "201603987",
+      "drug_name": "미뉴린정0.1밀리그램(데스모프레신아세트산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1P2JYwFs8l2",
+      "original_sha256": "785b2328916395a4b260c56cb1c8ac8cd52c60276b499888ec440c1c806183ef",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-181_front.jpg",
+        "back": "MFDS-181_back.jpg"
+      },
+      "file_sha256": {
+        "front": "09b1839445a22207309022165cf59d7fd3f3e2169a4bed4f40cbee846149117b",
+        "back": "f90b489c637ca375a25980acfdfe71d0d05e227818c9f7eb6911e45fcb3a9993"
+      }
+    },
+    {
+      "case_id": "MFDS-182",
+      "mfds_item_id": "201903161",
+      "drug_name": "오스칼로정1밀리그램(프루칼로프라이드숙신산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1N2HVJIcczn",
+      "original_sha256": "2e4b533e96ebe78a5b674017796a796aed36ca6755094366e1fff60f9e0012ef",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-182_front.jpg",
+        "back": "MFDS-182_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b3a5d7cca4179671a3e38d54421e0c660978c7bc1905b8a7ee201436d77477bd",
+        "back": "3f627495e3c2c381000efe92747cf12f224950effe78f5b8fccdc9ef1afd3cfe"
+      }
+    },
+    {
+      "case_id": "MFDS-183",
+      "mfds_item_id": "200404854",
+      "drug_name": "티로정(티로프라미드염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OnWl157ld2",
+      "original_sha256": "e408469659173f30b3bd95b2485bf684b0d2aff83f4c6ce1d998aacb80ecfee7",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-183_front.jpg",
+        "back": "MFDS-183_back.jpg"
+      },
+      "file_sha256": {
+        "front": "daeeba77f176c9f4f99838bb69eca969b23f8d78f8851d256d24080bda7f7298",
+        "back": "223d5c017649e38995a62e6fb9e342ca3c4159169fed31d88ed257da5bdf2b44"
+      }
+    },
+    {
+      "case_id": "MFDS-184",
+      "mfds_item_id": "198200009",
+      "drug_name": "세라자임정(세라티오펩티다제)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154333339425900037",
+      "original_sha256": "91bac49b6bf0f67e0dc82fcf126f9f81e5d8eb686e3e23c3d1460d4cafa36762",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-184_front.jpg",
+        "back": "MFDS-184_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ddc26c8728abff3650b099d109ada2879270beb37b89b4ca3800b0cc01a6a2d2",
+        "back": "2b2e6258c84cc809fe5dc758a667aaebb163c6573e3d53abb6623c4a82b05d61"
+      }
+    },
+    {
+      "case_id": "MFDS-185",
+      "mfds_item_id": "201502808",
+      "drug_name": "제이카민정(펠라고니움시도이데스11%에탄올건조엑스(5.5~6.6→1))",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MpNPEsu-Wh",
+      "original_sha256": "4620afcaeccce2c1bcbf29eb9b223677f356e23ab51bc4a19a4c936547996fbf",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-185_front.jpg",
+        "back": "MFDS-185_back.jpg"
+      },
+      "file_sha256": {
+        "front": "eb58e1ad1e1996b83b067b0d9bf1cbb30018d37779b686e6dd61afca0a01f478",
+        "back": "b8b4ff70f19fa398d97a5289e6e18736acf9a860068708472723be5d84f96e58"
+      }
+    },
+    {
+      "case_id": "MFDS-186",
+      "mfds_item_id": "197100081",
+      "drug_name": "키모랄에스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NjeveJRSOJ",
+      "original_sha256": "8c50a220f58e177fdb72de6abf50d10eeeb2c99a9ef3c08c0b3362a52140467b",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-186_front.jpg",
+        "back": "MFDS-186_back.jpg"
+      },
+      "file_sha256": {
+        "front": "7b0c58fcd2a8d76e26cbde6072ae38da4e01daf1d6782c3361ba332168aa6ba4",
+        "back": "e0de104780afa90610795702c286a8b42b3afe1f4bbea4436ccede834243a3b3"
+      }
+    },
+    {
+      "case_id": "MFDS-187",
+      "mfds_item_id": "201204675",
+      "drug_name": "피엠지폴산정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/153884041574300010",
+      "original_sha256": "6938c73c913ea5a91c456eafaa18c9b5c4702051aa13312152ee99ba3b6fb5d1",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-187_front.jpg",
+        "back": "MFDS-187_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ed2a953cb96dc6fe07c982426907eaa21f19c1fbd1a6ef0fcd78c503afe9f25a",
+        "back": "51fe42571130782836eba7dbda4c40f482a61c15ee44e5aa19abe3aa897d08e7"
+      }
+    },
+    {
+      "case_id": "MFDS-188",
+      "mfds_item_id": "201700478",
+      "drug_name": "록트로신정(록시트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/151620365654000142",
+      "original_sha256": "88f77073d89fe7c5ea925ef687bef8866220f233925dddbd105e7c0e27fb29c5",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-188_front.jpg",
+        "back": "MFDS-188_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3c7ea0318020322e8fdcfcffecb11dc1252f97c07b99461fc32d3c907b32c283",
+        "back": "79c6616bb45dcd558bf938a4ccfe51f20d7b7c69a34fc6fdfbc7e46ba85c32d5"
+      }
+    },
+    {
+      "case_id": "MFDS-189",
+      "mfds_item_id": "202001901",
+      "drug_name": "페북엠정40밀리그램(페북소스타트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PqCjCpvNFg",
+      "original_sha256": "18f5e705817b093f6a68845dac86668d212ce23cb133de514fe4c1d0ce6548c0",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-189_front.jpg",
+        "back": "MFDS-189_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6be5076bc5454d2ca8740de8d26f1a6ff53fe1391b21fa2fb581eb8fceb3a246",
+        "back": "4925a1eb61416653b4e0882bc99cabc1fd68064d28a6b1d36b2363595291fd9d"
+      }
+    },
+    {
+      "case_id": "MFDS-190",
+      "mfds_item_id": "200801383",
+      "drug_name": "네오칼디정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NXa2J_Kcxv",
+      "original_sha256": "d925227125aa32a9db0faaaf8a4776798e6b94c0edebe2ec764648a2979e8cfe",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-190_front.jpg",
+        "back": "MFDS-190_back.jpg"
+      },
+      "file_sha256": {
+        "front": "280a284e440826f9f6776ac0d6b14d6537aef80830dad23e01467ffc02569c05",
+        "back": "5bac17cd3f88a3f7a457deea8c4733a4de25ab5fe953819aead100323e62e9e4"
+      }
+    },
+    {
+      "case_id": "MFDS-191",
+      "mfds_item_id": "201001728",
+      "drug_name": "멀택정(드로네다론염산염(미분화))",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1kj9",
+      "original_sha256": "c1a76ce452a4f399b3c4e867f084af555ffae98b75291a40adc7900a83b1397f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-191_front.jpg",
+        "back": "MFDS-191_back.jpg"
+      },
+      "file_sha256": {
+        "front": "e924959d4232e2c6f70e61b5ea3391812a6d0838d4375135de022df830dce395",
+        "back": "95e3dcd2bcb1114470b8303c2f07a600c2d19965f02feb40b6b4981eb1e4afbd"
+      }
+    },
+    {
+      "case_id": "MFDS-192",
+      "mfds_item_id": "201705499",
+      "drug_name": "유턴정24mg(베타히스틴염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150298445842700018",
+      "original_sha256": "042181e4aec835dd6d7f2793aa42df73cb2a6f30b908a6421537d0d8883073f3",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-192_front.jpg",
+        "back": "MFDS-192_back.jpg"
+      },
+      "file_sha256": {
+        "front": "b4dbd3b71b3d71a58a2a7c02c6547c2ac3670c7ae4e934046cf4414a43d3c4a1",
+        "back": "68d1dacad9c53994620cbe3e5af017741f7cb9544f2a7c1079ca5d0049d8ecf4"
+      }
+    },
+    {
+      "case_id": "MFDS-193",
+      "mfds_item_id": "202601318",
+      "drug_name": "엑스팡정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PzYBWo9wZa",
+      "original_sha256": "e33106531b581b424a77c116add370da58669eddf17adf5a7f9031238b74ac2f",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-193_front.jpg",
+        "back": "MFDS-193_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ed79834c415c7634b9fd70e2274dcf6e8a4590afa2a1a356dd301c0715c7903b",
+        "back": "8908640bd8cf134b886e8b6612ddcc96098a32c1f0291d5fcce99f0730bdea83"
+      }
+    },
+    {
+      "case_id": "MFDS-194",
+      "mfds_item_id": "201206435",
+      "drug_name": "플러스디정(콜레칼시페롤농축분말)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6D3V",
+      "original_sha256": "a67fc7a3227eab8eb6db25112d69604b04eeaaa035ee523376807e10e051a00a",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-194_front.jpg",
+        "back": "MFDS-194_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3d43bf3fce1f4116e86bbb1a7eae7c8e58721423c33735c567d3a8ce0c5fd1c1",
+        "back": "97e151bee923f90f561a8f44a9a13865e85271f6a4cf6e8a7e893cb13c043827"
+      }
+    },
+    {
+      "case_id": "MFDS-195",
+      "mfds_item_id": "201908481",
+      "drug_name": "메가록시신정150밀리그램(록시트로마이신)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NvwvvpEt6f",
+      "original_sha256": "160254e7c96100fdf5bc27180afc9926d52773a446a751094d50ad9a2b400fbe",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-195_front.jpg",
+        "back": "MFDS-195_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f25e9d3dddb8e2dea7925f3a80d1bc15f374ca0e430e7860cd057b11991a62ab",
+        "back": "04509267dec299c2bad8640b84e28eb90b88229db38e826f03ed6579da8869ee"
+      }
+    },
+    {
+      "case_id": "MFDS-196",
+      "mfds_item_id": "199806858",
+      "drug_name": "구주인산코데인정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428013710600095",
+      "original_sha256": "e6605a514f417eaf39b06b7ac57660eb7d1bb6fb9edb631858578d50bfb776ca",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-196_front.jpg",
+        "back": "MFDS-196_back.jpg"
+      },
+      "file_sha256": {
+        "front": "7a15cdd6fa91fb2074e175a279cb2f0d06b79d7b3cd55b342aec52597b2afc5e",
+        "back": "7c97b37ce340aef61f37e93ef11765dc135253867cd7afe0664d9958525c243a"
+      }
+    },
+    {
+      "case_id": "MFDS-197",
+      "mfds_item_id": "201508213",
+      "drug_name": "데스모엠정0.1밀리그램(데스모프레신아세트산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pzj9E5NSjS",
+      "original_sha256": "1b57bf5956d7a39910cbddd424756d9dc47fadc8e2b426f0f73a47f9d350ed7f",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-197_front.jpg",
+        "back": "MFDS-197_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6e27de0f5cb8b54bc05bcbbafe33bcbf9152bc5480f2a4020f3ceaf6c96dc099",
+        "back": "901ab78dc33cac6518cb33663a26c10eb315d198cf9dcc7aa415c60df7beb62f"
+      }
+    },
+    {
+      "case_id": "MFDS-198",
+      "mfds_item_id": "200809403",
+      "drug_name": "나플리정(나프로닐옥살산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427935897900093",
+      "original_sha256": "f627e443e0b0ae25d4c9cec463de7ea1618f3a23f1e1facefb927dbc0c3537d4",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-198_front.jpg",
+        "back": "MFDS-198_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4e78e83fb0268305be03030eed834da4ec60f7d291a4df7302144a82866fe7e8",
+        "back": "0695ddc5f48c8278f459333f8602c2706ef8eb013c97db03578e39d16cef6377"
+      }
+    },
+    {
+      "case_id": "MFDS-199",
+      "mfds_item_id": "198802349",
+      "drug_name": "카로마스텐질정100밀리그램(클로트리마졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1cjy",
+      "original_sha256": "8dc03a52eea637f926b8e68a333b4e602f7397cd3fce66e3408183b24f594cc0",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-199_front.jpg",
+        "back": "MFDS-199_back.jpg"
+      },
+      "file_sha256": {
+        "front": "50483b2af8ff321bf8fd5eaf02cbfd54f7fdbb9308d179b7063537aae00d0c46",
+        "back": "ff86b71fc061a5d6b579888033d9cae12e9468891e4c95ed518cb8cae820f70c"
+      }
+    },
+    {
+      "case_id": "MFDS-200",
+      "mfds_item_id": "201307607",
+      "drug_name": "프리페민정(아그누스카스투스열매60%에탄올건조엑스(6~12→1)·콜로이드성이산화규소혼합물(1:1))",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152181493548200006",
+      "original_sha256": "f111ae0a224f75dd42ba37bbd88ae5a6d228c1822d57776d9fe14ef0fbab53e4",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-200_front.jpg",
+        "back": "MFDS-200_back.jpg"
+      },
+      "file_sha256": {
+        "front": "43556866faf0ed19a715b9c93b2f297d833fc0f6b41c4a975dc6c20c887f1219",
+        "back": "10662173d0747951ba56cae0b49fbb00710cede8bdc68851a00f444b06cb0c59"
+      }
+    },
+    {
+      "case_id": "MFDS-201",
+      "mfds_item_id": "201204931",
+      "drug_name": "크리콜론정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426609286000098",
+      "original_sha256": "617d7226721a143d34af4de9a9cc07938d9b80d4fd903fcc97dc40d90e2ac2da",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-201_front.jpg",
+        "back": "MFDS-201_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6b03469542b00b59a110b37f906c5cf165eb32eb0c7ae011c29ea65768f7e302",
+        "back": "e596c0e22a27320c8a586457f5d6d4679fe570e248f3a151329429e0c87dad36"
+      }
+    },
+    {
+      "case_id": "MFDS-202",
+      "mfds_item_id": "202500982",
+      "drug_name": "보니카디정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PU5OK3EfXh",
+      "original_sha256": "35784424c327506df79a8b8cbd94163f1ba4e9d17148e8680f5df07a3fef70a2",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-202_front.jpg",
+        "back": "MFDS-202_back.jpg"
+      },
+      "file_sha256": {
+        "front": "900443fd86f33104c98fbfcbe49788db971057fbe97ab5d3fe313f4bb4221909",
+        "back": "bef69986eb5ce02660b1a5cae5fb52c9eb0bcf5bf8bd7c71faea6b24e1c959e9"
+      }
+    },
+    {
+      "case_id": "MFDS-203",
+      "mfds_item_id": "200502640",
+      "drug_name": "유레민정0.2밀리그램(데스모프레신아세트산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/151335245510200016",
+      "original_sha256": "c1c178b937957b225a9188dabd29aa17d1522f1a30fa59fba660a783999f7d9f",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-203_front.jpg",
+        "back": "MFDS-203_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4eb40c035861214346fa8780ec876e33429d2c46289e9765bbb3540bae1ac396",
+        "back": "f2b296b45ff80df04e1609b7ca4e45d0eb6f01c1d8d17897b16d6408cd90f484"
+      }
+    },
+    {
+      "case_id": "MFDS-204",
+      "mfds_item_id": "201307451",
+      "drug_name": "오코돈서방정20밀리그램(옥시코돈염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426713789400166",
+      "original_sha256": "6fb881b41650aeef8a0076f26997275005e2705da523457c7e5de3b1c7edfc84",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-204_front.jpg",
+        "back": "MFDS-204_back.jpg"
+      },
+      "file_sha256": {
+        "front": "dd363e6754ca544ac3d1660482a360f65c2834f3b8ba5e4d21cb4efb309ae6bd",
+        "back": "8dd74b63940336a72229f87a417a5f61217173371e5603d0ba6cc05bcb824266"
+      }
+    },
+    {
+      "case_id": "MFDS-205",
+      "mfds_item_id": "201901342",
+      "drug_name": "모비졸로정2밀리그램(프루칼로프라이드숙신산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Mcb1OgU-JH",
+      "original_sha256": "f106566ba0427bc4d974e19134cf3b63080b0e5716a73195aef59ae37b7b2bbf",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-205_front.jpg",
+        "back": "MFDS-205_back.jpg"
+      },
+      "file_sha256": {
+        "front": "16608b327801e9f1fb8bfa7e32256dd7dca5dfd48e41fbfbb4dd07d28704b102",
+        "back": "4def37096de4bd8a5b95547ce887c0ca86dceb4f5e11e036490f655e50becf51"
+      }
+    },
+    {
+      "case_id": "MFDS-206",
+      "mfds_item_id": "199902449",
+      "drug_name": "하나온단세트론정(온단세트론염산염수화물)(수출명:도란, 온다8)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OqO4sCY24N",
+      "original_sha256": "e3deff698aaab74e6d45e17143d770be02adb84dbcce9163cc9f3fc50c0510ea",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-206_front.jpg",
+        "back": "MFDS-206_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3f239fce93aac5e583349664a342b761fcd35589ed33d47c4d061ee4fd9cb149",
+        "back": "3d4d47e36d0ff34bb2aa723920e7141157515fd9c5d255a9d09f881c93561620"
+      }
+    },
+    {
+      "case_id": "MFDS-207",
+      "mfds_item_id": "201907335",
+      "drug_name": "미니페정0.2밀리그램(데스모프레신아세트산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1ONExX12h1V",
+      "original_sha256": "b637d6a180c2b3d236ceb9c841e3242ed0ec675d47ce34378bece92dadbf6acd",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-207_front.jpg",
+        "back": "MFDS-207_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3b777b9ce404fbb5e6a79f71faefbc77805461e0a48a28e3f575f815905023ec",
+        "back": "1f66244c867e124200fcfafcedbdc1ac7a1b72dbdf0a4534f23f736b43f96986"
+      }
+    },
+    {
+      "case_id": "MFDS-208",
+      "mfds_item_id": "200001496",
+      "drug_name": "인다팜정(인다파미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147765842976900106",
+      "original_sha256": "e1689bcd4c8911cdd3286adabd6c24ceaf85427e70f582a2b2fa86dc7356c101",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-208_front.jpg",
+        "back": "MFDS-208_back.jpg"
+      },
+      "file_sha256": {
+        "front": "127a2302a4c7e93568393e052cdb00b133cf8f8b2c5547f033a1a6543ac0411a",
+        "back": "83c6c76ffa52778d8ed43764d0fffb080c12b511166a54548b96cbe9f1164909"
+      }
+    },
+    {
+      "case_id": "MFDS-209",
+      "mfds_item_id": "201906955",
+      "drug_name": "페북소릭정40밀리그램(페북소스타트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NdSqA-16i2",
+      "original_sha256": "792a3e2fa9cbbeafd9ef3fdce61f03f66c37667023a2e2fa83074b02923ac19d",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-209_front.jpg",
+        "back": "MFDS-209_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ce5355430918da3ce3d4c54d6e75bcc24e41dca0d9299c57bf53f113a97dd345",
+        "back": "a6860dda9bede2bfeab9e805014ce5eec5b917be96a0f3d646e0e5cbd8563e6d"
+      }
+    },
+    {
+      "case_id": "MFDS-210",
+      "mfds_item_id": "200409932",
+      "drug_name": "프로베라정10mg(메드록시프로게스테론아세테이트)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OlTcytjZbT",
+      "original_sha256": "f2aba8f8acb9a0d725e800b43cde4c7ba57c39797815e48795b47eb80b381027",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-210_front.jpg",
+        "back": "MFDS-210_back.jpg"
+      },
+      "file_sha256": {
+        "front": "be2f74ef3096bdd63cf10d191d1b1576da3d00c975337a82ed6b76c6db3d6dcc",
+        "back": "2d84698fbefaa73a52bbd619ffdadba7d6b5ba50ffe6ae8560d635fc8241f528"
+      }
+    },
+    {
+      "case_id": "MFDS-211",
+      "mfds_item_id": "201501737",
+      "drug_name": "고나스정6mg(독세핀염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MncJAM5klR",
+      "original_sha256": "2183217e24ad84b861ceaa81f411f9a2b7e69b96dd7c13dc54eac5ff7414a298",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-211_front.jpg",
+        "back": "MFDS-211_back.jpg"
+      },
+      "file_sha256": {
+        "front": "efa5022a293f3cd5b8d2f133c227e40aa64005d2a439e66935240ca528c209dd",
+        "back": "cd132798d2f03acabeb9960d330f414a599959b0e3082012f0469634e08eaac5"
+      }
+    },
+    {
+      "case_id": "MFDS-212",
+      "mfds_item_id": "197800021",
+      "drug_name": "갈미정(갈근탕가오미엑스정)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427290893900188",
+      "original_sha256": "fe5fb0a058ff081b35a7faa8f5850971cc0c421ea3be4ad44db41edbdd1da31a",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-212_front.jpg",
+        "back": "MFDS-212_back.jpg"
+      },
+      "file_sha256": {
+        "front": "80ecb8f94c62b72b105463671955a185f3cd035590b99105139ff42478645efd",
+        "back": "a841cb419bec2abb764d2abb2fd9cc3c39f4538b201241d9005c644eed5b4fe1"
+      }
+    },
+    {
+      "case_id": "MFDS-213",
+      "mfds_item_id": "201104436",
+      "drug_name": "타진서방정 5/2.5mg",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1msq",
+      "original_sha256": "6780c691c6ade2a4bf99cfa22923b8722102e43f93d0cd8f578299d042d29b63",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-213_front.jpg",
+        "back": "MFDS-213_back.jpg"
+      },
+      "file_sha256": {
+        "front": "81837ea5c64d8f8d86d212c69d3d55f68c64b7fb3da2f29a4fb36ca2ec1e14e0",
+        "back": "e7317c3b45ecdfac91d05b451dae66f2ab9385b60c5458f2a7ed68eebcbf1a7f"
+      }
+    },
+    {
+      "case_id": "MFDS-214",
+      "mfds_item_id": "201702793",
+      "drug_name": "센테라이트정(센텔라정량추출물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150108271437100146",
+      "original_sha256": "d3bf7e74e310ab7469e9c8155b340cb3e51e5bb5e3ed7cd1896afcc0ddf568d0",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-214_front.jpg",
+        "back": "MFDS-214_back.jpg"
+      },
+      "file_sha256": {
+        "front": "524a7e04102464ecfc9242e01f08bee319fe395c9a630285a653aa9e6d86941a",
+        "back": "ee6d826247435ca0ac58955fce5e7fa8125c83933cd0790bfe34f6fc8bfecaf5"
+      }
+    },
+    {
+      "case_id": "MFDS-215",
+      "mfds_item_id": "201603372",
+      "drug_name": "뉴신타서방정100밀리그램(타펜타돌염산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PLseQAdWg0",
+      "original_sha256": "0a742e5e3edbbd2d56a5c5b911c9782d78a7a7264ed3afe7f69dae4bd060fa18",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-215_front.jpg",
+        "back": "MFDS-215_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ee8fcb71f65046b8f83d509bfe3330a89ffb8f8292d84df63038bd8f3b5359f9",
+        "back": "7110ea714653f686d65fa99744fff16450a55cb28bd881a7e6081652c12c40b3"
+      }
+    },
+    {
+      "case_id": "MFDS-216",
+      "mfds_item_id": "201110262",
+      "drug_name": "아미나엑스정(니코틴산아미드)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1P_guZXilBY",
+      "original_sha256": "5fefa27038e290035b60a80af1cae89261cce13045e78e727926029780c5ffb6",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-216_front.jpg",
+        "back": "MFDS-216_back.jpg"
+      },
+      "file_sha256": {
+        "front": "8e6d8598acf703b9e21437f92c560246d405999c0df60c7f55ea3fb9c92901b9",
+        "back": "b1df64f78fe8f94ebffe0444732a7b6705a579ec08117fe55f097177267b806e"
+      }
+    },
+    {
+      "case_id": "MFDS-217",
+      "mfds_item_id": "201402408",
+      "drug_name": "로페시콘츄정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1Pvn3im1sAi",
+      "original_sha256": "cb60d0dd817665adf198552325c26d014b736bcd868acb07c4545d947273f379",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-217_front.jpg",
+        "back": "MFDS-217_back.jpg"
+      },
+      "file_sha256": {
+        "front": "6953bf68ef5c9e76b1daf72354f884171fc3dff514c563bd152415a8f83177bd",
+        "back": "6414d062d334d0e89dc6f47f23b2325b984389e0a02ebbf760fb916204fd0fe7"
+      }
+    },
+    {
+      "case_id": "MFDS-218",
+      "mfds_item_id": "201206336",
+      "drug_name": "피레스파정200밀리그램(피르페니돈)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MuMkTNG-jx",
+      "original_sha256": "b2d8e9cce71cb5e5057e0767bff1f23b394acab68b425a457718b75c1864dd23",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-218_front.jpg",
+        "back": "MFDS-218_back.jpg"
+      },
+      "file_sha256": {
+        "front": "ec5bad363d0bfe2bd25869d16e5c5cf906a4b8d58e3d6d990169100b46fafe56",
+        "back": "fc6423cb930495c410ee7a538c3a27d15f8904aed90a47f14ae782ddc1ebe69a"
+      }
+    },
+    {
+      "case_id": "MFDS-219",
+      "mfds_item_id": "202303278",
+      "drug_name": "카네클로질정(클로트리마졸)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OqHNzVf51z",
+      "original_sha256": "c355df167111dfd47aee4606bae9530bd9562aa9616def5dec4fd726da486763",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-219_front.jpg",
+        "back": "MFDS-219_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f0c179fdb1b35088a94b76cbdb6adb517d1e5b47d5ea00a0aeaa3f019e3d26d4",
+        "back": "1d35e063cd5f938ac38fca8196ca4dbcac6fb427b958ab071b7003040b311ba5"
+      }
+    },
+    {
+      "case_id": "MFDS-220",
+      "mfds_item_id": "201507206",
+      "drug_name": "비엔티정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/150471242485800169",
+      "original_sha256": "2e1c5b145ee406e9b1b485159cdb24723fbfd2378b8bcdd6bc9a55eea6c5405d",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-220_front.jpg",
+        "back": "MFDS-220_back.jpg"
+      },
+      "file_sha256": {
+        "front": "683d7356ac1d4758cb1dd7f973a90f075c4f68973a76ca64e850a1072af246f1",
+        "back": "b6a9f7d261963d4733dea10e15092d851634f579f5b4e9b774f11ae2e7bb3021"
+      }
+    },
+    {
+      "case_id": "MFDS-221",
+      "mfds_item_id": "200511385",
+      "drug_name": "산도스온단세트론정8밀리그람(염산온단세트론이수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428258513600053",
+      "original_sha256": "9a3e75e893ae5c442f9df12ef92ecd4e9e786ff8b6b007146a8ffaf722043a22",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-221_front.jpg",
+        "back": "MFDS-221_back.jpg"
+      },
+      "file_sha256": {
+        "front": "af3125f81f98f8e68d232cffa2c9509ff944b51cdf8c3437dd79b56d7d15a5ea",
+        "back": "c9afc9fb91d4c2768cff148b62d40b957301dc6457c5b6881a29bdfce8a1b7ed"
+      }
+    },
+    {
+      "case_id": "MFDS-222",
+      "mfds_item_id": "201108894",
+      "drug_name": "메가조인프리미엄정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426581382500029",
+      "original_sha256": "a9ea9a2b8791b652c9d3cb033475c1cc6b163511784cfe5f747b359c0fe3802a",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-222_front.jpg",
+        "back": "MFDS-222_back.jpg"
+      },
+      "file_sha256": {
+        "front": "50a2f7f5d2ed3bbdb0d9e6994b650ec6f4de897a36d8256b72fd8f9ef1724ca6",
+        "back": "fec1082c1ba6dd9a0694db9862143ab4f518ec36ddea31484000a3f507fbbaed"
+      }
+    },
+    {
+      "case_id": "MFDS-223",
+      "mfds_item_id": "201605049",
+      "drug_name": "아겐에프정(빌베리건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/148059389470800181",
+      "original_sha256": "92d016f24a057f9b6722f9c9ac7a64f6ca6cb6a88b004e42fc64d33d3e0884f8",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-223_front.jpg",
+        "back": "MFDS-223_back.jpg"
+      },
+      "file_sha256": {
+        "front": "d5af936c87c006c74409ff0629871aea8faa7931f879d3f329a282c327582378",
+        "back": "5d8413615f835e83c19a4eab10aa67323d4cda365141a806d4f2f691134d0085"
+      }
+    },
+    {
+      "case_id": "MFDS-224",
+      "mfds_item_id": "202002939",
+      "drug_name": "니코챔스정0.5밀리그램(바레니클린살리실산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6Icc",
+      "original_sha256": "984360a27097006e3e8639f214d4eea511b2b5240df3d3ed1f3773dfaadc37e4",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-224_front.jpg",
+        "back": "MFDS-224_back.jpg"
+      },
+      "file_sha256": {
+        "front": "4930ecf176b390defdaab87a136ea02045e9d114ced4cf6f7e29c9a50bbb7003",
+        "back": "50c7fcbaf895008ac2072a86d14c0b012755d4d737c1a65fd3b87899afe87528"
+      }
+    },
+    {
+      "case_id": "MFDS-225",
+      "mfds_item_id": "201708261",
+      "drug_name": "타진서방정80/40mg",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/152941971828400111",
+      "original_sha256": "689e61656188888c88079e6814a147a8a604df77e32ffb05573f0a5ab92636f2",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-225_front.jpg",
+        "back": "MFDS-225_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a02aa64d4846462296073e38b8e7711dec9c432f2dfad25dde2965b965aa77b4",
+        "back": "73e24edcf12bfcefcf951a00db4e95f73c0d31633746dd82a289d23b3262d373"
+      }
+    },
+    {
+      "case_id": "MFDS-226",
+      "mfds_item_id": "199907323",
+      "drug_name": "콜셉틴질정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154597933918200034",
+      "original_sha256": "5edbfb6e1b5fb4690f977d85dd8aacd7ccb3a54eae98a485a373692f227e9c38",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-226_front.jpg",
+        "back": "MFDS-226_back.jpg"
+      },
+      "file_sha256": {
+        "front": "c064ff8db2c834cc96accf13036b7a022a800126de89e7b85b276e288c81afd1",
+        "back": "92871dd408d62a2c16267462f5e7209c7db21f53b891ef80d5fe26cacecf9ccd"
+      }
+    },
+    {
+      "case_id": "MFDS-227",
+      "mfds_item_id": "202500976",
+      "drug_name": "칼앤디정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PUZO9zSrPS",
+      "original_sha256": "1973c6c3d3cdf4e8ddb0ac185505e6ea7997176a439bdf1701ea9fded8469c2b",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-227_front.jpg",
+        "back": "MFDS-227_back.jpg"
+      },
+      "file_sha256": {
+        "front": "30ee680f0beb79f4a0dd7ffaa4df85875739032ea01c471b8070f5473e056cea",
+        "back": "0142302cab36dee6118b04a25329c75eba759f22fd55c31f127b145bc2682320"
+      }
+    },
+    {
+      "case_id": "MFDS-228",
+      "mfds_item_id": "201804237",
+      "drug_name": "씬지로이드정0.2밀리그램(레보티록신나트륨수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609804554700001",
+      "original_sha256": "b7a30d5abf74792e12e8df4ff818e44d4f892aae3677f1ce4574cd8e0ebcd4f1",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-228_front.jpg",
+        "back": "MFDS-228_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bd204ae1048a387dcbc60ceee8a17af2308700679cbb570c47ac6fdf47c9d828",
+        "back": "904e77e2625a8728ad4fdacd540d01cd0498046c3658417fe790f1e17e3fd1f9"
+      }
+    },
+    {
+      "case_id": "MFDS-229",
+      "mfds_item_id": "200300430",
+      "drug_name": "코뚜에프정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427256788200026",
+      "original_sha256": "ef3222234eed9fe539893b04ae9f7ac3e7d171ffd1afe61d0287524c1c6b0009",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-229_front.jpg",
+        "back": "MFDS-229_back.jpg"
+      },
+      "file_sha256": {
+        "front": "5e0d0f4d98a72e6c2b2bce5f2aee85488a556116fcd825cb7199abf06d4a0998",
+        "back": "7516f9f57b6282048bc9a9464bcbf104164f62020c7476a26daac16b6bde38c9"
+      }
+    },
+    {
+      "case_id": "MFDS-230",
+      "mfds_item_id": "202500933",
+      "drug_name": "큐닌타정150밀리그램(닌테다닙에실산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1P_Qaa7cjo5",
+      "original_sha256": "1f92306c5c5a8d805b794cebb56fe93f27b1e86d33f62ae9cf3ae75985f8b785",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-230_front.jpg",
+        "back": "MFDS-230_back.jpg"
+      },
+      "file_sha256": {
+        "front": "25f24f9efc4127a173daa1251da233c8dabc46809d6442cccf31111af3ef1f70",
+        "back": "75a082dd635dbb01687891222ff614ee8ba648db2940dadc43e91605a5efa71a"
+      }
+    },
+    {
+      "case_id": "MFDS-231",
+      "mfds_item_id": "202500938",
+      "drug_name": "씬지록신정112마이크로그램(레보티록신나트륨수화물) ",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1PRmBytfKDf",
+      "original_sha256": "654ebd91e60168a4720c8e57e65c01c0eed902aef6f89a5a142fd84a74851222",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-231_front.jpg",
+        "back": "MFDS-231_back.jpg"
+      },
+      "file_sha256": {
+        "front": "7df40fac920eaefe0e6a3a2b8ea3c4cb566768afe3b9ec2b7802bbe8fa76b56d",
+        "back": "579bcd25f2fa95958ea8bb36ff43c110dfa5faeb19534e0b059821945817d514"
+      }
+    },
+    {
+      "case_id": "MFDS-232",
+      "mfds_item_id": "201803986",
+      "drug_name": "레니코정1밀리그램(바레니클린베실산염일수화물)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154056842685300012",
+      "original_sha256": "3ceede8575dc129b7f8a3c788654ebb64cb6fde32a18b74e365923ccaa0e9268",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-232_front.jpg",
+        "back": "MFDS-232_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9f6f2001b8f75b83ef5b831d617f8930c40d14907fc69e61847ed4e8ab050e32",
+        "back": "440cafadd73bccf18fc333763a3c3931afe53cfdacce2ba51ce30ad372b7d3f6"
+      }
+    },
+    {
+      "case_id": "MFDS-233",
+      "mfds_item_id": "202200785",
+      "drug_name": "정우감초엑스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OYlGy0Xgn-",
+      "original_sha256": "105e86facf5f955e4b8849026213eeb69079f4b020d9ddb75a1f2fb48b143686",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-233_front.jpg",
+        "back": "MFDS-233_back.jpg"
+      },
+      "file_sha256": {
+        "front": "dd4c04aabb6c5543bc75798214c2ff373e7e721031d4794cd7fe18557c3b6eaf",
+        "back": "542debe71693fd2d70eed7b913ff6ac445a9541e0b4be5226af19f8e15e880ba"
+      }
+    },
+    {
+      "case_id": "MFDS-234",
+      "mfds_item_id": "200300786",
+      "drug_name": "토비코민-큐정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609801683000141",
+      "original_sha256": "d0e45f05d5edcd637d7e8cb601e8e75eda8a504d0970c1823adb70293c2658f5",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-234_front.jpg",
+        "back": "MFDS-234_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f1496460fe11680a48c1d1c2b2342b82b55796560b7ea43de2c0b10d1e8a26bf",
+        "back": "53d12660abc2a32e1419e16d962d89af4beace1369a347f5b31a641d195312b7"
+      }
+    },
+    {
+      "case_id": "MFDS-235",
+      "mfds_item_id": "201803335",
+      "drug_name": "제로코틴정1mg(바레니클린살리실산염)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MksuF0DVcW",
+      "original_sha256": "72a714d6ab3e82843db028380e78a7bd6ba075e7a33980316587d91c3d18daa4",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-235_front.jpg",
+        "back": "MFDS-235_back.jpg"
+      },
+      "file_sha256": {
+        "front": "a74965b1d1108a1354e8c5877ba97e8bff26011b28c8d29ac29b726bd95a3811",
+        "back": "1a7d70c784b4abd7baf6f29b57cd2f973f8bcf399ab6e818f0bf65d32008efd2"
+      }
+    },
+    {
+      "case_id": "MFDS-236",
+      "mfds_item_id": "201707596",
+      "drug_name": "헤모포민에스35정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/151525327782000082",
+      "original_sha256": "ffbd40c4c01e495c7e345b708192c497b81c0fdefc936b1ac5b65c63c28b89e1",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-236_front.jpg",
+        "back": "MFDS-236_back.jpg"
+      },
+      "file_sha256": {
+        "front": "764e7a85489f47b8671d22a035b58f7e1a752946a2fa676392ca52355235fd77",
+        "back": "fe887ce04977848fe12fb33589ac078e0afa3a5a05230ce917334a086c9aecea"
+      }
+    },
+    {
+      "case_id": "MFDS-237",
+      "mfds_item_id": "202602031",
+      "drug_name": "지노칼플러스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1P_mST3o8OT",
+      "original_sha256": "a8c9c79c1fe6a7482bb0be64ce7409b936f775976e482260183e1972d31d9652",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-237_front.jpg",
+        "back": "MFDS-237_back.jpg"
+      },
+      "file_sha256": {
+        "front": "f1ecc4bd6a024529df4131b95828ba84ab1dc76dcd95ac42ccb4029b281c2e2a",
+        "back": "63f1955c432cebd2f61c06850230fd9d4b49ae177c91b37a3f778d2f3442d5e6"
+      }
+    },
+    {
+      "case_id": "MFDS-238",
+      "mfds_item_id": "202301580",
+      "drug_name": "정우작약엑스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1OYlGy0XgoH",
+      "original_sha256": "8299f73cde8f7f515d0bf72718b94838e460c9c1978db2d6ee4ccc06bf55a9f9",
+      "original_size": {
+        "width": 780,
+        "height": 426
+      },
+      "files": {
+        "front": "MFDS-238_front.jpg",
+        "back": "MFDS-238_back.jpg"
+      },
+      "file_sha256": {
+        "front": "bece589fa3b680957b1737fa901a1250da5233c41577f9fbb5c1e68f710ffc4e",
+        "back": "acc62216a89ee705d0edc8a2096e469dc0ea89bafd6b795bfac78cf9e5ceb1bb"
+      }
+    },
+    {
+      "case_id": "MFDS-239",
+      "mfds_item_id": "200607018",
+      "drug_name": "큐레틴정(빌베리건조엑스)",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147428234068200039",
+      "original_sha256": "67881db68d92fdb08655def4f100098d1dbbfff85f7dd914cc26ae27aa1e50c4",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-239_front.jpg",
+        "back": "MFDS-239_back.jpg"
+      },
+      "file_sha256": {
+        "front": "9d62dc6e6ca753b9c62953d3064ce9d8a7a0759e60c451359248ad3acd6bf9f2",
+        "back": "e9d5b23f8ff6ee56f2870376aef1dc87c12d1bab687f03644678a0a590639568"
+      }
+    },
+    {
+      "case_id": "MFDS-240",
+      "mfds_item_id": "200606537",
+      "drug_name": "헤모포스정",
+      "original_image_url": "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F66J3",
+      "original_sha256": "d161eea3c288aace0301d7b6e0b68766944a68e347a8d8d7fdc86872a595b2d7",
+      "original_size": {
+        "width": 1299,
+        "height": 709
+      },
+      "files": {
+        "front": "MFDS-240_front.jpg",
+        "back": "MFDS-240_back.jpg"
+      },
+      "file_sha256": {
+        "front": "3a1442887d0d1014525267e18a4e8f699ba00406d3490fd378bb9e70b5ed9dce",
+        "back": "b3db8a90657daae70d0bd07523a2ac018ed2cceb7095f3918152b78cb9346008"
+      }
+    }
+  ]
+}
