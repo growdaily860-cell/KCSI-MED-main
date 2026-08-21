@@ -662,7 +662,8 @@
       const viewport = page.getViewport({ scale });
       const canvas = createCanvas(session.settings, viewport.width, viewport.height);
       const context = typeof canvas.getContext === 'function' ? canvas.getContext('2d', { alpha: false }) : null;
-      await page.render({ canvasContext: context, viewport }).promise;
+      if (!context) throw createError('canvas_missing', 'PDF 페이지를 그릴 캔버스 컨텍스트를 만들지 못했습니다.');
+      await page.render({ canvasContext: context, viewport, background: '#ffffff' }).promise;
       return canvas;
     } finally {
       if (typeof page.cleanup === 'function') { try { page.cleanup(); } catch (_) {} }

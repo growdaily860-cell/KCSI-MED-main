@@ -777,6 +777,7 @@
     document.getElementById('arenaDatasetSampleLoad').addEventListener('click', loadFixedSampleDataset);
     document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
     document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
+    document.getElementById('arenaDatasetPreview').addEventListener('change', handleDatasetCorrection);
     document.getElementById('arenaDatasetLoadBatch').addEventListener('click', loadDatasetBatch);
     document.getElementById('arenaOpenAiPreset').addEventListener('click', restorePreset);
     document.getElementById('arenaCostMode').addEventListener('change', syncCostHint);
@@ -1084,6 +1085,24 @@
     return messages.length ? messages.map(message => `<span>${esc(message)}</span>`).join('') : '<span class="ok">검증 통과</span>';
   }
 
+  function datasetCorrectionInput(rowIndex, key, value, label, mono) {
+    return `<input class="arena-dataset-edit${mono ? ' mono' : ''}" data-dataset-row="${rowIndex}" data-dataset-column="${key}" value="${esc(value)}" aria-label="${esc(label)}">`;
+  }
+
+  function handleDatasetCorrection(event) {
+    const target = event && event.target;
+    const rowIndex = Number(target && target.dataset && target.dataset.datasetRow);
+    const key = safeText(target && target.dataset && target.dataset.datasetColumn);
+    if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= state.dataset.rows.length) return;
+    if (!DATASET_COLUMNS.some(column => column.key === key)) return;
+    state.dataset.rows[rowIndex] = { ...state.dataset.rows[rowIndex], [key]: safeText(target.value).trim() };
+    state.dataset.confirmed = false;
+    const confirm = document.getElementById('arenaPdfConfirm');
+    if (confirm) confirm.checked = false;
+    refreshDatasetValidation();
+    setDatasetStatus(`${rowIndex + 1}번째 행의 ${key} 값을 수정했습니다 · 원문과 다시 대조한 뒤 확인하세요`);
+  }
+
   function renderDatasetValidation() {
     const validation = state.dataset.validation || validateDatasetRows([], state.dataset.imageFiles);
     const summary = validation.summary;
@@ -1104,7 +1123,20 @@
     if (!validation.rows.length) preview.innerHTML = '<div class="arena-empty">정답지와 알약 사진을 선택하면 검증 결과가 표시됩니다.</div>';
     else {
       const visibleRows = validation.rows.slice(0, 100);
-      preview.innerHTML = `<div class="arena-table-wrap"><table class="arena-table arena-dataset-table"><thead><tr><th>상태</th><th>행</th><th>case_id</th><th>앞면 파일</th><th>뒷면 파일</th><th>정답</th><th>각인 앞·뒤</th><th>검증 내용</th></tr></thead><tbody>${visibleRows.map(row => `<tr class="${row._valid ? 'is-valid' : 'is-invalid'}"><td><span class="arena-dataset-badge ${row._valid ? 'ok' : 'bad'}">${row._valid ? '통과' : '수정'}</span></td><td>${esc(row._sourceRow)}</td><td class="mono">${esc(row.case_id || '—')}</td><td>${esc(row.front_image || '—')}</td><td>${esc(row.back_image || '—')}</td><td>${esc(row.drug_name || row.mfds_item_id || '—')}</td><td class="mono">${esc(row.front_imprint || '—')} · ${esc(row.back_imprint || '—')}</td><td><div class="arena-dataset-issues">${datasetRowIssueHtml(row)}</div></td></tr>`).join('')}</tbody></table></div>${validation.rows.length > visibleRows.length ? `<div class="arena-dataset-more">처음 100행만 표시합니다 · 전체 ${validation.rows.length.toLocaleString('ko-KR')}행</div>` : ''}`;
+      const editable = datasetRequiresConfirmation(state.dataset);
+      const rowsHtml = visibleRows.map((row, rowIndex) => {
+        const caseId = editable ? datasetCorrectionInput(rowIndex, 'case_id', row.case_id, `${rowIndex + 1}행 시험번호`, true) : esc(row.case_id || '—');
+        const frontImage = editable ? datasetCorrectionInput(rowIndex, 'front_image', row.front_image, `${rowIndex + 1}행 앞면 파일`, false) : esc(row.front_image || '—');
+        const backImage = editable ? datasetCorrectionInput(rowIndex, 'back_image', row.back_image, `${rowIndex + 1}행 뒷면 파일`, false) : esc(row.back_image || '—');
+        const answer = editable
+          ? `<div class="arena-dataset-edit-stack">${datasetCorrectionInput(rowIndex, 'drug_name', row.drug_name, `${rowIndex + 1}행 의약품명`, false)}${datasetCorrectionInput(rowIndex, 'mfds_item_id', row.mfds_item_id, `${rowIndex + 1}행 식약처 품목ID`, true)}</div>`
+          : esc(row.drug_name || row.mfds_item_id || '—');
+        const imprints = editable
+          ? `<div class="arena-dataset-edit-stack">${datasetCorrectionInput(rowIndex, 'front_imprint', row.front_imprint, `${rowIndex + 1}행 앞면 각인`, true)}${datasetCorrectionInput(rowIndex, 'back_imprint', row.back_imprint, `${rowIndex + 1}행 뒷면 각인`, true)}</div>`
+          : `${esc(row.front_imprint || '—')} · ${esc(row.back_imprint || '—')}`;
+        return `<tr class="${row._valid ? 'is-valid' : 'is-invalid'}"><td><span class="arena-dataset-badge ${row._valid ? 'ok' : 'bad'}">${row._valid ? '통과' : '수정'}</span></td><td>${esc(row._sourceRow)}</td><td class="mono">${caseId}</td><td>${frontImage}</td><td>${backImage}</td><td>${answer}</td><td class="mono">${imprints}</td><td><div class="arena-dataset-issues">${datasetRowIssueHtml(row)}</div></td></tr>`;
+      }).join('');
+      preview.innerHTML = `${editable ? '<div class="arena-dataset-edit-note">OCR/PDF 변환값을 이 표에서 수정할 수 있습니다. 값을 바꾸면 사람 확인이 자동으로 해제됩니다.</div>' : ''}<div class="arena-table-wrap"><table class="arena-table arena-dataset-table"><thead><tr><th>상태</th><th>행</th><th>case_id</th><th>앞면 파일</th><th>뒷면 파일</th><th>정답</th><th>각인 앞·뒤</th><th>검증 내용</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>${validation.rows.length > visibleRows.length ? `<div class="arena-dataset-more">처음 100행만 표시합니다 · 전체 ${validation.rows.length.toLocaleString('ko-KR')}행</div>` : ''}`;
     }
     const importArea = document.getElementById('arenaDatasetImport');
     const select = document.getElementById('arenaDatasetBatchSelect');

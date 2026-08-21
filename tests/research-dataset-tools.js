@@ -188,7 +188,7 @@ const xlsxAdapter = {
             state.pages.push(pageNumber);
             return Promise.resolve({
               getViewport: ({ scale }) => ({ width: 900 * scale, height: 1200 * scale }),
-              render: () => ({ promise: Promise.resolve() }),
+              render: options => { state.renderBackgrounds.push(options.background); return { promise: Promise.resolve() }; },
               cleanup() { state.pageCleanups += 1; },
             });
           },
@@ -223,7 +223,7 @@ const xlsxAdapter = {
   }
 
   function newState() {
-    return { pages: [], pageCleanups: 0, documentCleanups: 0, destroyed: 0, workers: 0, recognized: 0, terminated: 0, canvasSizes: [], canvases: [] };
+    return { pages: [], pageCleanups: 0, documentCleanups: 0, destroyed: 0, workers: 0, recognized: 0, terminated: 0, canvasSizes: [], canvases: [], renderBackgrounds: [] };
   }
 
   function runOptions(state, pageWords, extra) {
@@ -271,6 +271,7 @@ const xlsxAdapter = {
   assert.equal(okState.destroyed, 1, '완료 후 PDF loadingTask를 정리합니다');
   assert.equal(okState.documentCleanups, 1, '완료 후 PDF document 캐시를 비웁니다');
   assert.equal(okState.pageCleanups, 2);
+  assert(okState.renderBackgrounds.every(background => background === '#ffffff'), 'OCR 캔버스는 흰 배경으로 렌더링해야 합니다');
   assert(okState.canvases.every(canvas => canvas.width === 0 && canvas.height === 0), '캔버스 메모리를 반환해야 합니다');
   assert(progress.some(event => event.phase === 'ocr' && event.pageNumber === 1), '진행률에 페이지 번호가 필요합니다');
   assert(progress.some(event => event.ocrPercent === 50), '진행률에 OCR 진행 상태가 필요합니다');
@@ -315,6 +316,14 @@ const xlsxAdapter = {
   );
   assert.equal(limitState.recognized, 0, '페이지 제한 초과 시 OCR을 시작하지 않습니다');
   assert.equal(limitState.destroyed, 1, '오류 후에도 PDF document를 정리합니다');
+  const defaultLimitState = newState();
+  await assert.rejects(
+    tools.parseScannedPdf(fakePdfFile('scan-21-pages.pdf'), runOptions(defaultLimitState, Array.from({ length: 21 }, () => page1))),
+    error => error.code === 'too_many_pages' && /최대 20페이지/.test(error.message),
+    '기본 설정은 20페이지를 초과한 PDF를 거부해야 합니다',
+  );
+  assert.equal(defaultLimitState.recognized, 0, '기본 20페이지 제한도 OCR 시작 전에 적용합니다');
+  assert.equal(defaultLimitState.destroyed, 1, '기본 제한 오류에서도 PDF document를 정리합니다');
 
   // cancelActiveOcr()
   const cancelState = newState();

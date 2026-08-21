@@ -5,11 +5,13 @@
 1. 사용자가 내려받아 바로 작성하는 **XLSX 정답지 템플릿** 생성
 2. 텍스트 레이어가 없는 **스캔 PDF 정답지**를 브라우저 안에서만 OCR해 사람이 확인할 수 있는 구조화 결과 생성
 
-이 모듈은 `arena.js`, `index.html`, `worker/`, `deidentify.js`를 수정하지 않습니다. 운영 화면 연결은 통합 담당자가 별도로 수행합니다.
+도구 로직은 `research-dataset-tools.js`에 독립적으로 두고, 운영 화면 연결만 `arena.js`와 `index.html`에 최소한으로 추가했습니다. `worker/`와 `deidentify.js`는 변경하지 않습니다.
 
 - 모듈 버전: `1.0.0`
-- 데이터 계약: Task A `02_DATA_CONTRACTS.md` v1
+- 데이터 계약: KCSI-MED 공통 Contract v1의 GroundTruth 입력용 평면 형식
 - 기준 앱 버전: v12.10
+
+템플릿은 별도 열 정의를 만들지 않고 `arena.js`의 `DATASET_COLUMNS`를 그대로 사용합니다. 이후 공통 계약 변환 경계에서 `case_id`는 `GroundTruth.sample_id`, `front_image`/`back_image`는 `images`, 정답 열은 `answer`, 촬영 조건 열은 `condition`으로 매핑하고 `schema_version: "1.0"`을 부여할 수 있습니다. 이 모듈은 병렬 작업 중인 공통 스키마를 다시 선언하지 않습니다.
 
 ## 1. 불러오기
 
@@ -77,7 +79,7 @@ const blob = await KCSIResearchDatasetTools.buildXlsxTemplate({ arenaCore: KCSIA
 | `maxCanvasSide` | `1800` | 렌더링 캔버스 긴 변 상한(배율 상한 2.2) |
 | `pdfjs`, `tesseract`, `createCanvas` | CDN/DOM | 테스트용 의존성 주입 |
 
-반환 구조(`02_DATA_CONTRACTS.md` Task A 계약)
+반환 구조(공통 GroundTruth 입력으로 변환하기 전 로컬 OCR 결과)
 
 ```js
 {
@@ -172,8 +174,8 @@ const blob = await KCSIResearchDatasetTools.buildXlsxTemplate({ arenaCore: KCSIA
 2. **XLSX 템플릿** 버튼이 `buildXlsxTemplate()`로 두 시트 정답지를 생성합니다.
 3. 정답지 선택에서 PDF의 텍스트 표를 먼저 시도하고, 표가 없으면 `parseScannedPdf()` 로컬 OCR로 자동 전환합니다.
 4. OCR 진행률과 페이지 상태를 표시하며 **OCR 취소** 버튼은 `AbortController`와 `cancelActiveOcr()`를 함께 호출합니다.
-5. 변환이 끝나면 경고, 페이지별 평균 신뢰도, OCR 원문과 구조화 표를 함께 보여줍니다.
-6. `pdf`와 `pdf_ocr` 결과는 모두 `arenaPdfConfirm`을 직접 선택하기 전까지 5건 배치 불러오기가 비활성화됩니다.
+5. 변환이 끝나면 경고, 페이지별 평균 신뢰도, OCR 원문과 구조화 표를 함께 보여줍니다. 구조화 표의 시험번호·이미지 파일명·정답·각인은 화면에서 바로 수정할 수 있습니다.
+6. `pdf`와 `pdf_ocr` 결과는 모두 `arenaPdfConfirm`을 직접 선택하기 전까지 5건 배치 불러오기가 비활성화됩니다. 값을 수정하면 확인 상태가 자동으로 해제되어 원문 대조를 다시 요구합니다.
 7. 페이지를 벗어날 때 `dispose()`를 호출해 worker와 로딩 캐시를 정리합니다.
 
 `rows`는 기존 `validateDatasetRows()` 형식으로 전달되며 PDF와 OCR 원본은 브라우저 메모리에만 머뭅니다.

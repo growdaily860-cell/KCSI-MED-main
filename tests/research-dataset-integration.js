@@ -174,11 +174,24 @@ function storage() {
   await confirmation.trigger('change', { target: confirmation });
   assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, false, 'human confirmation must unlock batch import');
 
+  const preview = document.getElementById('arenaDatasetPreview');
+  assert(preview.innerHTML.includes('data-dataset-column="drug_name"'), 'OCR structured rows must be editable');
+  await preview.trigger('change', {
+    target: { dataset: { datasetRow: '1', datasetColumn: 'drug_name' }, value: '수정된 테스트정2' },
+  });
+  assert.equal(confirmation.checked, false, 'editing an OCR value must clear human confirmation');
+  assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, true, 'edited OCR rows must be reviewed again');
+  assert(preview.innerHTML.includes('value="수정된 테스트정2"'), 'the corrected value must remain in the structured table');
+
+  confirmation.checked = true;
+  await confirmation.trigger('change', { target: confirmation });
+  assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, false, 'reviewing the corrected rows must unlock import again');
+
   await document.getElementById('arenaDatasetClear').trigger('click');
   assert.equal(document.getElementById('arenaDatasetOcrPanel').hidden, true, 'clear must remove the OCR review from memory/UI');
   assert.equal(document.getElementById('arenaDatasetRows').textContent, '0');
 
-  console.log('[research-dataset-integration] PASS — PDF fallback · OCR review · confirmation gate · clear');
+  console.log('[research-dataset-integration] PASS — PDF fallback · editable OCR review · confirmation gate · clear');
 })().catch(error => {
   console.error(error.stack || error);
   process.exit(1);

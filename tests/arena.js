@@ -99,6 +99,17 @@ assert.equal(normalizedDataset.rows.length, 1);
 assert.equal(normalizedDataset.rows[0].case_id, 'CASE-001');
 assert.equal(normalizedDataset.rows[0].front_image, 'pill_front.jpg');
 assert.equal(normalizedDataset.rows[0].drug_name, '테스트, 정');
+const datasetTsv = 'case_id\tfront_image\tback_image\tdrug_name\nCASE-TSV\ttsv_front.jpg\ttsv_back.jpg\tTSV정';
+const normalizedTsv = arena.normalizeDatasetTable(arena.parseDelimitedRows(datasetTsv, '\t'));
+assert.equal(normalizedTsv.rows[0].case_id, 'CASE-TSV', 'TSV 정답지 회귀');
+assert.equal(normalizedTsv.rows[0].back_image, 'tsv_back.jpg');
+const pdfTable = arena.pdfTableFromLines([
+  [{ x:0, text:'시험번호' }, { x:100, text:'앞면사진' }, { x:200, text:'뒷면사진' }, { x:300, text:'제품명' }],
+  [{ x:0, text:'CASE-PDF' }, { x:100, text:'pdf_front.jpg' }, { x:200, text:'pdf_back.jpg' }, { x:300, text:'PDF정' }],
+]);
+const normalizedPdf = arena.normalizeDatasetTable(pdfTable);
+assert.equal(normalizedPdf.rows[0].case_id, 'CASE-PDF', '텍스트형 PDF 표 회귀');
+assert.equal(normalizedPdf.rows[0].drug_name, 'PDF정');
 const validDataset = arena.validateDatasetRows(normalizedDataset.rows, ['pill_front.jpg', 'pill_back.jpg']);
 assert.equal(validDataset.summary.validRows, 1);
 assert.equal(validDataset.summary.invalidRows, 0);
@@ -138,6 +149,7 @@ assert(arenaSource.includes('arenaDatasetOcrReview') && arenaSource.includes('�
 assert(arenaSource.includes('arenaDatasetSampleLoad') && arenaSource.includes('KCSI_MED_MFDS_sample_20.zip'));
 assert(arenaSource.includes('loadFixedSampleDataset') && arenaSource.includes('JSZIP_URL'));
 assert(arenaSource.includes('.csv,.tsv,.xlsx,.xls,.pdf'));
+assert(arenaSource.includes('XLSX.read') && arenaSource.includes('sheet_to_json'), 'XLS/XLSX reader must remain wired');
 assert(arenaSource.includes('validateDatasetRows') && arenaSource.includes('buildDatasetTemplateCsv'));
 assert(arenaSource.includes('arenaCase${number}${cap}Cam') && arenaSource.includes('capture="environment"'));
 assert(arenaSource.includes('arena-all-failed') && arenaSource.includes('friendlyCallError'));
