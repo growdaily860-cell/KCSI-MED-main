@@ -4,3 +4,4 @@ easy_db.json -diff linguist-generated=true
 
 # Binary assets
 *.png binary
+*.zip binary
