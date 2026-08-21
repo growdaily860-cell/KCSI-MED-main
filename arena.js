@@ -33,6 +33,12 @@
   const PDF_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
   const SAMPLE_DATASET_URL = '/samples/KCSI_MED_MFDS_sample_20.zip';
   const SAMPLE_DATASET_COUNT = 20;
+  // 고정 샘플 세트. 확장 세트는 scripts/build-mfds-sample-dataset.mjs --set=extended120 로 만든다.
+  const SAMPLE_DATASETS = [
+    { id: 'fixed20', count: SAMPLE_DATASET_COUNT, url: SAMPLE_DATASET_URL, archive: 'KCSI_MED_MFDS_sample_20.zip', label: '고정 샘플 20건' },
+    { id: 'extended120', count: 120, url: '/samples/KCSI_MED_MFDS_sample_120.zip', archive: 'KCSI_MED_MFDS_sample_120.zip', label: '확장 샘플 120건' },
+  ];
+  const sampleDatasetById = id => SAMPLE_DATASETS.find(item => item.id === id) || SAMPLE_DATASETS[0];
   const DATASET_COLUMNS = [
     { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', '시험번호', '익명시험번호', '검체번호'] },
     { key: 'pill_id', label: '알약번호', aliases: ['pill_id', 'pill id', '알약번호', '약물번호'] },
@@ -447,6 +453,80 @@
     return Object.fromEntries(MODEL_LABELS.map((label, index) => [label, shuffled[index]]));
   }
 
+  // ── 무작위 배치 뽑기 ────────────────────────────────────────────────────
+  // 문제은행(정답지)은 고정해 두고, 그중 어느 5건을 풀지를 무작위로 정한다.
+  // 데이터셋 자체를 무작위로 만들면 모델 간 비교가 성립하지 않기 때문이다.
+  // 같은 seed면 같은 순서가 나오므로 다른 사람이 결과를 재현하고 감사할 수 있다.
+  function seededRandom(seedText) {
+    const text = safeText(seedText) || 'KCSI';
+    let hash = 2166136261;
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    let state = hash >>> 0;
+    return function random() {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function randomSeedText(randomFn) {
+    const random = typeof randomFn === 'function' ? randomFn : Math.random;
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 0/O·1/I 제외 — 사람이 받아 적는 값이다
+    let seed = '';
+    for (let index = 0; index < 6; index += 1) seed += alphabet[Math.floor(random() * alphabet.length)];
+    return seed;
+  }
+
+  function shuffledIndices(total, randomFn) {
+    const random = typeof randomFn === 'function' ? randomFn : Math.random;
+    const count = Math.max(0, Math.floor(Number(total)) || 0);
+    const order = Array.from({ length: count }, (_, index) => index);
+    for (let index = order.length - 1; index > 0; index -= 1) {
+      const swap = Math.floor(random() * (index + 1));
+      [order[index], order[swap]] = [order[swap], order[index]];
+    }
+    return order;
+  }
+
+  function createRandomBatchQueue(total, seed, randomFn) {
+    return {
+      total: Math.max(0, Math.floor(Number(total)) || 0),
+      seed: safeText(seed).trim().toUpperCase() || randomSeedText(randomFn),
+      round: 0,
+      cursor: 0,
+      order: [],
+      draws: 0,
+    };
+  }
+
+  // 한 회차 안에서는 같은 알약이 다시 나오지 않는다. 전부 소진하면 다음 회차로 넘어가
+  // 새로 섞는다 — 100건이 넘는 데이터셋을 빠짐없이 돌기 위한 구조다.
+  function drawRandomBatch(queue, size) {
+    const count = Math.max(1, Math.floor(Number(size)) || CASE_COUNT);
+    if (!queue || queue.total < count) return null;
+    if (queue.cursor + count > queue.order.length) {
+      queue.round += 1;
+      queue.order = shuffledIndices(queue.total, seededRandom(`${queue.seed}#${queue.round}`));
+      queue.cursor = 0;
+    }
+    const indices = queue.order.slice(queue.cursor, queue.cursor + count);
+    queue.cursor += count;
+    queue.draws += 1;
+    return {
+      indices,
+      seed: queue.seed,
+      round: queue.round,
+      draw: queue.draws,
+      remaining: queue.order.length - queue.cursor,
+      drawsPerRound: Math.floor(queue.total / count),
+    };
+  }
+
   function makePrompt(caseCount = CASE_COUNT) {
     return `당신은 대한민국 의약품 낱알 이미지 비교평가에 참여하는 시각 판독 모델입니다.
 아래에는 서로 다른 알약 ${caseCount}개의 앞면과 뒷면 사진이 CASE-1부터 CASE-${caseCount}까지 순서대로 제공됩니다.
@@ -773,13 +853,14 @@
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
     normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
     datasetRequiresConfirmation, buildContractDatasetFromRuns,
+    seededRandom, randomSeedText, shuffledIndices, createRandomBatchQueue, drawRandomBatch,
   };
   root.KCSIArenaCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
 
   const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
-  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null });
+  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null });
   const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset() };
   let datasetOcrAbort = null;
 
@@ -826,6 +907,10 @@
           <div><span class="arena-sample-eyebrow">MFDS FIXED BASELINE · 20 CASES</span><b>식약처 공식사진 고정 샘플</b><p>같은 20건을 반복 사용해 모델별 기본 식별 성능을 비교합니다. 공식 등록사진 기반 결과는 실제 현장사진 정확도와 구분해서 해석해야 합니다.</p></div>
           <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad">샘플 20건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload" href="${SAMPLE_DATASET_URL}" download="KCSI_MED_MFDS_sample_20.zip">ZIP 내려받기</a></div>
         </div>
+        <div class="arena-sample-dataset arena-sample-extended">
+          <div><span class="arena-sample-eyebrow">MFDS EXTENDED · 120 CASES · RANDOM</span><b>확장 샘플 120건 · 무작위 출제</b><p>모양·색상·약효분류를 흩어 고른 120건입니다. 앞 20건은 고정 샘플과 같아 기존 결과와 이어집니다. 불러온 뒤 <em>랜덤 5건 뽑기</em>로 매번 다른 문제를 받되, 같은 seed면 같은 문제가 다시 나옵니다.</p></div>
+          <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad120">샘플 120건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload120" href="/samples/KCSI_MED_MFDS_sample_120.zip" download="KCSI_MED_MFDS_sample_120.zip">ZIP 내려받기</a></div>
+        </div>
         <div class="arena-dataset-upload-grid">
           <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · PDF(텍스트·스캔)</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
           <input class="arena-file-input" type="file" id="arenaDatasetAnswer" accept=".csv,.tsv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
@@ -851,7 +936,7 @@
         </div>
         <div id="arenaDatasetNotices"></div>
         <div class="arena-dataset-preview" id="arenaDatasetPreview"><div class="arena-empty">정답지와 알약 사진을 선택하면 검증 결과가 표시됩니다.</div></div>
-        <div class="arena-dataset-import" id="arenaDatasetImport" hidden><div><b>검증된 데이터를 기존 5알약 비교에 적용</b><span>한 번에 5건씩 앞·뒷면과 정답을 자동 입력합니다.</span></div><select class="arena-select" id="arenaDatasetBatchSelect" aria-label="불러올 데이터셋 범위"></select><button class="arena-action" type="button" id="arenaDatasetLoadBatch">선택한 5건 불러오기</button></div>
+        <div class="arena-dataset-import" id="arenaDatasetImport" hidden><div><b>검증된 데이터를 기존 5알약 비교에 적용</b><span>한 번에 5건씩 앞·뒷면과 정답을 자동 입력합니다.</span><span class="arena-dataset-random" id="arenaDatasetRandomNote"></span></div><select class="arena-select" id="arenaDatasetBatchSelect" aria-label="불러올 데이터셋 범위"></select><button class="arena-action" type="button" id="arenaDatasetLoadBatch">선택한 5건 불러오기</button><button class="arena-action arena-action-ghost" type="button" id="arenaDatasetRandomBatch">🎲 랜덤 5건 뽑기</button></div>
       </section>
     </div>`;
   }
@@ -910,11 +995,13 @@
     document.getElementById('arenaDatasetTemplate').addEventListener('click', () => download('KCSI_MED_dataset_template.csv', buildDatasetTemplateCsv(), 'text/csv;charset=utf-8'));
     document.getElementById('arenaDatasetTemplateXlsx').addEventListener('click', downloadDatasetTemplateXlsx);
     document.getElementById('arenaDatasetOcrCancel').addEventListener('click', cancelDatasetOcr);
-    document.getElementById('arenaDatasetSampleLoad').addEventListener('click', loadFixedSampleDataset);
+    document.getElementById('arenaDatasetSampleLoad').addEventListener('click', () => loadFixedSampleDataset('fixed20'));
+    document.getElementById('arenaDatasetSampleLoad120').addEventListener('click', () => loadFixedSampleDataset('extended120'));
     document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
     document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
     document.getElementById('arenaDatasetPreview').addEventListener('change', handleDatasetCorrection);
-    document.getElementById('arenaDatasetLoadBatch').addEventListener('click', loadDatasetBatch);
+    document.getElementById('arenaDatasetLoadBatch').addEventListener('click', () => loadDatasetBatch());
+    document.getElementById('arenaDatasetRandomBatch').addEventListener('click', loadRandomDatasetBatch);
     document.getElementById('arenaOpenAiPreset').addEventListener('click', restorePreset);
     document.getElementById('arenaCostMode').addEventListener('change', syncCostHint);
     document.getElementById('arenaBatchFiles').addEventListener('change', handleBatchFiles);
@@ -1117,27 +1204,30 @@
     return state.dataset.imageFiles.find(file => datasetImageKey(file.name) === key) || null;
   }
 
-  async function loadFixedSampleDataset() {
-    const button = document.getElementById('arenaDatasetSampleLoad');
+  async function loadFixedSampleDataset(setId) {
+    const set = sampleDatasetById(setId);
+    const button = document.getElementById(set.id === 'extended120' ? 'arenaDatasetSampleLoad120' : 'arenaDatasetSampleLoad');
     button.disabled = true;
-    setDatasetStatus('식약처 고정 샘플 20건을 내려받고 압축을 푸는 중...');
+    setDatasetStatus(`식약처 ${set.label}을 내려받고 압축을 푸는 중...`);
     try {
-      const response = await fetch(SAMPLE_DATASET_URL, { cache: 'no-store' });
+      const response = await fetch(set.url, { cache: 'no-store' });
+      // 확장 세트 ZIP은 저장소에 커밋된 뒤에야 배포된다. 404를 그냥 숫자로 보여주면 원인을 알 수 없다.
+      if (response.status === 404) throw new Error(`${set.archive}가 아직 배포에 없습니다. scripts/build-mfds-sample-dataset.mjs --set=${set.id} 로 만들어 커밋하세요`);
       if (!response.ok) throw new Error(`샘플 데이터 다운로드 오류 ${response.status}`);
       const JSZip = await ensureZipLib();
       const archive = await JSZip.loadAsync(await response.arrayBuffer());
       const answerEntry = archive.file('answer_sheet.csv');
       if (!answerEntry) throw new Error('샘플 ZIP에서 answer_sheet.csv를 찾지 못했습니다');
       const imageEntries = Object.values(archive.files).filter(entry => !entry.dir && /^images\/.+\.(?:jpe?g|png|webp)$/i.test(entry.name));
-      if (imageEntries.length !== SAMPLE_DATASET_COUNT * 2) throw new Error(`샘플 사진 수가 예상과 다릅니다: ${imageEntries.length}장`);
-      const answerFile = new File([await answerEntry.async('blob')], 'KCSI_MED_MFDS_sample_20_answer_sheet.csv', { type: 'text/csv;charset=utf-8' });
+      if (imageEntries.length !== set.count * 2) throw new Error(`샘플 사진 수가 예상과 다릅니다: ${imageEntries.length}장`);
+      const answerFile = new File([await answerEntry.async('blob')], `${set.archive.replace(/\.zip$/, '')}_answer_sheet.csv`, { type: 'text/csv;charset=utf-8' });
       const imageFiles = await Promise.all(imageEntries.map(async entry => {
         const name = entry.name.split('/').pop();
         const type = /\.png$/i.test(name) ? 'image/png' : /\.webp$/i.test(name) ? 'image/webp' : 'image/jpeg';
         return new File([await entry.async('blob')], name, { type });
       }));
       const parsed = await readAnswerKeyFile(answerFile);
-      if (parsed.rows.length !== SAMPLE_DATASET_COUNT) throw new Error(`샘플 정답지 행이 예상과 다릅니다: ${parsed.rows.length}건`);
+      if (parsed.rows.length !== set.count) throw new Error(`샘플 정답지 행이 예상과 다릅니다: ${parsed.rows.length}건`);
       state.dataset = {
         answerFile,
         sourceType: parsed.sourceType,
@@ -1148,17 +1238,18 @@
         confirmed: true,
         requiresConfirmation: false,
         importMeta: parsed,
+        randomQueue: null,
       };
       resetDatasetOcrUi();
       document.getElementById('arenaDatasetAnswerName').textContent = answerFile.name;
-      document.getElementById('arenaDatasetImageName').textContent = `${imageFiles.length.toLocaleString('ko-KR')}장 · 식약처 고정 샘플`;
+      document.getElementById('arenaDatasetImageName').textContent = `${imageFiles.length.toLocaleString('ko-KR')}장 · 식약처 ${set.label}`;
       document.getElementById('arenaPdfConfirmWrap').hidden = true;
       document.getElementById('arenaPdfConfirm').checked = false;
       refreshDatasetValidation();
-      if (state.dataset.validation.validRows.length !== SAMPLE_DATASET_COUNT) {
-        throw new Error(`샘플 자체 검증 실패: ${state.dataset.validation.validRows.length}/${SAMPLE_DATASET_COUNT}건 통과`);
+      if (state.dataset.validation.validRows.length !== set.count) {
+        throw new Error(`샘플 자체 검증 실패: ${state.dataset.validation.validRows.length}/${set.count}건 통과`);
       }
-      setDatasetStatus('식약처 고정 샘플 20건과 앞·뒷면 사진 40장을 불러왔습니다 · 아래에서 5건씩 선택하세요');
+      setDatasetStatus(`식약처 ${set.label}과 앞·뒷면 사진 ${set.count * 2}장을 불러왔습니다 · 아래에서 5건씩 선택하거나 랜덤으로 뽑으세요`);
     } catch (error) {
       clearDataset();
       setDatasetStatus(error.message || '고정 샘플을 불러오지 못했습니다', true);
@@ -1297,7 +1388,16 @@
         options.push(`<option value="${index}">${index + 1}–${index + CASE_COUNT}번 · ${esc(first.case_id)} ~ ${esc(last.case_id)}</option>`);
       }
       select.innerHTML = options.join('');
-      button.disabled = datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed;
+      const locked = datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed;
+      button.disabled = locked;
+      // 유효 행 수가 달라지면(수정·재업로드) 뽑기 이력을 버리고 새로 섞는다.
+      const queue = state.dataset.randomQueue;
+      if (!queue || queue.total !== validation.validRows.length) {
+        state.dataset.randomQueue = createRandomBatchQueue(validation.validRows.length);
+      }
+      const randomButton = document.getElementById('arenaDatasetRandomBatch');
+      if (randomButton) randomButton.disabled = locked;
+      renderRandomNote();
     }
   }
 
@@ -1344,12 +1444,39 @@
     return 'original';
   }
 
-  async function loadDatasetBatch() {
+  function renderRandomNote(draw) {
+    const note = document.getElementById('arenaDatasetRandomNote');
+    if (!note) return;
+    const queue = state.dataset.randomQueue;
+    if (!queue || queue.total < CASE_COUNT) { note.textContent = ''; return; }
+    const perRound = Math.floor(queue.total / CASE_COUNT);
+    note.textContent = draw
+      ? `무작위 ${draw.draw}회차 · seed ${draw.seed} · ${draw.round}바퀴 ${Math.ceil((queue.cursor) / CASE_COUNT)}/${perRound} · 이번 바퀴 미출제 ${draw.remaining}건`
+      : `🎲 ${queue.total}건 중 무작위 5건 · seed ${queue.seed} · 한 바퀴 ${perRound}배치, 같은 바퀴에서는 중복 없음`;
+  }
+
+  // 무작위 뽑기도 정답지 자체는 건드리지 않는다. 어느 5건을 풀지만 정한다.
+  async function loadRandomDatasetBatch() {
+    const validation = state.dataset.validation;
+    if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
+    if (!state.dataset.randomQueue || state.dataset.randomQueue.total !== validation.validRows.length) {
+      state.dataset.randomQueue = createRandomBatchQueue(validation.validRows.length);
+    }
+    const draw = drawRandomBatch(state.dataset.randomQueue, CASE_COUNT);
+    if (!draw) return setDatasetStatus('무작위로 뽑을 데이터가 부족합니다', true);
+    await loadDatasetBatch({ indices: draw.indices, draw });
+  }
+
+  async function loadDatasetBatch(options) {
     const validation = state.dataset.validation;
     if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
     if (datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed) return setDatasetStatus('PDF/OCR 추출 내용을 확인한 뒤 확인란을 선택하세요', true);
-    const start = Number(document.getElementById('arenaDatasetBatchSelect').value) || 0;
-    const rows = validation.validRows.slice(start, start + CASE_COUNT);
+    const draw = options && options.draw ? options.draw : null;
+    const explicit = options && Array.isArray(options.indices) ? options.indices : null;
+    const start = explicit ? 0 : Number(document.getElementById('arenaDatasetBatchSelect').value) || 0;
+    const rows = explicit
+      ? explicit.map(index => validation.validRows[index]).filter(Boolean)
+      : validation.validRows.slice(start, start + CASE_COUNT);
     if (rows.length !== CASE_COUNT) return setDatasetStatus('선택한 범위에서 5건을 불러오지 못했습니다', true);
     setDatasetStatus('앞·뒷면 사진 10장을 비교용 크기로 최적화하는 중...');
     try {
@@ -1362,7 +1489,10 @@
       state.images = pairs;
       state.dataset.loadedRows = rows.map(row => ({ ...row, variant: variantFromDatasetRow(row) }));
       const sourceName = safeText(state.dataset.answerFile && state.dataset.answerFile.name).replace(/\.[^.]+$/, '') || 'DATASET';
-      document.getElementById('arenaBatchId').value = `${sourceName}-${String(start + 1).padStart(3, '0')}-${String(start + CASE_COUNT).padStart(3, '0')}`;
+      // 무작위 배치는 seed와 회차를 배치 ID에 남긴다 — 나중에 같은 문제를 다시 뽑을 수 있어야 한다.
+      document.getElementById('arenaBatchId').value = draw
+        ? `${sourceName}-RND${draw.seed}-${String(draw.draw).padStart(2, '0')}`
+        : `${sourceName}-${String(start + 1).padStart(3, '0')}-${String(start + CASE_COUNT).padStart(3, '0')}`;
       rows.forEach((row, index) => {
         const number = index + 1;
         document.getElementById(`arenaCaseId${number}`).value = row.case_id;
@@ -1375,7 +1505,10 @@
       document.getElementById('arenaConsent').checked = false;
       refreshUploadCount();
       switchArenaView('experiment');
-      setArenaStatus(`검증된 데이터셋 ${start + 1}–${start + CASE_COUNT}번을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`);
+      if (draw) renderRandomNote(draw);
+      setArenaStatus(draw
+        ? `무작위 5건(seed ${draw.seed} · ${draw.draw}회차)을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`
+        : `검증된 데이터셋 ${start + 1}–${start + CASE_COUNT}번을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`);
       document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) { setDatasetStatus(error.message || '데이터셋을 불러오지 못했습니다', true); }
   }

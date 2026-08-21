@@ -110,9 +110,28 @@ try {
   assert.equal(scored.vote, 'A');
 
   // 3) 자동채점 UI와 플랫폼 보고서 UI가 한 화면에 함께 설치되는지
-  for (const selector of ['#arenaAutoStatus', '#arenaAutoReasons', '#arenaAcceptAuto', '#arenaContractCsv', '#arenaXlsx', '#arenaPdf', '#arenaDatasetSampleLoad']) {
+  for (const selector of ['#arenaAutoStatus', '#arenaAutoReasons', '#arenaAcceptAuto', '#arenaContractCsv', '#arenaXlsx', '#arenaPdf',
+    '#arenaDatasetSampleLoad', '#arenaDatasetSampleLoad120', '#arenaDatasetRandomBatch', '#arenaDatasetRandomNote']) {
     assert.equal(await page.locator(selector).count(), 1, `${selector} 가 없다`);
   }
+
+  // 3b) 무작위 출제가 실제 페이지에서 도는지 — 120건에서 한 바퀴 중복 없이 24배치가 나와야 한다.
+  const randomDraw = await page.evaluate(() => {
+    const core = globalThis.KCSIArenaCore;
+    const queue = core.createRandomBatchQueue(120, 'BROWSE');
+    const seen = [];
+    let last = null;
+    for (let index = 0; index < 24; index += 1) {
+      last = core.drawRandomBatch(queue, core.CASE_COUNT);
+      seen.push(...last.indices);
+    }
+    return { unique: new Set(seen).size, count: seen.length, round: last.round, seed: last.seed, drawsPerRound: last.drawsPerRound };
+  });
+  assert.equal(randomDraw.count, 120);
+  assert.equal(randomDraw.unique, 120, '실제 브라우저에서 같은 알약이 중복 출제됐다');
+  assert.equal(randomDraw.round, 1);
+  assert.equal(randomDraw.drawsPerRound, 24);
+  assert.equal(randomDraw.seed, 'BROWSE');
 
   // 4) 모바일 폭에서 가로 스크롤이 생기지 않는지 — 자동채점 카드가 390px에서 넘치면 현장에서 못 쓴다.
   // PIN 게이트가 화면을 덮고 있으므로 실제 클릭 대신 핸들러만 호출한다(인증은 그대로 둔다).

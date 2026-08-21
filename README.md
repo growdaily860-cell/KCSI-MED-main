@@ -147,8 +147,10 @@ scoring/                   자동채점·비용·강건성 엔진
 scoring/arena-rubric.js    기존 40+25+20+15 평가표 자동채점·감사 근거
 evaluation/                Promptfoo 등 외부 러너용 평가 assertion
 reports/                   Dashboard·CSV·XLSX·PDF 보고서
-samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트
-scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트
+samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트 (20건 · 120건)
+scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트 (`--set=extended120`)
+scripts/mfds-sample-sets.mjs           고정 샘플 품목 목록
+scripts/select-mfds-sample-items.mjs   품목 선정 기준과 재생성기
 worker/worker.js           PIN 로그인·API 프록시·일일 한도 Worker
 wrangler.jsonc             Cloudflare Worker 및 Durable Object 배포 설정
 pill_db.json               낱알식별 검색 데이터

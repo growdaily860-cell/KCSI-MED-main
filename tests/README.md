@@ -107,6 +107,18 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - 같은 배치를 Contract v1 결과로 다시 채점해도 판정이 일치하는지
 - Bridge Result Dataset에 이미지·base64·provider raw가 섞이지 않는지
 
+### sample-dataset-builder.js / random-batch.js
+
+고정 샘플 확장(120건)과 무작위 출제를 검사한다. 식약처 서버 없이 돈다.
+
+- 세트 정의: 확장 세트가 기존 20건을 같은 순서로 포함하는지, 후보가 목표보다 많은지
+- 후보 150건이 `pill_db.json`에 실제로 있고 이미지 URL 형식·모양·색상 다양성을 만족하는지
+- 사진이 빠진 품목을 건너뛰고도 목표 건수를 채우며, case_id가 빈틈없이 이어지는지
+- 목표를 채우면 남은 후보는 내려받지 않는지(불필요한 요청 방지)
+- 만들어진 ZIP이 앱의 `validateDatasetRows`를 그대로 통과하는지
+- 좌=앞면·우=뒷면 분할이 실제로 맞는지 (sharp 설치 시)
+- 무작위 출제: 같은 바퀴 중복 없음, 전량 순회, seed 재현, 5건 미만이면 뽑지 않음
+
 ### promptfoo-assertion.js
 
 외부 평가 러너용 assertion이 화면과 같은 산식을 쓰는지 확인한다(Promptfoo 미설치).
