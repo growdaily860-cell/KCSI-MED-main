@@ -70,6 +70,11 @@ assert.equal(invalidConfidence.prediction.confidence, null, 'tolerant normalizat
 const strictBad = { ...normal, prediction: { ...normal.prediction, confidence: 101 } };
 assert.equal(validateResearchResult(strictBad).valid, false);
 
+// strict validation must preserve sample correlation for scoring/reporting
+const missingSampleId = { ...normal, sample_id: '' };
+assert.equal(validateResearchResult(missingSampleId).valid, false);
+assert(validateResearchResult(missingSampleId).errors.some(message => message.includes('sample_id')));
+
 // null prediction
 const nullPrediction = normalizeResearchResult({
   sample_id: 'NULL-PRED', provider: 'openai', model: 'gpt-4o', prediction: null,
