@@ -107,6 +107,17 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - 같은 배치를 Contract v1 결과로 다시 채점해도 판정이 일치하는지
 - Bridge Result Dataset에 이미지·base64·provider raw가 섞이지 않는지
 
+### promptfoo-assertion.js
+
+외부 평가 러너용 assertion이 화면과 같은 산식을 쓰는지 확인한다(Promptfoo 미설치).
+
+- 화면 자동채점과 총점이 정확히 같은지
+- 코드블록으로 감싼 응답도 같은 파서를 타는지
+- 고신뢰 오식별의 환각 억제 감점 반영
+- 정답 누락이 모델 0점이 아니라 채점 보류로 남는지
+- JSON이 아닌 응답에서 예외 대신 실패 결과를 돌려주는지
+- Contract v1 `answer` vars와 기존 `truth*` vars 동시 지원
+
 ### browser-research.mjs (선택 · `npm run test:browser`)
 
 실제 Chromium으로 `/research`를 띄운다. Playwright가 없으면 건너뛴다.

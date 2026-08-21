@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build:research": "esbuild research/browser-entry.js --bundle --format=iife --global-name=KCSIResearchPlatform --platform=browser --target=es2020 --outfile=research/platform-browser.js",
-    "test": "node tests/tdz.js index.html && node tests/dom.js index.html && node tests/deidentify.js && node tests/arena.js && node tests/arena-rubric.js && node tests/research-contract-v1.js && node tests/research-dataset-tools.js && node tests/research-dataset-integration.js && node tests/providers.js && node tests/research-scoring-report-v2.js && node tests/research-platform-integration.js && node tests/research-arena-bridge.js && node tests/arena-auto-scoring-integration.js && node tests/sample-dataset.js && node tests/worker-auth.mjs && node mark.js",
+    "test": "node tests/tdz.js index.html && node tests/dom.js index.html && node tests/deidentify.js && node tests/arena.js && node tests/arena-rubric.js && node tests/research-contract-v1.js && node tests/research-dataset-tools.js && node tests/research-dataset-integration.js && node tests/providers.js && node tests/research-scoring-report-v2.js && node tests/research-platform-integration.js && node tests/research-arena-bridge.js && node tests/arena-auto-scoring-integration.js && node tests/promptfoo-assertion.js && node tests/sample-dataset.js && node tests/worker-auth.mjs && node mark.js",
     "test:browser": "node tests/browser-research.mjs",
     "serve": "node tests/dev-server.js"
   },

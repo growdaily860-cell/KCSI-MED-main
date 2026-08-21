@@ -21,6 +21,8 @@
 - 자동채점 감사 열(`rating_source`, `evaluation_version`, `automatic_total_score`,
   `rating_override_fields`, `vote_source`)을 기존 CSV에 유지
 - Contract 보고서 경로(Bridge · Result Dataset)와 자동채점 산식은 서로 독립
+- 외부 러너용 `evaluation/promptfoo-assertion.js`를 같은 자동채점 산식 위에 재구성
+  (`agent/automate-arena-evaluation`의 별도 100점 산식은 병합하지 않음)
 
 ## 배포 전
 
