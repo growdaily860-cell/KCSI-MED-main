@@ -146,7 +146,7 @@ function validateResearchResult(value, options = {}) {
   if (!isObject(value)) return { valid: false, errors: ['ResearchResult must be an object.'] };
   if (value.schema_version !== SCHEMA_VERSION) errors.push(`schema_version must be "${SCHEMA_VERSION}".`);
   if (typeof value.run_id !== 'string') errors.push('run_id must be a string.');
-  if (typeof value.sample_id !== 'string') errors.push('sample_id must be a string.');
+  if (typeof value.sample_id !== 'string' || !value.sample_id.trim()) errors.push('sample_id must be a non-empty string.');
   if (typeof value.provider !== 'string' || !value.provider.trim()) errors.push('provider must be a non-empty string.');
   else if (!allowUnknownProvider && !allowedProviders.includes(value.provider)) errors.push(`provider "${value.provider}" is not registered.`);
   if (typeof value.model !== 'string' || !value.model.trim()) errors.push('model must be a non-empty string.');
