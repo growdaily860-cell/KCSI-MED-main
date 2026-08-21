@@ -87,6 +87,7 @@ assert.equal(summary.accuracy, 62.5);
 const csv = arena.buildCsv(runs);
 assert(csv.includes("'=FORMULA"), 'CSV formula injection must be neutralized');
 assert(csv.includes('cost_mode') && csv.includes('저비용 연습'), 'CSV must record cost mode');
+assert(csv.includes('rating_source') && csv.includes('evaluation_version') && csv.includes('vote_source'), 'CSV must preserve automatic/manual scoring audit fields');
 assert.equal(csv.split('\r\n').length, 21, 'one batch must export 20 data rows plus header');
 assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not contain secrets');
 
@@ -133,7 +134,9 @@ assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="research/platform-browser.js"></script>'));
 assert(html.includes('<script src="arena.js"></script>'));
 assert(html.includes('<script src="research-dataset-tools.js"></script>'));
+assert(html.includes('<script src="scoring/arena-rubric.js"></script>'));
 assert(html.indexOf('research/platform-browser.js') < html.indexOf('<script src="arena.js"></script>'), 'Contract platform must load before Arena');
+assert(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'), 'auto rubric must load before Arena');
 assert(html.indexOf('<script src="arena.js"></script>') < html.indexOf('<script src="research-dataset-tools.js"></script>'), 'arena core must load before dataset tools');
 assert(/APP_VERSION = 'v12\.11'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));

@@ -22,6 +22,9 @@
     'providers/contract.js', 'providers/errors.js', 'providers/shared.js', 'providers/registry.js',
     'providers/openai.js', 'providers/anthropic.js', 'providers/gemini.js', 'providers/mock.js', 'providers/index.js',
   ];
+  const AUTO_RUBRIC = root.KCSIArenaRubric || (typeof require === 'function' ? (() => {
+    try { return require('./scoring/arena-rubric.js'); } catch (_) { return null; }
+  })() : null);
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
   const MAX_DATASET_IMAGES = 1000;
   const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -253,15 +256,17 @@
       return '';
     };
     const confidenceRaw = Number(parsed.confidence);
+    const hasConfidence = parsed.confidence != null && safeText(parsed.confidence).trim() !== '' && Number.isFinite(confidenceRaw);
     return {
       case_id: pick('case_id', 'id') || fallbackCaseId,
       drug_name: pick('drug_name', 'item_name', 'medicine_name', 'name'),
+      drug_code: pick('drug_code', 'mfds_item_id', 'item_seq'),
       imprint_front: pick('imprint_front', 'mark_front', 'front_imprint'),
       imprint_back: pick('imprint_back', 'mark_back', 'back_imprint'),
       shape: pick('shape'),
       color: pick('color', 'color_front'),
       dosage_form: pick('dosage_form', 'form_code', 'form'),
-      confidence: Number.isFinite(confidenceRaw) ? Math.max(0, Math.min(100, confidenceRaw)) : null,
+      confidence: hasConfidence ? Math.max(0, Math.min(100, confidenceRaw)) : null,
       evidence: pick('evidence', 'basis', 'mfds_basis'),
       uncertainty: pick('uncertainty', 'limitations', 'caveat'),
     };
@@ -301,6 +306,45 @@
   }
 
   function computeTotal(rating) { return computeBatchTotal(rating); }
+
+  // Contract v1 정답(answer/condition)이 있으면 그대로 넘긴다.
+  // 레거시 필드를 함께 넘기면 rubric이 비워 둔 제품명 정답을 truthName으로 되살려 채점이 어긋난다.
+  function groundTruthForRubric(item, index) {
+    const source = item && typeof item === 'object' ? item : {};
+    if (!source.answer || typeof source.answer !== 'object') return source;
+    return {
+      schema_version: safeText(source.schema_version) || '1.0',
+      sample_id: safeText(source.sample_id || source.id).trim() || `CASE-${index + 1}`,
+      answer: { ...source.answer },
+      condition: { ...(source.condition && typeof source.condition === 'object' ? source.condition : {}) },
+    };
+  }
+
+  function scoreBatchWithRubric(groundTruths, predictions, dbChecks) {
+    if (!AUTO_RUBRIC || typeof AUTO_RUBRIC.scoreBatch !== 'function') {
+      return {
+        ready: false,
+        rubric_version: '',
+        caseVerdicts: [],
+        caseMetrics: [],
+        missing_ground_truth: [{ sample_id: '', error: '자동채점 모듈을 불러오지 못했습니다' }],
+        accuracy: null,
+        evidence: null,
+        hallucination: null,
+        clarity: null,
+        total: null,
+      };
+    }
+    const truths = (Array.isArray(groundTruths) ? groundTruths : []).map(groundTruthForRubric);
+    return AUTO_RUBRIC.scoreBatch(truths, predictions, { dbChecks });
+  }
+
+  function determineAutomaticWinner(ratingsByLabel, tieTolerance) {
+    if (!AUTO_RUBRIC || typeof AUTO_RUBRIC.determineWinner !== 'function') {
+      return { vote: '', ranked: [], reason: '자동채점 모듈을 불러오지 못했습니다' };
+    }
+    return AUTO_RUBRIC.determineWinner(ratingsByLabel, { tieTolerance });
+  }
 
   function csvCell(value) {
     let text = safeText(value).replace(/\r?\n/g, ' ');
@@ -363,9 +407,9 @@
   function buildCsv(runs) {
     const columns = [
       'batch_id','created_at','case_index','case_id','image_sides','image_clarity','cost_mode','prompt_version','blind_label',
-      'provider','model','truth_drug_name','truth_imprint_front','truth_imprint_back','drug_name','imprint_front','imprint_back',
+      'provider','model','truth_mfds_item_id','truth_drug_name','truth_imprint_front','truth_imprint_back','drug_name','drug_code','imprint_front','imprint_back',
       'mfds_match','mfds_candidate','verdict','accuracy_score','evidence_score','hallucination_score','clarity_score','total_score',
-      'vote','latency_ms','call_error',
+      'rating_source','evaluation_version','automatic_total_score','rating_override_fields','vote','vote_source','latency_ms','call_error',
     ];
     const rows = [columns];
     (runs || []).forEach(run => MODEL_LABELS.forEach(label => {
@@ -380,10 +424,13 @@
         rows.push([
           run.id, run.createdAt, index + 1, testCase.id, run.condition && run.condition.sides, testCase.clarity,
           run.condition && (run.condition.costModeLabel || run.condition.costMode), run.promptVersion, label,
-          model.providerLabel || model.provider, model.model, testCase.truthName, testCase.truthFront, testCase.truthBack,
-          parsed.drug_name, parsed.imprint_front, parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched',
+          model.providerLabel || model.provider, model.model, testCase.mfdsItemId || testCase.answer && testCase.answer.mfds_item_id,
+          testCase.truthName, testCase.truthFront, testCase.truthBack,
+          parsed.drug_name, parsed.drug_code, parsed.imprint_front, parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched',
           db.candidate, verdict, accuracyFromVerdict(verdict), rating.evidence, rating.hallucination, rating.clarity,
-          computeBatchTotal(rating), run.vote, result.latencyMs, result.error,
+          computeBatchTotal(rating), rating.source || 'manual', rating.evaluationMode || rating.rubricVersion || 'manual-v1',
+          result.autoRating && result.autoRating.total, (rating.overrideFields || []).join('|'), run.vote, run.voteSource || 'manual',
+          result.latencyMs, result.error,
         ]);
       });
     }));
@@ -412,7 +459,7 @@
 5. 다른 모델의 답이나 모델 이름을 추측하지 마세요.
 
 반드시 cases 배열에 CASE-1부터 CASE-${caseCount}까지 정확히 ${caseCount}개를 넣은 JSON 객체 하나만 출력하세요.
-{"cases":[{"case_id":"CASE-1","drug_name":"","imprint_front":"","imprint_back":"","shape":"","color":"","dosage_form":"","confidence":0,"evidence":"","uncertainty":""}]}`;
+{"cases":[{"case_id":"CASE-1","drug_name":"","drug_code":"","imprint_front":"","imprint_back":"","shape":"","color":"","dosage_form":"","confidence":0,"evidence":"","uncertainty":""}]}`;
   }
 
   function extractAssistantContent(payload) {
@@ -722,6 +769,7 @@
     PROVIDERS, PROMPT_VERSION, MODEL_LABELS, CASE_COUNT, DEFAULT_OPENAI_MODELS, MODEL_PRESETS, COST_MODES,
     createRequestBody, callCandidate, parseModelOutput, parseBatchModelOutput, accuracyFromVerdict, averageAccuracy,
     computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
+    scoreBatchWithRubric, determineAutomaticWinner,
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
     normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
     datasetRequiresConfirmation, buildContractDatasetFromRuns,
@@ -768,7 +816,7 @@
   }
 
   function scoreInput(label, field, max) {
-    return `<input class="arena-number" type="number" min="0" max="${max}" step="1" placeholder="0–${max}" data-score-label="${label}" data-score-field="${field}">`;
+    return `<input class="arena-number" type="number" min="0" max="${max}" step="0.1" placeholder="0–${max}" data-score-label="${label}" data-score-field="${field}">`;
   }
 
   function datasetViewMarkup() {
@@ -820,7 +868,7 @@
         <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>한 배치에 알약 5개, 사진 10장을 등록합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>정답지 사용</label><small>제품명·각인 정답은 AI에 전송되지 않고 블라인드 채점 보조와 CSV에만 사용됩니다.</small></div></div></section>
         <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>5쌍 이미지와 정답지</h2><p>일괄 선택 시 반드시 1앞, 1뒤, 2앞, 2뒤 … 5앞, 5뒤 순서로 10장을 선택하세요.</p></div><div class="arena-batch-count" id="arenaBatchCount">0 / 10</div></div><div class="arena-bulk-actions"><label class="arena-action" for="arenaBatchFiles">📚 사진 10장 한꺼번에 선택</label><input class="arena-file-input" type="file" id="arenaBatchFiles" accept="image/*" multiple><button class="arena-action secondary" type="button" id="arenaClearImages">사진 전체 지우기</button></div><div class="arena-order-guide"><b>자동 배치 순서</b><span>① 1번 앞</span><span>② 1번 뒤</span><span>③ 2번 앞</span><span>④ 2번 뒤</span><span>…</span><span>⑨ 5번 앞</span><span>⑩ 5번 뒤</span></div><div class="arena-cases">${Array.from({ length: CASE_COUNT }, (_, index) => caseForm(index)).join('')}</div></section>
         <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 5개 알약 채점과 투표가 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>10장 모두 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 사진 10장 · 모델 4개 블라인드 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
-        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">👁️ 실제 모델명은 숨겨져 있습니다. 모델 A–D가 판독한 알약 5개 결과와 식약처 DB 대조를 확인한 뒤 먼저 채점하세요.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${rubricRow('근거 타당성 (0–25)','evidence',25)}${rubricRow('환각 억제 (0–20)','hallucination',20)}${rubricRow('명확성 (0–15)','clarity',15)}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" id="arenaTotal${label}">—</span></td>`).join('')}</tr></tbody></table></div><div class="arena-vote-title">어느 모델의 5개 종합 결과가 가장 우수합니까?</div><div class="arena-votes">${MODEL_LABELS.map(label => `<button class="arena-vote" data-vote="${label}">${label}가 더 우수</button>`).join('')}<button class="arena-vote" data-vote="tie">동등</button></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
+        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">👁️ 실제 모델명은 숨겨져 있습니다. 정답지는 API에 보내지 않고, 응답 뒤 브라우저 메모리에서만 자동채점합니다. 자동점수는 저장 전 수정할 수 있습니다.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-auto-status" id="arenaAutoStatus" role="status" aria-live="polite">자동채점 대기</div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${rubricRow('근거 타당성 (0–25)','evidence',25)}${rubricRow('환각 억제 (0–20)','hallucination',20)}${rubricRow('명확성 (0–15)','clarity',15)}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" id="arenaTotal${label}">—</span></td>`).join('')}</tr></tbody></table></div><details class="arena-auto-details" id="arenaAutoDetails"><summary>자동채점 산식과 사례별 근거 보기</summary><div id="arenaAutoReasons"></div></details><div class="arena-auto-accept"><button class="arena-action" type="button" id="arenaAcceptAuto" disabled>자동 추천 결과로 평가 저장</button><span>점수 검토가 필요하면 위 값을 수정하거나 아래 모델을 직접 선택하세요.</span></div><div class="arena-vote-title">어느 모델의 5개 종합 결과가 가장 우수합니까?</div><div class="arena-votes">${MODEL_LABELS.map(label => `<button class="arena-vote" data-vote="${label}">${label}가 더 우수</button>`).join('')}<button class="arena-vote" data-vote="tie">동등</button></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
       </div>
       <div class="arena-view" id="arenaDashboard">
         <div class="arena-stat-grid" id="arenaStats"></div>
@@ -874,8 +922,14 @@
     for (let index = 0; index < CASE_COUNT; index += 1) { bindImage(index, 'front'); bindImage(index, 'back'); }
     document.getElementById('arenaConsent').addEventListener('change', refreshRunButton);
     document.getElementById('arenaRun').addEventListener('click', runExperiment);
-    document.querySelectorAll('[data-score-label]').forEach(element => element.addEventListener('input', refreshTotals));
-    document.querySelectorAll('[data-vote]').forEach(button => button.addEventListener('click', () => finalizeVote(button.dataset.vote)));
+    document.querySelectorAll('[data-score-label]').forEach(element => element.addEventListener('input', () => {
+      element.dataset.scoreEdited = 'true';
+      refreshTotals();
+    }));
+    document.getElementById('arenaAcceptAuto').addEventListener('click', () => {
+      if (state.current && state.current.autoVote) finalizeVote(state.current.autoVote, recommendationVoteSource());
+    });
+    document.querySelectorAll('[data-vote]').forEach(button => button.addEventListener('click', () => finalizeVote(button.dataset.vote, 'manual')));
     document.getElementById('arenaNew').addEventListener('click', resetExperiment);
     document.getElementById('arenaGoDashboard').addEventListener('click', () => switchArenaView('dashboard'));
     document.getElementById('arenaCsv').addEventListener('click', () => {
@@ -1437,23 +1491,49 @@
       const number = index + 1;
       const id = document.getElementById(`arenaCaseId${number}`).value.trim() || `${batchId}-${String(number).padStart(2, '0')}`;
       const datasetRow = (state.dataset.loadedRows || []).find(row => safeText(row.case_id).trim() === id) || {};
+      const imported = Object.keys(datasetRow).length > 0;
       const clarity = document.getElementById(`arenaClarity${number}`).value;
+      const truthName = document.getElementById(`arenaTruthName${number}`).value.trim();
+      const truthFront = document.getElementById(`arenaTruthFront${number}`).value.trim();
+      const truthBack = document.getElementById(`arenaTruthBack${number}`).value.trim();
+      const mfdsItemId = safeText(datasetRow.mfds_item_id).trim();
+      const truthShape = safeText(datasetRow.shape).trim();
+      const truthColor = safeText(datasetRow.color).trim();
+      const expectedReadable = imported ? expectedReadableFromDatasetRow(datasetRow) : true;
+      const light = safeText(datasetRow.light).trim();
+      const background = safeText(datasetRow.background).trim();
+      const blur = safeText(datasetRow.blur).trim() || clarity;
+      const angle = safeText(datasetRow.angle).trim();
+      const variant = imported ? variantFromDatasetRow(datasetRow) : 'original';
+      // 정답지에 제품명이 없어 품목 ID를 제품명 칸에 채운 경우, 그 ID를 제품명 정답으로 채점하지 않는다.
+      const answerDrugName = imported && !safeText(datasetRow.drug_name).trim() && mfdsItemId && mfdsItemId === truthName ? '' : truthName;
       return {
+        schema_version: '1.0',
+        sample_id: id,
         id,
         clarity,
-        truthName: document.getElementById(`arenaTruthName${number}`).value.trim(),
-        truthFront: document.getElementById(`arenaTruthFront${number}`).value.trim(),
-        truthBack: document.getElementById(`arenaTruthBack${number}`).value.trim(),
+        truthName,
+        truthFront,
+        truthBack,
         pillId: safeText(datasetRow.pill_id).trim(),
-        mfdsItemId: safeText(datasetRow.mfds_item_id).trim(),
-        truthShape: safeText(datasetRow.shape).trim(),
-        truthColor: safeText(datasetRow.color).trim(),
-        expectedReadable: Object.keys(datasetRow).length ? expectedReadableFromDatasetRow(datasetRow) : true,
-        light: safeText(datasetRow.light).trim(),
-        background: safeText(datasetRow.background).trim(),
-        blur: safeText(datasetRow.blur).trim() || clarity,
-        angle: safeText(datasetRow.angle).trim(),
-        variant: Object.keys(datasetRow).length ? variantFromDatasetRow(datasetRow) : 'original',
+        mfdsItemId,
+        truthShape,
+        truthColor,
+        expectedReadable,
+        light,
+        background,
+        blur,
+        angle,
+        variant,
+        answer: {
+          mfds_item_id: mfdsItemId,
+          drug_name: answerDrugName,
+          front_imprint: truthFront,
+          back_imprint: truthBack,
+          shape: truthShape,
+          color: truthColor,
+        },
+        condition: { expected_readable: expectedReadable, light, background, blur, angle, variant },
       };
     });
   }
@@ -1491,8 +1571,8 @@
     if (!successCount) {
       resultsElement.classList.add('arena-all-failed'); setArenaStatus('4개 모델 호출이 모두 실패했습니다. 오류 내용을 확인하세요.', true);
       document.getElementById('arenaSetupCard').classList.remove('arena-running'); state.current = null; refreshRunButton();
-    } else if (successCount < MODEL_LABELS.length) setArenaStatus(`${successCount}/4개 모델만 응답했습니다. 실패한 모델의 계정 권한 또는 ID를 확인하세요.`, true);
-    else setArenaStatus('4개 모델 응답 완료 · 실제 모델명을 보지 말고 5개 결과를 먼저 채점하세요');
+    } else if (successCount < MODEL_LABELS.length) setArenaStatus(`${successCount}/4개 모델 응답 및 자동채점 완료 · 실패한 모델의 계정 권한 또는 ID를 확인하세요.`, true);
+    else setArenaStatus('4개 모델 응답 및 자동채점 완료 · 점수와 산정 근거를 확인한 뒤 저장하세요');
     setTimeout(() => resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   }
 
@@ -1500,7 +1580,7 @@
     if (result.error) return `<article class="arena-output"><div class="arena-output-head"><span>모델 ${label}</span><span>IDENTITY HIDDEN</span></div><div class="arena-error"><b>호출 실패</b><span>${esc(friendlyCallError(result.error))}</span></div></article>`;
     return `<article class="arena-output"><div class="arena-output-head"><span>모델 ${label}</span><span>IDENTITY HIDDEN</span></div><div class="arena-output-body">${result.cases.map((item, index) => {
       const db = result.db[index] || {};
-      return `<section class="arena-result-case"><h3>알약 ${index + 1} <span>${esc(state.current.cases[index].id)}</span></h3><div class="arena-kv"><b>식별</b><span>${esc(item.drug_name || '식별 불가')}</span></div><div class="arena-kv"><b>각인</b><span class="mono">앞 ${esc(item.imprint_front || '—')} · 뒤 ${esc(item.imprint_back || '—')}</span></div><div class="arena-kv"><b>외형</b><span>${esc([item.shape, item.color, item.dosage_form].filter(Boolean).join(' · ') || '—')}</span></div><div class="arena-kv"><b>근거</b><span>${esc(item.evidence || '제시하지 않음')}</span></div><div class="arena-kv"><b>불확실성</b><span>${esc(item.uncertainty || '언급 없음')}</span></div><div class="arena-db ${db.matched ? 'ok' : 'warn'}">${db.matched ? `식약처 DB ${esc(db.confidence || '후보')} 일치 · ${esc(db.candidate || '후보명 없음')}` : '식약처 내장 낱알 DB 일치 후보 없음'}</div></section>`;
+      return `<section class="arena-result-case"><h3>알약 ${index + 1} <span>${esc(state.current.cases[index].id)}</span></h3><div class="arena-kv"><b>식별</b><span>${esc(item.drug_name || '식별 불가')}${item.drug_code ? ` · ${esc(item.drug_code)}` : ''}</span></div><div class="arena-kv"><b>각인</b><span class="mono">앞 ${esc(item.imprint_front || '—')} · 뒤 ${esc(item.imprint_back || '—')}</span></div><div class="arena-kv"><b>외형</b><span>${esc([item.shape, item.color, item.dosage_form].filter(Boolean).join(' · ') || '—')}</span></div><div class="arena-kv"><b>근거</b><span>${esc(item.evidence || '제시하지 않음')}</span></div><div class="arena-kv"><b>불확실성</b><span>${esc(item.uncertainty || '언급 없음')}</span></div><div class="arena-db ${db.matched ? 'ok' : 'warn'}">${db.matched ? `식약처 DB ${esc(db.confidence || '후보')} 일치 · ${esc(db.candidate || '후보명 없음')}` : '식약처 내장 낱알 DB 일치 후보 없음'}</div></section>`;
     }).join('')}</div></article>`;
   }
 
@@ -1512,14 +1592,76 @@
       if (voteButton) voteButton.disabled = !!result.error;
       for (let index = 0; index < CASE_COUNT; index += 1) {
         const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
-        select.value = result.error ? '' : suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
+        select.value = '';
+        select.title = '';
+        delete select.dataset.scoreAuto;
+        delete select.dataset.scoreEdited;
         select.disabled = !!result.error;
       }
       ['evidence','hallucination','clarity'].forEach(field => {
         const input = document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`);
-        input.value = ''; input.disabled = !!result.error;
+        input.value = '';
+        input.title = '';
+        delete input.dataset.scoreAuto;
+        delete input.dataset.scoreEdited;
+        input.disabled = !!result.error;
       });
     });
+    applyAutomaticRubric();
+  }
+
+  function applyAutomaticRatingToControls(label, rating) {
+    rating.caseVerdicts.forEach((verdict, index) => {
+      const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
+      const metric = rating.caseMetrics[index];
+      if (!select) return;
+      select.value = verdict;
+      select.dataset.scoreAuto = 'true';
+      select.title = metric && metric.reasons && metric.reasons.accuracy ? metric.reasons.accuracy.join(' · ') : '';
+    });
+    ['evidence','hallucination','clarity'].forEach(field => {
+      const input = document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`);
+      if (!input) return;
+      input.value = rating[field];
+      input.dataset.scoreAuto = 'true';
+      input.title = rating.caseMetrics.map(metric => {
+        const reasons = metric.reasons && metric.reasons[field] || [];
+        return `${metric.sample_id}: ${metric.component_scores[field]}점 · ${reasons.join(' · ')}`;
+      }).join('\n');
+    });
+  }
+
+  function automaticReasonHtml(label, rating) {
+    if (!rating || !rating.ready) return '';
+    const verdictLabel = { correct: '정답 40', partial: '부분정답 20', wrong: '오답 0' };
+    return `<article class="arena-auto-reason-card"><h4>모델 ${label} <span>${rating.total.toFixed(1)} / 100</span></h4><div class="arena-auto-component">정확성 ${rating.accuracy.toFixed(1)} · 근거 ${rating.evidence.toFixed(1)} · 환각 억제 ${rating.hallucination.toFixed(1)} · 명확성 ${rating.clarity.toFixed(1)}</div>${rating.caseMetrics.map((metric, index) => `<div class="arena-auto-case"><b>알약 ${index + 1} · ${esc(verdictLabel[metric.verdict] || metric.verdict)}</b><span>${esc(metric.reasons.accuracy.join(' · '))}</span><small>근거 ${metric.component_scores.evidence} · 환각 억제 ${metric.component_scores.hallucination} · 명확성 ${metric.component_scores.clarity}</small></div>`).join('')}</article>`;
+  }
+
+  function applyAutomaticRubric() {
+    if (!state.current) return;
+    const issues = [];
+    let scoredCount = 0;
+    MODEL_LABELS.forEach(label => {
+      const result = state.current.results[label];
+      if (!result || result.error) return;
+      const rating = scoreBatchWithRubric(state.current.cases, result.cases, result.db);
+      result.autoRating = rating;
+      if (rating.ready) {
+        scoredCount += 1;
+        applyAutomaticRatingToControls(label, rating);
+      } else {
+        (rating.missing_ground_truth || []).forEach(item => issues.push(`${item.sample_id || '알약'}: ${item.error}`));
+        for (let index = 0; index < CASE_COUNT; index += 1) {
+          const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`);
+          if (select) select.value = suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
+        }
+      }
+    });
+    state.current.autoScoredCount = scoredCount;
+    state.current.autoScoringIssues = [...new Set(issues)];
+    const reasons = document.getElementById('arenaAutoReasons');
+    if (reasons) reasons.innerHTML = MODEL_LABELS.map(label => automaticReasonHtml(label, state.current.results[label] && state.current.results[label].autoRating)).join('')
+      || '<div class="arena-auto-empty">자동채점 근거를 만들 수 없습니다. 정답 제품명 또는 식약처 품목 ID를 확인하세요.</div>';
     refreshTotals();
   }
 
@@ -1527,35 +1669,108 @@
     if (!state.current || state.current.results[label].error) return null;
     const caseVerdicts = Array.from({ length: CASE_COUNT }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"]`).value);
     const get = field => document.querySelector(`[data-score-label="${label}"][data-score-field="${field}"]`).value;
-    const rating = { caseVerdicts, evidence: get('evidence') === '' ? null : Number(get('evidence')), hallucination: get('hallucination') === '' ? null : Number(get('hallucination')), clarity: get('clarity') === '' ? null : Number(get('clarity')) };
+    const result = state.current.results[label];
+    const automatic = result.autoRating && result.autoRating.ready ? result.autoRating : null;
+    const rating = {
+      caseVerdicts,
+      evidence: get('evidence') === '' ? null : Number(get('evidence')),
+      hallucination: get('hallucination') === '' ? null : Number(get('hallucination')),
+      clarity: get('clarity') === '' ? null : Number(get('clarity')),
+    };
     const valid = caseVerdicts.every(Boolean) && Number.isFinite(rating.evidence) && rating.evidence >= 0 && rating.evidence <= 25 && Number.isFinite(rating.hallucination) && rating.hallucination >= 0 && rating.hallucination <= 20 && Number.isFinite(rating.clarity) && rating.clarity >= 0 && rating.clarity <= 15;
     if (strict && !valid) throw new Error(`모델 ${label}의 알약 5개 정확성과 나머지 3개 점수를 모두 입력하세요`);
-    return rating;
+    const overrideFields = [];
+    if (automatic) {
+      caseVerdicts.forEach((verdict, index) => { if (verdict && verdict !== automatic.caseVerdicts[index]) overrideFields.push(`case_${index + 1}`); });
+      ['evidence','hallucination','clarity'].forEach(field => {
+        if (Number.isFinite(rating[field]) && Math.abs(rating[field] - automatic[field]) > 0.05) overrideFields.push(field);
+      });
+    }
+    return {
+      ...rating,
+      source: automatic ? (overrideFields.length ? 'manual_override' : 'automatic') : 'manual',
+      evaluationMode: automatic ? automatic.rubric_version : 'manual-v1',
+      rubricVersion: automatic ? automatic.rubric_version : 'manual-v1',
+      automaticTotal: automatic ? automatic.total : null,
+      overrideFields,
+      ready: valid,
+      total: valid ? computeBatchTotal(rating) : null,
+    };
+  }
+
+  function refreshAutomaticRecommendation(ratings) {
+    if (!state.current) return;
+    const successCount = MODEL_LABELS.filter(label => state.current.results[label] && !state.current.results[label].error).length;
+    const completeCount = Object.keys(ratings || {}).length;
+    const recommendation = completeCount === successCount
+      ? determineAutomaticWinner(ratings, 1)
+      : { vote: '', ranked: [], reason: `${completeCount}/${successCount}개 모델만 점수가 완성되었습니다` };
+    state.current.autoRecommendation = recommendation;
+    state.current.autoVote = recommendation.vote;
+    document.querySelectorAll('[data-vote]').forEach(button => button.classList.toggle('auto-recommended', !!recommendation.vote && button.dataset.vote === recommendation.vote));
+    const accept = document.getElementById('arenaAcceptAuto');
+    if (accept) {
+      accept.disabled = !recommendation.vote;
+      accept.textContent = !recommendation.vote ? '자동 추천 결과로 평가 저장'
+        : recommendation.vote === 'tie' ? '현재 점수 추천 · 동등으로 저장'
+          : `현재 점수 추천 · 모델 ${recommendation.vote}로 저장`;
+    }
+    const status = document.getElementById('arenaAutoStatus');
+    if (!status) return;
+    const automaticCount = state.current.autoScoredCount || 0;
+    const issues = state.current.autoScoringIssues || [];
+    if (automaticCount) {
+      const voteText = recommendation.vote === 'tie' ? '상위 모델 1점 이내 동률' : recommendation.vote ? `모델 ${recommendation.vote} 최고점` : '추천 계산 대기';
+      status.textContent = `${automaticCount}개 모델 자동채점 완료 · ${voteText} · 점수는 검토 후 수정 가능`;
+      status.classList.remove('error');
+    } else {
+      status.textContent = issues.length ? `자동채점 보류 · ${issues.slice(0, 3).join(' / ')}` : '자동채점 보류 · 정답지와 응답을 확인하세요';
+      status.classList.add('error');
+    }
+  }
+
+  function recommendationVoteSource() {
+    const hasOverride = MODEL_LABELS.some(label => {
+      const rating = state.current && state.current.results[label] && !state.current.results[label].error ? ratingFor(label, false) : null;
+      return rating && rating.source !== 'automatic';
+    });
+    return hasOverride ? 'score_recommendation_after_override' : 'automatic_recommendation';
   }
 
   function refreshTotals() {
+    const ratings = {};
     MODEL_LABELS.forEach(label => {
-      const total = state.current && !state.current.results[label].error ? computeBatchTotal(ratingFor(label, false)) : null;
+      const rating = state.current && !state.current.results[label].error ? ratingFor(label, false) : null;
+      const total = rating && rating.ready ? computeBatchTotal(rating) : null;
       const element = document.getElementById(`arenaTotal${label}`);
       if (element) element.textContent = total == null ? '—' : `${total.toFixed(1)} / 100`;
+      if (rating && rating.ready) ratings[label] = { ...rating, total };
     });
+    refreshAutomaticRecommendation(ratings);
   }
 
-  function finalizeVote(vote) {
+  function finalizeVote(vote, voteSource = 'manual') {
     if (!state.current || state.current.vote) return;
     const successLabels = MODEL_LABELS.filter(label => !state.current.results[label].error);
     if (successLabels.length < 2) return setArenaStatus('비교 저장에는 최소 2개 모델의 정상 응답이 필요합니다', true);
+    if (vote !== 'tie' && !successLabels.includes(vote)) return setArenaStatus('정상 응답을 받은 모델만 선택할 수 있습니다', true);
     try { successLabels.forEach(label => { state.current.results[label].rating = ratingFor(label, true); }); }
     catch (error) { return setArenaStatus(error.message, true); }
-    state.current.vote = vote; state.runs.push(state.current); state.runs = state.runs.slice(-MAX_RUNS); writeRuns(state.runs);
-    revealIdentities(); renderDashboard(); setArenaStatus('4모델 × 5알약 블라인드 평가를 저장했습니다');
+    state.current.vote = vote;
+    state.current.voteSource = voteSource;
+    state.runs.push(state.current); state.runs = state.runs.slice(-MAX_RUNS); writeRuns(state.runs);
+    const sourceLabel = voteSource === 'automatic_recommendation' ? '자동 추천 채택'
+      : voteSource === 'score_recommendation_after_override' ? '수정 점수 추천 채택' : '조사자 선택';
+    revealIdentities(); renderDashboard(); setArenaStatus(`4모델 × 5알약 블라인드 평가를 저장했습니다 · ${sourceLabel}`);
   }
 
   function revealIdentities() {
     const current = state.current, reveal = document.getElementById('arenaReveal');
     const voteLabel = current.vote === 'tie' ? '동등' : `모델 ${current.vote} 우수`;
-    reveal.innerHTML = `<h3>✓ 평가 완료 · 선택: ${esc(voteLabel)}</h3><div class="arena-reveal-grid">${MODEL_LABELS.map(label => { const model = current.blindOrder[label], result = current.results[label]; return `<div class="arena-reveal-item">모델 ${label}<b>${esc(model.providerLabel)} · ${esc(model.model)}</b>${result.error ? `<span class="arena-fail-text">${esc(friendlyCallError(result.error))}</span>` : `응답시간 ${esc(result.latencyMs)}ms · 총점 ${computeBatchTotal(result.rating).toFixed(1)}`}</div>`; }).join('')}</div>`;
-    reveal.classList.add('show'); document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = true; }); document.getElementById('arenaPostActions').hidden = false;
+    const sourceLabel = current.voteSource === 'automatic_recommendation' ? '자동 추천 채택'
+      : current.voteSource === 'score_recommendation_after_override' ? '수정 점수 추천 채택' : '조사자 선택';
+    reveal.innerHTML = `<h3>✓ 평가 완료 · 선택: ${esc(voteLabel)} · ${esc(sourceLabel)}</h3><div class="arena-reveal-grid">${MODEL_LABELS.map(label => { const model = current.blindOrder[label], result = current.results[label]; return `<div class="arena-reveal-item">모델 ${label}<b>${esc(model.providerLabel)} · ${esc(model.model)}</b>${result.error ? `<span class="arena-fail-text">${esc(friendlyCallError(result.error))}</span>` : `응답시간 ${esc(result.latencyMs)}ms · 총점 ${computeBatchTotal(result.rating).toFixed(1)} · ${esc(result.rating.source || 'manual')}`}</div>`; }).join('')}</div>`;
+    reveal.classList.add('show'); document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = true; }); document.getElementById('arenaAcceptAuto').disabled = true; document.getElementById('arenaPostActions').hidden = false;
   }
 
   function resetExperiment() {
@@ -1568,7 +1783,19 @@
     }
     document.getElementById('arenaConsent').checked = false; document.getElementById('arenaSetupCard').classList.remove('arena-running');
     document.getElementById('arenaResults').classList.remove('show', 'arena-all-failed'); document.getElementById('arenaReveal').classList.remove('show'); document.getElementById('arenaPostActions').hidden = true;
-    document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = false; if (element.dataset.scoreField) element.value = ''; });
+    document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => {
+      element.disabled = false;
+      element.classList.remove('auto-recommended');
+      if (element.dataset.scoreField) element.value = '';
+      element.title = '';
+      delete element.dataset.scoreAuto;
+      delete element.dataset.scoreEdited;
+    });
+    document.getElementById('arenaAcceptAuto').disabled = true;
+    document.getElementById('arenaAcceptAuto').textContent = '자동 추천 결과로 평가 저장';
+    document.getElementById('arenaAutoStatus').textContent = '자동채점 대기';
+    document.getElementById('arenaAutoStatus').classList.remove('error');
+    document.getElementById('arenaAutoReasons').innerHTML = '';
     setArenaStatus(''); refreshRunButton(); switchArenaView('experiment'); document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 

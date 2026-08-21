@@ -144,6 +144,7 @@ research/arena-bridge.js   기존 Arena → Contract v1 변환
 research/platform-browser.js  연구 플랫폼 브라우저 번들
 providers/                 OpenAI·Anthropic·Gemini·Mock Adapter와 Registry
 scoring/                   자동채점·비용·강건성 엔진
+scoring/arena-rubric.js    기존 40+25+20+15 평가표 자동채점·감사 근거
 reports/                   Dashboard·CSV·XLSX·PDF 보고서
 samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트
 scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트
@@ -154,7 +155,7 @@ easy_db.json               효능·주의사항 데이터
 med-manifest.json          PWA manifest
 vercel.json                Vercel 캐시 헤더 설정
 scripts/update_pill_db.mjs DB 갱신 스크립트
-tests/                     자동 테스트
+tests/                     자동 테스트 (`npm test` · 브라우저 확인은 `npm run test:browser`)
 .github/workflows/         월간 DB 갱신 작업
 ```
 

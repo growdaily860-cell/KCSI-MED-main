@@ -86,6 +86,37 @@ v11.14부터 다음 안전 회귀도 함께 검사한다.
 - 보고서에서 원본 이미지·base64·provider raw 응답이 제거되는지
 - 정적 브라우저 번들이 OpenAI·Anthropic·Gemini·Mock Registry를 노출하는지
 
+### arena-rubric.js
+
+첨부 화면의 40+25+20+15 점수표 자동화를 독립 모듈 단위로 검사한다.
+
+- Contract v1과 기존 Arena 필드의 동시 지원
+- 완전정답 100점, 부분정답 20점, 앞·뒤 각인 교환 처리
+- 고신뢰 오식별의 환각 억제 감점과 안전한 판독 보류 분리
+- 정답 누락 시 자동채점 중단, 1점 이내 동률 추천
+- 공급자 원본 `raw`가 자동점수 결과에 복사되지 않는지
+
+### arena-auto-scoring-integration.js
+
+자동채점과 Research Platform v1이 한 `arena.js` 위에서 함께 도는지 확인한다.
+
+- 두 갈래 코어 API의 공존과 화면 `readCases()` 모양 그대로의 자동채점
+- 정답지가 없는 손입력 배치의 레거시 채점 하위호환
+- 제품명 없는 정답지에서 품목 ID를 되뇐 응답이 정답 40점을 가져가지 않는지
+- 자동점수·수동수정 감사 열이 기존 CSV에 남고 provider raw는 빠지는지
+- 같은 배치를 Contract v1 결과로 다시 채점해도 판정이 일치하는지
+- Bridge Result Dataset에 이미지·base64·provider raw가 섞이지 않는지
+
+### browser-research.mjs (선택 · `npm run test:browser`)
+
+실제 Chromium으로 `/research`를 띄운다. Playwright가 없으면 건너뛴다.
+
+- 자동채점 모듈이 `arena.js`보다 먼저 실행되어 전역에 잡히는지
+- 실제 페이지에서 `KCSIArenaCore.scoreBatchWithRubric()`이 100점을 산출하는지
+- 자동채점 UI와 Contract 보고서 UI가 한 화면에 함께 설치되는지
+- 390px에서 가로 넘침 없이 자동 추천 영역이 1열로 접히는지
+- 화면을 여는 동안 정적 폰트·CDN 외의 요청이나 본문 전송이 없는지
+
 ## 테스트가 실제로 작동하는지 확인하는 법 (중요)
 
 통과만 확인하면 의미가 없다. 버그를 일부러 심어 검출되는지 봐야 한다.
