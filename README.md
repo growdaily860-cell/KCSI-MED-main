@@ -133,6 +133,7 @@ tools/pii-redactor/        첨부 자료 기반 오프라인 PNG 비식별화 �
 docs/                      비식별화 실행·복구·보안 운영 문서
 arena.js                   블라인드 모델 비교·채점·통계
 arena.css                  연구 모드 전용 화면 스타일
+scoring/arena-rubric.js    기존 40+25+20+15 평가표 자동채점·감사 근거
 samples/                   식약처 고정 샘플 ZIP과 무결성 매니페스트
 scripts/build-mfds-sample-dataset.mjs  고정 샘플 재생성 스크립트
 worker/worker.js           PIN 로그인·API 프록시·일일 한도 Worker

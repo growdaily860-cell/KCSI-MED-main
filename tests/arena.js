@@ -87,6 +87,7 @@ assert.equal(summary.accuracy, 62.5);
 const csv = arena.buildCsv(runs);
 assert(csv.includes("'=FORMULA"), 'CSV formula injection must be neutralized');
 assert(csv.includes('cost_mode') && csv.includes('저비용 연습'), 'CSV must record cost mode');
+assert(csv.includes('rating_source') && csv.includes('evaluation_version') && csv.includes('vote_source'), 'CSV must preserve automatic/manual scoring audit fields');
 assert.equal(csv.split('\r\n').length, 21, 'one batch must export 20 data rows plus header');
 assert(!csv.includes('apiKey') && !csv.includes('access_token'), 'CSV must not contain secrets');
 
@@ -116,6 +117,7 @@ assert.equal(arena.datasetImageKey('folder\\PILL_FRONT.JPG'), 'pill_front.jpg');
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
+assert(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'));
 assert(/APP_VERSION = 'v12\.10'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(html.includes('id="quotaRefillForm"') && html.includes('id="quotaRefillPin"') && html.includes('+200회 충전'));
