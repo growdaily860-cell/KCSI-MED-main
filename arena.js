@@ -225,6 +225,11 @@
     return '\uFEFF' + [columns, sample].map(row => row.map(csvCell).join(',')).join('\r\n');
   }
 
+  function datasetRequiresConfirmation(dataset) {
+    const sourceType = safeText(dataset && dataset.sourceType).trim().toLowerCase();
+    return !!(dataset && dataset.requiresConfirmation) || sourceType === 'pdf' || sourceType === 'pdf_ocr';
+  }
+
   function cleanJsonText(raw) {
     let text = safeText(raw).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
     try { JSON.parse(text); return text; } catch (_) {}
@@ -497,7 +502,7 @@
   function writeRuns(runs) { storageSet(STORE_KEY, JSON.stringify((runs || []).slice(-MAX_RUNS))); }
 
   function download(name, content, type) {
-    const blob = new Blob([content], { type });
+    const blob = typeof Blob !== 'undefined' && content instanceof Blob ? content : new Blob([content], { type });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url; anchor.download = name; anchor.click();
@@ -638,14 +643,16 @@
     computeBatchTotal, computeTotal, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
     normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
+    datasetRequiresConfirmation,
   };
   root.KCSIArenaCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
 
   const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
-  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], imageFiles: [], validation: null, confirmed: false, importMeta: null });
+  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null });
   const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset() };
+  let datasetOcrAbort = null;
 
   function modelForm(number, preset) {
     return `<div class="arena-model" data-model-form="${number}">
@@ -685,19 +692,25 @@
 
   function datasetViewMarkup() {
     return `<div class="arena-view active" id="arenaDataset">
-      <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>정답지와 이미지 데이터셋</h2><p>정답지의 이미지 파일명과 실제 사진을 브라우저 안에서 대조합니다. 원본은 서버나 연구기록에 저장하지 않습니다.</p></div><button class="arena-preset" type="button" id="arenaDatasetTemplate">CSV 템플릿 받기</button></div>
+      <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>정답지와 이미지 데이터셋</h2><p>정답지의 이미지 파일명과 실제 사진을 브라우저 안에서 대조합니다. 원본은 서버나 연구기록에 저장하지 않습니다.</p></div><div class="arena-template-actions"><button class="arena-preset" type="button" id="arenaDatasetTemplate">CSV 템플릿</button><button class="arena-preset" type="button" id="arenaDatasetTemplateXlsx">XLSX 템플릿</button></div></div>
         <div class="arena-sample-dataset">
           <div><span class="arena-sample-eyebrow">MFDS FIXED BASELINE · 20 CASES</span><b>식약처 공식사진 고정 샘플</b><p>같은 20건을 반복 사용해 모델별 기본 식별 성능을 비교합니다. 공식 등록사진 기반 결과는 실제 현장사진 정확도와 구분해서 해석해야 합니다.</p></div>
           <div class="arena-sample-actions"><button class="arena-action" type="button" id="arenaDatasetSampleLoad">샘플 20건 자동 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload" href="${SAMPLE_DATASET_URL}" download="KCSI_MED_MFDS_sample_20.zip">ZIP 내려받기</a></div>
         </div>
         <div class="arena-dataset-upload-grid">
-          <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · 텍스트형 PDF</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
+          <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · PDF(텍스트·스캔)</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
           <input class="arena-file-input" type="file" id="arenaDatasetAnswer" accept=".csv,.tsv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
           <label class="arena-dataset-drop" for="arenaDatasetImages"><span class="arena-dataset-icon">💊</span><b>알약 사진 선택</b><small>앞·뒷면 이미지를 여러 장 동시 선택</small><strong id="arenaDatasetImageName">선택된 사진 없음</strong></label>
           <input class="arena-file-input" type="file" id="arenaDatasetImages" accept="image/*" multiple>
         </div>
         <div class="arena-dataset-guide"><b>필수 열</b><span>case_id</span><span>front_image</span><span>back_image</span><span>drug_name 또는 mfds_item_id</span><span>front_imprint</span><span>back_imprint</span></div>
-        <label class="arena-check arena-pdf-confirm" id="arenaPdfConfirmWrap" hidden><input type="checkbox" id="arenaPdfConfirm"><span>PDF에서 자동 추출한 정답지 내용을 아래 표에서 직접 확인했습니다. 확인 전에는 데이터셋을 비교 배치로 불러올 수 없습니다.</span></label>
+        <div class="arena-ocr-note"><b>스캔 PDF도 로컬 처리</b><span>텍스트 표가 없으면 브라우저가 자동으로 한글·영문 OCR로 전환합니다. 첫 실행은 글자 모델을 내려받아 시간이 걸릴 수 있습니다.</span></div>
+        <div class="arena-ocr-panel" id="arenaDatasetOcrPanel" hidden>
+          <div class="arena-ocr-head"><div><b>스캔 PDF 로컬 OCR</b><span id="arenaDatasetOcrStatus">준비 중</span></div><button class="arena-preset arena-preset-danger" type="button" id="arenaDatasetOcrCancel">OCR 취소</button></div>
+          <div class="arena-ocr-track" id="arenaDatasetOcrTrack" role="progressbar" aria-label="스캔 PDF OCR 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="arenaDatasetOcrBar"></span></div>
+          <div class="arena-ocr-review" id="arenaDatasetOcrReview" hidden></div>
+        </div>
+        <label class="arena-check arena-pdf-confirm" id="arenaPdfConfirmWrap" hidden><input type="checkbox" id="arenaPdfConfirm"><span id="arenaPdfConfirmText">PDF에서 자동 추출한 정답지 내용을 아래 표에서 직접 확인했습니다. 확인 전에는 데이터셋을 비교 배치로 불러올 수 없습니다.</span></label>
         <div class="arena-status" id="arenaDatasetStatus" role="status" aria-live="polite"></div>
       </section>
       <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>자동 검증 결과</h2><p>시험번호 중복, 필수 정답 누락, 앞·뒷면 파일명과 업로드 사진의 일치 여부를 확인합니다.</p></div><button class="arena-preset arena-preset-danger" type="button" id="arenaDatasetClear">데이터셋 지우기</button></div>
@@ -759,6 +772,8 @@
     document.getElementById('arenaDatasetAnswer').addEventListener('change', handleDatasetAnswer);
     document.getElementById('arenaDatasetImages').addEventListener('change', handleDatasetImages);
     document.getElementById('arenaDatasetTemplate').addEventListener('click', () => download('KCSI_MED_dataset_template.csv', buildDatasetTemplateCsv(), 'text/csv;charset=utf-8'));
+    document.getElementById('arenaDatasetTemplateXlsx').addEventListener('click', downloadDatasetTemplateXlsx);
+    document.getElementById('arenaDatasetOcrCancel').addEventListener('click', cancelDatasetOcr);
     document.getElementById('arenaDatasetSampleLoad').addEventListener('click', loadFixedSampleDataset);
     document.getElementById('arenaDatasetClear').addEventListener('click', clearDataset);
     document.getElementById('arenaPdfConfirm').addEventListener('change', event => { state.dataset.confirmed = event.target.checked; renderDatasetValidation(); });
@@ -782,6 +797,10 @@
       if (!state.runs.length || !root.confirm('누적된 배치 비교 기록을 모두 삭제할까요?')) return;
       state.runs = []; writeRuns(state.runs); renderDashboard();
     });
+    root.addEventListener('pagehide', () => {
+      const tools = root.KCSIResearchDatasetTools;
+      if (tools && typeof tools.dispose === 'function') tools.dispose().catch(() => {});
+    }, { once: true });
   }
 
   function switchArenaView(name) {
@@ -797,6 +816,153 @@
     element.textContent = message || '';
     element.classList.toggle('show', !!message);
     element.classList.toggle('error', !!message && !!error);
+  }
+
+  function researchDatasetTools() {
+    const tools = root.KCSIResearchDatasetTools;
+    if (!tools) throw new Error('연구 정답지 도구를 불러오지 못했습니다. 페이지를 새로고침하세요.');
+    return tools;
+  }
+
+  function isPdfFile(file) {
+    return !!file && (/\.pdf$/i.test(safeText(file.name)) || safeText(file.type).toLowerCase() === 'application/pdf');
+  }
+
+  async function downloadDatasetTemplateXlsx() {
+    const button = document.getElementById('arenaDatasetTemplateXlsx');
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = '생성 중…';
+    setDatasetStatus('XLSX 정답지 템플릿을 브라우저에서 만드는 중...');
+    try {
+      const tools = researchDatasetTools();
+      const blob = await tools.buildXlsxTemplate({ arenaCore: core });
+      download(tools.templateFileName(), blob, tools.mimeType);
+      setDatasetStatus('XLSX 정답지 템플릿을 내려받았습니다 · 예시 행을 삭제하거나 덮어쓰세요');
+    } catch (error) {
+      setDatasetStatus(error.message || 'XLSX 템플릿을 만들지 못했습니다', true);
+    } finally {
+      button.disabled = false;
+      button.textContent = label;
+    }
+  }
+
+  function resetDatasetOcrUi() {
+    const panel = document.getElementById('arenaDatasetOcrPanel');
+    const review = document.getElementById('arenaDatasetOcrReview');
+    const cancel = document.getElementById('arenaDatasetOcrCancel');
+    const track = document.getElementById('arenaDatasetOcrTrack');
+    const bar = document.getElementById('arenaDatasetOcrBar');
+    const status = document.getElementById('arenaDatasetOcrStatus');
+    if (panel) panel.hidden = true;
+    if (review) { review.hidden = true; review.innerHTML = ''; }
+    if (cancel) { cancel.hidden = false; cancel.disabled = false; }
+    if (track) track.setAttribute('aria-valuenow', '0');
+    if (bar) bar.style.width = '0%';
+    if (status) status.textContent = '준비 중';
+  }
+
+  function setDatasetOcrProgress(event) {
+    const info = event || {};
+    const panel = document.getElementById('arenaDatasetOcrPanel');
+    const status = document.getElementById('arenaDatasetOcrStatus');
+    const track = document.getElementById('arenaDatasetOcrTrack');
+    const bar = document.getElementById('arenaDatasetOcrBar');
+    if (panel) panel.hidden = false;
+    let percent = Number(info.percent);
+    const pageNumber = Number(info.pageNumber);
+    const totalPages = Number(info.totalPages);
+    const ocrPercent = Number(info.ocrPercent);
+    if (info.phase === 'ocr' && Number.isFinite(pageNumber) && Number.isFinite(totalPages) && totalPages > 0 && Number.isFinite(ocrPercent)) {
+      percent = ((pageNumber - 1) + Math.max(0, Math.min(100, ocrPercent)) / 100) / totalPages * 100;
+    }
+    percent = Number.isFinite(percent) ? Math.max(0, Math.min(100, Math.round(percent))) : 0;
+    if (track) track.setAttribute('aria-valuenow', String(percent));
+    if (bar) bar.style.width = `${percent}%`;
+    if (status) status.textContent = info.message || `로컬 OCR 처리 중 · ${percent}%`;
+    if (info.message) setDatasetStatus(`${info.message}${/\d%/.test(info.message) ? '' : ` · ${percent}%`}`);
+  }
+
+  function renderDatasetOcrReview(result) {
+    const panel = document.getElementById('arenaDatasetOcrPanel');
+    const review = document.getElementById('arenaDatasetOcrReview');
+    const cancel = document.getElementById('arenaDatasetOcrCancel');
+    if (!panel || !review) return;
+    const warnings = [...(result.warnings || []), ...(result.errors || [])];
+    const pages = result.pages || [];
+    const warningHtml = warnings.length
+      ? `<div class="arena-ocr-warnings"><b>확인할 항목 ${warnings.length}개</b>${warnings.map(item => `<span>⚠ ${esc(item.message || item.code || '확인 필요')}</span>`).join('')}</div>`
+      : '<div class="arena-ocr-ok">자동 경고는 없지만 OCR 값은 원문과 직접 대조해야 합니다.</div>';
+    const pageHtml = pages.length
+      ? `<div class="arena-ocr-pages">${pages.map(page => {
+        const confidence = Number.isFinite(Number(page.confidence)) ? ` · 평균 신뢰도 ${Number(page.confidence).toFixed(1)}` : '';
+        return `<details><summary>${esc(page.pageNumber)}페이지 OCR 원문${esc(confidence)}</summary><pre>${esc(page.text || '인식된 텍스트 없음')}</pre></details>`;
+      }).join('')}</div>`
+      : '<div class="arena-ocr-empty">표시할 OCR 원문이 없습니다.</div>';
+    panel.hidden = false;
+    if (cancel) cancel.hidden = true;
+    review.hidden = false;
+    review.innerHTML = `<div class="arena-ocr-summary"><b>${(result.rows || []).length.toLocaleString('ko-KR')}개 행 변환</b><span>원문과 표를 대조한 뒤 아래 확인란을 선택하세요. PDF와 OCR 결과는 저장하거나 서버로 보내지 않습니다.</span></div>${warningHtml}${pageHtml}`;
+  }
+
+  function cancelDatasetOcr() {
+    if (!datasetOcrAbort) return;
+    datasetOcrAbort.abort();
+    const tools = root.KCSIResearchDatasetTools;
+    if (tools && typeof tools.cancelActiveOcr === 'function') tools.cancelActiveOcr();
+    const button = document.getElementById('arenaDatasetOcrCancel');
+    if (button) button.disabled = true;
+    setDatasetStatus('OCR 작업을 취소하는 중...');
+  }
+
+  function applyDatasetImport(file, parsed) {
+    const requiresConfirmation = !!parsed.requiresConfirmation;
+    state.dataset.answerFile = file;
+    state.dataset.rows = parsed.rows || [];
+    state.dataset.sourceType = parsed.sourceType || '';
+    state.dataset.confirmed = !requiresConfirmation;
+    state.dataset.requiresConfirmation = requiresConfirmation;
+    state.dataset.importMeta = parsed;
+    const confirmWrap = document.getElementById('arenaPdfConfirmWrap');
+    const confirm = document.getElementById('arenaPdfConfirm');
+    const confirmText = document.getElementById('arenaPdfConfirmText');
+    confirmWrap.hidden = !requiresConfirmation;
+    confirm.checked = false;
+    if (confirmText) confirmText.textContent = parsed.sourceType === 'pdf_ocr'
+      ? '페이지별 OCR 원문과 아래 변환 표를 직접 대조했습니다. 확인 전에는 데이터셋을 비교 배치로 불러올 수 없습니다.'
+      : 'PDF에서 자동 추출한 정답지 내용을 아래 표에서 직접 확인했습니다. 확인 전에는 데이터셋을 비교 배치로 불러올 수 없습니다.';
+    refreshDatasetValidation();
+  }
+
+  async function importScannedAnswerKey(file) {
+    const tools = researchDatasetTools();
+    const controller = new AbortController();
+    datasetOcrAbort = controller;
+    const panel = document.getElementById('arenaDatasetOcrPanel');
+    const review = document.getElementById('arenaDatasetOcrReview');
+    const cancel = document.getElementById('arenaDatasetOcrCancel');
+    if (panel) panel.hidden = false;
+    if (review) { review.hidden = true; review.innerHTML = ''; }
+    if (cancel) { cancel.hidden = false; cancel.disabled = false; }
+    try {
+      const result = await tools.parseScannedPdf(file, {
+        arenaCore: core,
+        maxPages: 20,
+        signal: controller.signal,
+        onProgress: setDatasetOcrProgress,
+      });
+      renderDatasetOcrReview(result);
+      if (result.errors && result.errors.length) {
+        const error = new Error(result.errors[0].message || '스캔 PDF에서 정답지 표를 만들지 못했습니다');
+        error.ocrResult = result;
+        throw error;
+      }
+      applyDatasetImport(file, result);
+      setDatasetStatus(`${file.name} · OCR로 ${result.rows.length}개 데이터 행을 읽었습니다 · 원문과 변환 표를 확인하세요`);
+    } finally {
+      if (datasetOcrAbort === controller) datasetOcrAbort = null;
+      if (cancel) cancel.hidden = true;
+    }
   }
 
   function datasetFileByName(name) {
@@ -832,8 +998,10 @@
         imageFiles,
         validation: null,
         confirmed: true,
+        requiresConfirmation: false,
         importMeta: parsed,
       };
+      resetDatasetOcrUi();
       document.getElementById('arenaDatasetAnswerName').textContent = answerFile.name;
       document.getElementById('arenaDatasetImageName').textContent = `${imageFiles.length.toLocaleString('ko-KR')}장 · 식약처 고정 샘플`;
       document.getElementById('arenaPdfConfirmWrap').hidden = true;
@@ -855,30 +1023,40 @@
     const file = event.target.files && event.target.files[0];
     event.target.value = '';
     if (!file) return;
+    if (datasetOcrAbort) {
+      cancelDatasetOcr();
+      return setDatasetStatus('실행 중인 OCR을 취소했습니다. 정리가 끝난 뒤 새 정답지를 다시 선택하세요', true);
+    }
     state.dataset.answerFile = file;
     state.dataset.rows = [];
+    state.dataset.sourceType = '';
     state.dataset.importMeta = null;
     state.dataset.validation = null;
     state.dataset.confirmed = false;
+    state.dataset.requiresConfirmation = false;
+    resetDatasetOcrUi();
     document.getElementById('arenaDatasetAnswerName').textContent = file.name;
     setDatasetStatus('정답지의 열과 데이터 행을 확인하는 중...');
     try {
-      const parsed = await readAnswerKeyFile(file);
-      state.dataset.rows = parsed.rows;
-      state.dataset.sourceType = parsed.sourceType;
-      state.dataset.confirmed = !parsed.requiresConfirmation;
-      state.dataset.importMeta = parsed;
-      const confirmWrap = document.getElementById('arenaPdfConfirmWrap');
-      const confirm = document.getElementById('arenaPdfConfirm');
-      confirmWrap.hidden = !parsed.requiresConfirmation;
-      confirm.checked = false;
-      refreshDatasetValidation();
+      let parsed;
+      try {
+        parsed = await readAnswerKeyFile(file);
+      } catch (error) {
+        if (!isPdfFile(file)) throw error;
+        setDatasetStatus('PDF 텍스트 표를 찾지 못해 브라우저 로컬 OCR로 전환합니다...');
+        await importScannedAnswerKey(file);
+        return;
+      }
+      applyDatasetImport(file, parsed);
       setDatasetStatus(`${file.name} · ${parsed.rows.length}개 데이터 행을 읽었습니다${parsed.requiresConfirmation ? ' · PDF 추출 내용을 확인하세요' : ''}`);
     } catch (error) {
       state.dataset.rows = [];
       state.dataset.sourceType = '';
+      state.dataset.requiresConfirmation = false;
+      state.dataset.confirmed = false;
       document.getElementById('arenaPdfConfirmWrap').hidden = true;
-      setDatasetStatus(error.message || '정답지를 읽지 못했습니다', true);
+      const cancelled = error && (error.name === 'AbortError' || error.code === 'cancelled');
+      setDatasetStatus(cancelled ? 'OCR 작업을 취소했습니다' : (error.message || '정답지를 읽지 못했습니다'), !cancelled);
       refreshDatasetValidation();
     }
   }
@@ -919,7 +1097,7 @@
     if (meta.unknownHeaders && meta.unknownHeaders.length) notices.push(`채점에서 제외되는 열: ${meta.unknownHeaders.slice(0, 8).join(', ')}${meta.unknownHeaders.length > 8 ? ' 외' : ''}`);
     if (validation.duplicateImages.length) notices.push(`같은 파일명의 사진이 중복 선택됨: ${validation.duplicateImages.slice(0, 5).join(', ')}`);
     if (validation.orphanImages.length) notices.push(`정답지에 연결되지 않은 사진 ${validation.orphanImages.length}장`);
-    if (state.dataset.sourceType === 'pdf' && !state.dataset.confirmed) notices.push('PDF 추출값을 직접 확인하고 확인란을 선택해야 합니다');
+    if (datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed) notices.push('PDF/OCR 추출값을 직접 확인하고 확인란을 선택해야 합니다');
     document.getElementById('arenaDatasetNotices').innerHTML = notices.length
       ? `<div class="arena-dataset-notices">${notices.map(message => `<div>⚠ ${esc(message)}</div>`).join('')}</div>` : '';
     const preview = document.getElementById('arenaDatasetPreview');
@@ -940,11 +1118,12 @@
         options.push(`<option value="${index}">${index + 1}–${index + CASE_COUNT}번 · ${esc(first.case_id)} ~ ${esc(last.case_id)}</option>`);
       }
       select.innerHTML = options.join('');
-      button.disabled = state.dataset.sourceType === 'pdf' && !state.dataset.confirmed;
+      button.disabled = datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed;
     }
   }
 
   function clearDataset() {
+    cancelDatasetOcr();
     state.dataset = blankDataset();
     document.getElementById('arenaDatasetAnswer').value = '';
     document.getElementById('arenaDatasetImages').value = '';
@@ -952,6 +1131,7 @@
     document.getElementById('arenaDatasetImageName').textContent = '선택된 사진 없음';
     document.getElementById('arenaPdfConfirmWrap').hidden = true;
     document.getElementById('arenaPdfConfirm').checked = false;
+    resetDatasetOcrUi();
     setDatasetStatus('데이터셋을 브라우저 메모리에서 지웠습니다');
     refreshDatasetValidation();
   }
@@ -968,7 +1148,7 @@
   async function loadDatasetBatch() {
     const validation = state.dataset.validation;
     if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
-    if (state.dataset.sourceType === 'pdf' && !state.dataset.confirmed) return setDatasetStatus('PDF 추출 내용을 확인한 뒤 확인란을 선택하세요', true);
+    if (datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed) return setDatasetStatus('PDF/OCR 추출 내용을 확인한 뒤 확인란을 선택하세요', true);
     const start = Number(document.getElementById('arenaDatasetBatchSelect').value) || 0;
     const rows = validation.validRows.slice(start, start + CASE_COUNT);
     if (rows.length !== CASE_COUNT) return setDatasetStatus('선택한 범위에서 5건을 불러오지 못했습니다', true);

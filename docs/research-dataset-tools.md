@@ -164,43 +164,19 @@ const blob = await KCSIResearchDatasetTools.buildXlsxTemplate({ arenaCore: KCSIA
 - `kor`+`eng` 글자 모델은 첫 실행 때 CDN에서 수 MB를 내려받아 브라우저 캐시에 남습니다. 모바일 데이터 환경에서는 Wi-Fi 사용을 권장합니다.
 - 화면을 벗어날 때는 `dispose()`로 worker와 캐시를 정리하세요.
 
-## 6. `arena.js` 통합 예제
+## 6. `/research` 운영 화면 통합
 
-`/research` 데이터셋 화면에 붙일 때의 최소 예시입니다(운영 코드에는 아직 반영하지 않았습니다).
+운영 화면에 다음 흐름으로 연결되어 있습니다.
 
-```js
-// index.html: <script src="arena.js"></script> 다음에 research-dataset-tools.js 를 넣는다.
-const tools = window.KCSIResearchDatasetTools;
-let ocrAbort = null;
+1. `index.html`이 `arena.js` 다음에 이 모듈을 불러옵니다.
+2. **XLSX 템플릿** 버튼이 `buildXlsxTemplate()`로 두 시트 정답지를 생성합니다.
+3. 정답지 선택에서 PDF의 텍스트 표를 먼저 시도하고, 표가 없으면 `parseScannedPdf()` 로컬 OCR로 자동 전환합니다.
+4. OCR 진행률과 페이지 상태를 표시하며 **OCR 취소** 버튼은 `AbortController`와 `cancelActiveOcr()`를 함께 호출합니다.
+5. 변환이 끝나면 경고, 페이지별 평균 신뢰도, OCR 원문과 구조화 표를 함께 보여줍니다.
+6. `pdf`와 `pdf_ocr` 결과는 모두 `arenaPdfConfirm`을 직접 선택하기 전까지 5건 배치 불러오기가 비활성화됩니다.
+7. 페이지를 벗어날 때 `dispose()`를 호출해 worker와 로딩 캐시를 정리합니다.
 
-document.getElementById('arenaDatasetTemplateXlsx').addEventListener('click', async () => {
-  const blob = await tools.buildXlsxTemplate({ arenaCore: window.KCSIArenaCore });
-  download(tools.templateFileName(), blob, tools.mimeType); // arena.js의 download() 재사용
-});
-
-async function importScannedAnswerKey(file) {
-  ocrAbort = new AbortController();
-  const result = await tools.parseScannedPdf(file, {
-    arenaCore: window.KCSIArenaCore,
-    maxPages: 20,
-    signal: ocrAbort.signal,
-    onProgress: event => setDatasetStatus(`${event.message}${event.percent ? ` · ${event.percent}%` : ''}`),
-  });
-  if (result.errors.length) throw new Error(result.errors[0].message);
-  state.dataset.rows = result.rows;                       // 기존 검증 흐름 그대로 사용
-  state.dataset.sourceType = result.sourceType;           // 'pdf_ocr'
-  state.dataset.confirmed = !result.requiresConfirmation; // 항상 false → 사람 확인 필요
-  state.dataset.validation = window.KCSIArenaCore.validateDatasetRows(result.rows, state.dataset.imageFiles);
-  renderOcrWarnings(result.warnings, result.pages);       // 경고와 페이지 원문을 함께 노출
-  renderDatasetValidation();
-}
-
-document.getElementById('arenaDatasetOcrCancel').addEventListener('click', () => {
-  if (ocrAbort) ocrAbort.abort(); else tools.cancelActiveOcr();
-});
-```
-
-기존 PDF 확인 체크박스(`arenaPdfConfirm`)를 그대로 재사용하면 `requiresConfirmation`을 만족합니다. `rows`는 `validateDatasetRows()`가 기대하는 형식과 같으므로 추가 변환이 필요 없습니다.
+`rows`는 기존 `validateDatasetRows()` 형식으로 전달되며 PDF와 OCR 원본은 브라우저 메모리에만 머뭅니다.
 
 ## 7. 알려진 OCR 한계 · 사람 확인이 필요한 이유
 
@@ -229,6 +205,7 @@ Node(네트워크·전역 라이브러리 없이 결정론적 어댑터 주입)
 npm test
 node --check research-dataset-tools.js
 node tests/research-dataset-tools.js
+node tests/research-dataset-integration.js
 ```
 
 브라우저 데모 `tests/research-dataset-tools-demo.html` (`npm run serve` 후 `/tests/research-dataset-tools-demo.html`)

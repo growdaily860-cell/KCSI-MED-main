@@ -112,10 +112,16 @@ assert(invalidDataset.rows[1]._errors.some(message => message.includes('찾지 �
 const template = arena.buildDatasetTemplateCsv();
 assert(template.includes('case_id') && template.includes('mfds_item_id') && template.includes('expected_readable'));
 assert.equal(arena.datasetImageKey('folder\\PILL_FRONT.JPG'), 'pill_front.jpg');
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'pdf' }), true);
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'pdf_ocr' }), true, 'OCR PDF must require human confirmation');
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'excel', requiresConfirmation: false }), false);
+assert.equal(arena.datasetRequiresConfirmation({ sourceType: 'excel', requiresConfirmation: true }), true);
 
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('<link rel="stylesheet" href="arena.css">'));
 assert(html.includes('<script src="arena.js"></script>'));
+assert(html.includes('<script src="research-dataset-tools.js"></script>'));
+assert(html.indexOf('<script src="arena.js"></script>') < html.indexOf('<script src="research-dataset-tools.js"></script>'), 'arena core must load before dataset tools');
 assert(/APP_VERSION = 'v12\.10'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(html.includes('id="quotaRefillForm"') && html.includes('id="quotaRefillPin"') && html.includes('+200회 충전'));
@@ -126,6 +132,9 @@ assert(css.includes('.arena-cases') && css.includes('.arena-votes'));
 const arenaSource = fs.readFileSync('arena.js', 'utf8');
 assert(arenaSource.includes('arenaBatchFiles') && arenaSource.includes('multiple'));
 assert(arenaSource.includes('arenaDatasetAnswer') && arenaSource.includes('arenaDatasetImages'));
+assert(arenaSource.includes('arenaDatasetTemplateXlsx') && arenaSource.includes('buildXlsxTemplate'));
+assert(arenaSource.includes('arenaDatasetOcrCancel') && arenaSource.includes('parseScannedPdf'));
+assert(arenaSource.includes('arenaDatasetOcrReview') && arenaSource.includes('페이지 OCR 원문'));
 assert(arenaSource.includes('arenaDatasetSampleLoad') && arenaSource.includes('KCSI_MED_MFDS_sample_20.zip'));
 assert(arenaSource.includes('loadFixedSampleDataset') && arenaSource.includes('JSZIP_URL'));
 assert(arenaSource.includes('.csv,.tsv,.xlsx,.xls,.pdf'));
