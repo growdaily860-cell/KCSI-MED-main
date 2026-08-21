@@ -40,14 +40,41 @@ seed 문자는 `0/O`, `1/I`처럼 헷갈리는 글자를 뺀 32자에서 고른�
 
 ## 샘플 팩 만들기
 
-`nedrug.mfds.go.kr`에 접속할 수 있는 환경에서 실행한다.
+`nedrug.mfds.go.kr`에 접속할 수 있는 환경에서 실행한다. 저장소를 클론한 폴더 안에서
+실행해야 한다.
 
 ```bash
-npm i -D sharp                                              # 선택 — 없으면 ImageMagick 사용
-node scripts/build-mfds-sample-dataset.mjs                  # 기존 20건
-node scripts/build-mfds-sample-dataset.mjs --set=extended120 # 확장 120건
-npm run build:samples                                        # 둘 다
+npm install --no-save sharp
+node scripts/build-mfds-sample-dataset.mjs
+node scripts/build-mfds-sample-dataset.mjs --set=extended120
+npm run build:samples
 ```
+
+`sharp`는 사진을 앞·뒤로 자르는 데 쓴다. `--no-save`를 붙이는 이유는 배포 웹앱에는
+필요 없는 도구라 `package.json`에 남기지 않기 위해서다. 설치하지 않으면
+ImageMagick(`identify`/`convert`)을 찾고, 둘 다 없으면 무엇을 설치해야 하는지 알려준다.
+
+ZIP은 외부 `zip` 명령 없이 Node만으로 만든다. 윈도우 기본 명령 프롬프트에는 `zip`이
+없어서, 예전 방식이면 사진 240장을 다 받은 뒤 마지막 단계에서만 실패했다.
+
+### 윈도우 명령 프롬프트에서
+
+`cmd.exe`는 `#` 주석을 이해하지 못한다. 아래 명령을 **주석 없이 한 줄씩** 붙여 넣는다.
+
+```bat
+cd %USERPROFILE%\Documents
+git clone https://github.com/growdaily860-cell/KCSI-MED-main.git
+cd KCSI-MED-main
+git checkout claude/arena-auto-scoring-integration-vuu05a
+npm install --no-save sharp
+node scripts/build-mfds-sample-dataset.mjs --set=extended120
+git add samples/KCSI_MED_MFDS_sample_120.zip samples/KCSI_MED_MFDS_sample_120.manifest.json
+git commit -m "chore: add extended 120-case MFDS sample pack"
+git push origin claude/arena-auto-scoring-integration-vuu05a
+```
+
+`npm install`이 `package-lock.json`을 건드릴 수 있다. 위처럼 `samples/` 두 파일만
+`git add` 하면 나머지 변경은 커밋되지 않는다.
 
 만들어진 `samples/*.zip`과 `samples/*.manifest.json`을 커밋하면 배포에 실려 화면의
 "샘플 120건 자동 불러오기"가 동작한다. ZIP이 아직 없으면 화면이 그 사실과 실행할

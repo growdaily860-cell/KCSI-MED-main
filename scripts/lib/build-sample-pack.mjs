@@ -5,10 +5,11 @@
 
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, stat, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { createZip } from './zip-writer.mjs';
 
 const execFileAsync = promisify(execFile);
 const FIXED_TIMESTAMP = new Date('2026-08-01T00:00:00.000Z');
@@ -73,7 +74,16 @@ export async function splitCompositeImage(sourcePath, frontPath, backPath) {
       .jpeg({ quality: 92, mozjpeg: false }).toFile(backPath);
     return { width, height, leftWidth, rightWidth, splitter: 'sharp' };
   }
-  const { stdout } = await execFileAsync('identify', ['-format', '%w %h', sourcePath]);
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync('identify', ['-format', '%w %h', sourcePath]));
+  } catch (error) {
+    // 윈도우 기본 환경에는 ImageMagick이 없다. 원인을 정확히 알려 준다.
+    if (error && (error.code === 'ENOENT' || /not recognized|찾을 수 없습니다/.test(String(error.message)))) {
+      throw new Error('사진을 자를 도구가 없습니다. `npm install --no-save sharp` 를 실행한 뒤 다시 시도하세요 (또는 ImageMagick 설치).');
+    }
+    throw error;
+  }
   const [width, height] = stdout.trim().split(/\s+/).map(Number);
   assertGeometry(width, height, stdout.trim());
   const leftWidth = Math.floor(width / 2);
@@ -186,9 +196,11 @@ export async function buildSamplePack(options) {
     throw new Error(`목표 ${set.targetCount}건 중 ${manifestItems.length}건만 만들었습니다. 건너뛴 품목: ${skipped.length}건`);
   }
 
-  await writeFile(path.join(packRoot, 'answer_sheet.csv'), csv(answerRows));
-  await writeFile(path.join(packRoot, 'source_manifest.csv'), csv(manifestRows));
-  await writeFile(path.join(packRoot, 'README.txt'), [
+  const answerCsv = csv(answerRows);
+  const manifestCsv = csv(manifestRows);
+  await writeFile(path.join(packRoot, 'answer_sheet.csv'), answerCsv);
+  await writeFile(path.join(packRoot, 'source_manifest.csv'), manifestCsv);
+  const readmeText = [
     `KCSI MED · ${set.label}`,
     '',
     '- 용도: /research 데이터셋 업로드·검증 및 4개 AI 모델 기본 성능 비교',
@@ -200,24 +212,24 @@ export async function buildSamplePack(options) {
     '- 주의: 공식 등록사진 기반 결과는 기능·기초 성능 확인용이며 실제 현장사진 정확도를 뜻하지 않습니다.',
     '- 주의: 의약품 식별 결과는 실물·포장·처방전 및 식약처 등록정보로 사람이 최종 확인해야 합니다.',
     '',
-  ].join('\n'));
+  ].join('\n');
+  await writeFile(path.join(packRoot, 'README.txt'), readmeText);
 
-  const generatedFiles = [
-    path.join(packRoot, 'answer_sheet.csv'),
-    path.join(packRoot, 'source_manifest.csv'),
-    path.join(packRoot, 'README.txt'),
-    ...manifestItems.flatMap(item => [
-      path.join(imagesDirectory, item.files.front),
-      path.join(imagesDirectory, item.files.back),
-    ]),
-  ];
-  await Promise.all(generatedFiles.map(filePath => utimes(filePath, FIXED_TIMESTAMP, FIXED_TIMESTAMP)));
-
+  // 외부 zip 명령을 쓰지 않는다 — 윈도우 기본 명령 프롬프트에는 없어서
+  // 사진을 다 받은 뒤 마지막 단계에서만 실패한다. 항목 순서와 시각을 고정해
+  // 같은 입력이면 같은 ZIP이 나오게 한다.
   const archivePath = path.join(outputDirectory, `${set.archiveBase}.zip`);
   const metadataPath = path.join(outputDirectory, `${set.archiveBase}.manifest.json`);
-  const temporaryZip = path.join(temporaryRoot, `${set.archiveBase}.zip`);
-  await execFileAsync('zip', ['-X', '-q', '-r', temporaryZip, '.'], { cwd: packRoot });
-  const zipBytes = await readFile(temporaryZip);
+  const zipEntries = [
+    { name: 'answer_sheet.csv', data: Buffer.from(answerCsv, 'utf8') },
+    { name: 'source_manifest.csv', data: Buffer.from(manifestCsv, 'utf8') },
+    { name: 'README.txt', data: Buffer.from(readmeText, 'utf8') },
+  ];
+  for (const item of manifestItems) {
+    zipEntries.push({ name: `images/${item.files.front}`, data: await readFile(path.join(imagesDirectory, item.files.front)) });
+    zipEntries.push({ name: `images/${item.files.back}`, data: await readFile(path.join(imagesDirectory, item.files.back)) });
+  }
+  const zipBytes = await createZip(zipEntries, FIXED_TIMESTAMP);
   await writeFile(archivePath, zipBytes);
   await writeFile(metadataPath, `${JSON.stringify({
     version: 1,

@@ -126,6 +126,48 @@ const arena = require('../arena.js');
   assert.ok(readme.includes('테스트 샘플 6건') && readme.includes('앞·뒷면 12장'));
   assert.ok(readme.includes('사람이 최종 확인'), '해석 주의 문구가 빠졌다');
 
+  // ── 3b. ZIP은 외부 zip 명령 없이 만들고, 같은 입력이면 같은 바이트가 나와야 한다 ──
+  const rebuiltRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'kcsi-pack-test2-'));
+  const rebuilt = await builder.buildSamplePack({
+    set: testSet, database: fakeDatabase, outputDirectory: rebuiltRoot, throttleMs: 0,
+    download: async (url, targetPath) => {
+      const id = url.split('/').pop().replace('TEST', '');
+      const caseId = `T-${String(Number(id)).padStart(3, '0')}`;
+      if (broken.has(caseId)) throw new Error('HTTP 404');
+      const bytes = Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(20_000, Number(id) % 251)]);
+      fs.writeFileSync(targetPath, bytes);
+      return bytes;
+    },
+    split: async (sourcePath, frontPath, backPath) => {
+      const source = fs.readFileSync(sourcePath);
+      fs.writeFileSync(frontPath, Buffer.concat([Buffer.from('FRONT'), source]));
+      fs.writeFileSync(backPath, Buffer.concat([Buffer.from('BACK'), source]));
+      return { width: 800, height: 400, leftWidth: 400, rightWidth: 400, splitter: 'test' };
+    },
+  });
+  assert.ok(fs.readFileSync(archivePath).equals(fs.readFileSync(rebuilt.archivePath)),
+    '같은 입력인데 ZIP 바이트가 달라졌다 — 무결성 해시를 비교할 수 없다');
+  fs.rmSync(rebuiltRoot, { recursive: true, force: true });
+
+  // 화면은 JSZip으로 이 ZIP을 푼다. 설치돼 있으면 실제 소비자로 한 번 더 확인한다.
+  let JSZip = null;
+  try { JSZip = require('jszip'); } catch (_) { /* 선택 의존성 */ }
+  if (JSZip) {
+    const archive = await JSZip.loadAsync(fs.readFileSync(archivePath));
+    const names = Object.values(archive.files).filter(entry => !entry.dir).map(entry => entry.name);
+    assert.equal(names.filter(name => /^images\/.+\.jpg$/.test(name)).length, 12);
+    const jszipAnswer = await archive.file('answer_sheet.csv').async('string');
+    assert.equal(jszipAnswer, answerCsv, 'JSZip이 읽은 정답지가 unzip 결과와 다르다');
+    const jszipReadme = await archive.file('README.txt').async('string');
+    assert.ok(jszipReadme.includes('테스트 샘플 6건'), 'JSZip이 한글 README를 깨뜨렸다');
+    const jpeg = await archive.file(`images/${manifest.items[0].files.front}`).async('nodebuffer');
+    assert.equal(crypto.createHash('sha256').update(jpeg).digest('hex'), manifest.items[0].file_sha256.front,
+      'JSZip으로 푼 사진이 매니페스트 해시와 다르다');
+    console.log('[sample-dataset-builder] JSZip 해석 검증 완료');
+  } else {
+    console.log('[sample-dataset-builder] JSZip 검증 건너뜀 — jszip 미설치');
+  }
+
   // ── 4. 실제 이미지 분할(설치돼 있을 때만) ───────────────────────────────
   let sharp = null;
   try { sharp = require('sharp'); } catch (_) { /* 선택 의존성 */ }
