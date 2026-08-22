@@ -1,0 +1,7751 @@
+{
+  "version": 1,
+  "set": "synthetic-medical-docs",
+  "generated_at": "2026-08-22T01:19:29.547Z",
+  "page": {
+    "width": 1240,
+    "height": 1754
+  },
+  "forms": [
+    {
+      "id": "diagnosis",
+      "label": "진단서"
+    },
+    {
+      "id": "prescription",
+      "label": "처방전"
+    },
+    {
+      "id": "lab",
+      "label": "검사결과지"
+    }
+  ],
+  "conditions": [
+    {
+      "id": "original",
+      "label": "정상 스캔",
+      "logged": "original"
+    },
+    {
+      "id": "fold",
+      "label": "접힘(가로 음영)",
+      "logged": "fold"
+    },
+    {
+      "id": "crumple",
+      "label": "구겨짐(얼룩 음영)",
+      "logged": "crumple"
+    },
+    {
+      "id": "skew5",
+      "label": "기울어짐 5°",
+      "logged": "skew"
+    },
+    {
+      "id": "skew15",
+      "label": "기울어짐 15°",
+      "logged": "skew"
+    },
+    {
+      "id": "lowlight",
+      "label": "저조도",
+      "logged": "lowlight"
+    },
+    {
+      "id": "noise",
+      "label": "스캔 노이즈",
+      "logged": "noise"
+    },
+    {
+      "id": "lowres",
+      "label": "저해상도",
+      "logged": "lowres"
+    }
+  ],
+  "per_condition": 5,
+  "document_count": 120,
+  "item_count": 680,
+  "notice": "합성 문서입니다. 이름·주민등록번호·전화번호는 모두 지어낸 값이며 실제 인물과 무관합니다.",
+  "documents": [
+    {
+      "doc_id": "DOC-0001",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0001_diagnosis_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0002",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0002_diagnosis_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0003",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0003_diagnosis_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0004",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0004_diagnosis_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0005",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0005_diagnosis_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0006",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0006_diagnosis_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0007",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0007_diagnosis_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0008",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0008_diagnosis_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0009",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0009_diagnosis_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0010",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0010_diagnosis_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0011",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0011_diagnosis_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0012",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0012_diagnosis_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0013",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0013_diagnosis_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0014",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0014_diagnosis_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0015",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0015_diagnosis_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0016",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0016_diagnosis_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 501,
+            "h": 93
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 431,
+            "y": 713,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 409,
+            "y": 964,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0017",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0017_diagnosis_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 487,
+            "h": 92
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 431,
+            "y": 713,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 409,
+            "y": 964,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0018",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0018_diagnosis_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 449,
+            "h": 89
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 431,
+            "y": 713,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 409,
+            "y": 964,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0019",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0019_diagnosis_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 501,
+            "h": 93
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 431,
+            "y": 713,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 409,
+            "y": 964,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0020",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0020_diagnosis_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 487,
+            "h": 92
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 431,
+            "y": 713,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 409,
+            "y": 964,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0021",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0021_diagnosis_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 480,
+            "h": 174
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 596,
+            "y": 752,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 531,
+            "y": 995,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0022",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0022_diagnosis_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 444,
+            "h": 164
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 596,
+            "y": 752,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 531,
+            "y": 995,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0023",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0023_diagnosis_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 495,
+            "h": 177
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 596,
+            "y": 752,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 531,
+            "y": 995,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0024",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0024_diagnosis_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 480,
+            "h": 174
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 596,
+            "y": 752,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 531,
+            "y": 995,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0025",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0025_diagnosis_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 444,
+            "h": 164
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 596,
+            "y": 752,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 531,
+            "y": 995,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0026",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0026_diagnosis_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0027",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0027_diagnosis_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0028",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0028_diagnosis_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0029",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0029_diagnosis_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0030",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0030_diagnosis_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0031",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0031_diagnosis_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0032",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0032_diagnosis_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0033",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0033_diagnosis_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 446,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0034",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0034_diagnosis_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 499,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0035",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0035_diagnosis_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 484,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 686,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 938,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0036",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0036_diagnosis_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 242,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 343,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 469,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0037",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0037_diagnosis_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 223,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 343,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 469,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0038",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0038_diagnosis_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 250,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 343,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 469,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0039",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0039_diagnosis_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 242,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 343,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 469,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0040",
+      "form": "diagnosis",
+      "form_label": "진단서",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0040_diagnosis_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "주소",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 223,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 343,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 469,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0041",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0041_prescription_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0042",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0042_prescription_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0043",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0043_prescription_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0044",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0044_prescription_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0045",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0045_prescription_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0046",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0046_prescription_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0047",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0047_prescription_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0048",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0048_prescription_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0049",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0049_prescription_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0050",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0050_prescription_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0051",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0051_prescription_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0052",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0052_prescription_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0053",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0053_prescription_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0054",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0054_prescription_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0055",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0055_prescription_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0056",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0056_prescription_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 417,
+            "y": 881,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0057",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0057_prescription_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 417,
+            "y": 881,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0058",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0058_prescription_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 417,
+            "y": 881,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0059",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0059_prescription_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 417,
+            "y": 881,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0060",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0060_prescription_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 252,
+            "h": 72
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 417,
+            "y": 881,
+            "w": 118,
+            "h": 60
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0061",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0061_prescription_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 552,
+            "y": 914,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0062",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0062_prescription_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 552,
+            "y": 914,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0063",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0063_prescription_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 552,
+            "y": 914,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0064",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0064_prescription_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 552,
+            "y": 914,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0065",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0065_prescription_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 253,
+            "h": 113
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 552,
+            "y": 914,
+            "w": 123,
+            "h": 78
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0066",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0066_prescription_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0067",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0067_prescription_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0068",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0068_prescription_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0069",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0069_prescription_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0070",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0070_prescription_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0071",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0071_prescription_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0072",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0072_prescription_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0073",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0073_prescription_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0074",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0074_prescription_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0075",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0075_prescription_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 249,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 854,
+            "w": 114,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0076",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0076_prescription_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 427,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0077",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0077_prescription_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 427,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0078",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0078_prescription_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 427,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0079",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0079_prescription_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 427,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0080",
+      "form": "prescription",
+      "form_label": "처방전",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0080_prescription_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 125,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 427,
+            "w": 57,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0081",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0081_lab_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0082",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0082_lab_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0083",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0083_lab_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0084",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0084_lab_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0085",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "original",
+      "condition_label": "정상 스캔",
+      "logged_condition": "original",
+      "image": "DOC-0085_lab_original.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0086",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0086_lab_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0087",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0087_lab_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0088",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0088_lab_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0089",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0089_lab_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0090",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "fold",
+      "condition_label": "접힘(가로 음영)",
+      "logged_condition": "fold",
+      "image": "DOC-0090_lab_fold.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0091",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0091_lab_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0092",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0092_lab_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0093",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0093_lab_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0094",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0094_lab_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0095",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "crumple",
+      "condition_label": "구겨짐(얼룩 음영)",
+      "logged_condition": "crumple",
+      "image": "DOC-0095_lab_crumple.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0096",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0096_lab_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 252,
+            "h": 72
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0097",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0097_lab_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 252,
+            "h": 72
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0098",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0098_lab_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 252,
+            "h": 72
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0099",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0099_lab_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 252,
+            "h": 72
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0100",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew5",
+      "condition_label": "기울어짐 5°",
+      "logged_condition": "skew",
+      "image": "DOC-0100_lab_skew5.jpg",
+      "width": 1388,
+      "height": 1855,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 468,
+            "y": 295,
+            "w": 118,
+            "h": 60
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 461,
+            "y": 378,
+            "w": 196,
+            "h": 67
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 453,
+            "y": 462,
+            "w": 277,
+            "h": 74
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 446,
+            "y": 546,
+            "w": 163,
+            "h": 64
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 439,
+            "y": 629,
+            "w": 252,
+            "h": 72
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0101",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0101_lab_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 253,
+            "h": 113
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0102",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0102_lab_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 253,
+            "h": 113
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0103",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0103_lab_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 253,
+            "h": 113
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0104",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0104_lab_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 253,
+            "h": 113
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0105",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "skew15",
+      "condition_label": "기울어짐 15°",
+      "logged_condition": "skew",
+      "image": "DOC-0105_lab_skew15.jpg",
+      "width": 1652,
+      "height": 2015,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 705,
+            "y": 346,
+            "w": 123,
+            "h": 78
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 683,
+            "y": 427,
+            "w": 198,
+            "h": 98
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 661,
+            "y": 508,
+            "w": 278,
+            "h": 119
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 639,
+            "y": 589,
+            "w": 167,
+            "h": 89
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 618,
+            "y": 670,
+            "w": 253,
+            "h": 113
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0106",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0106_lab_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0107",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0107_lab_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0108",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0108_lab_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0109",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0109_lab_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0110",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowlight",
+      "condition_label": "저조도",
+      "logged_condition": "lowlight",
+      "image": "DOC-0110_lab_lowlight.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0111",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0111_lab_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0112",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0112_lab_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0113",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0113_lab_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0114",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0114_lab_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0115",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "noise",
+      "condition_label": "스캔 노이즈",
+      "logged_condition": "noise",
+      "image": "DOC-0115_lab_noise.jpg",
+      "width": 1240,
+      "height": 1754,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 344,
+            "y": 266,
+            "w": 114,
+            "h": 50
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 344,
+            "y": 350,
+            "w": 192,
+            "h": 50
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 344,
+            "y": 434,
+            "w": 274,
+            "h": 50
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 344,
+            "y": 518,
+            "w": 159,
+            "h": 50
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 344,
+            "y": 602,
+            "w": 249,
+            "h": 50
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0116",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0116_lab_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 125,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0117",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0117_lab_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 125,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0118",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0118_lab_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 125,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0119",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0119_lab_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 125,
+            "h": 25
+          }
+        }
+      ]
+    },
+    {
+      "doc_id": "DOC-0120",
+      "form": "lab",
+      "form_label": "검사결과지",
+      "condition": "lowres",
+      "condition_label": "저해상도",
+      "logged_condition": "lowres",
+      "image": "DOC-0120_lab_lowres.jpg",
+      "width": 620,
+      "height": 877,
+      "items": [
+        {
+          "type": "성명",
+          "box": {
+            "x": 172,
+            "y": 133,
+            "w": 57,
+            "h": 25
+          }
+        },
+        {
+          "type": "생년월일",
+          "box": {
+            "x": 172,
+            "y": 175,
+            "w": 96,
+            "h": 25
+          }
+        },
+        {
+          "type": "주민등록번호",
+          "box": {
+            "x": 172,
+            "y": 217,
+            "w": 137,
+            "h": 25
+          }
+        },
+        {
+          "type": "개인식별번호",
+          "box": {
+            "x": 172,
+            "y": 259,
+            "w": 80,
+            "h": 25
+          }
+        },
+        {
+          "type": "전화번호",
+          "box": {
+            "x": 172,
+            "y": 301,
+            "w": 125,
+            "h": 25
+          }
+        }
+      ]
+    }
+  ]
+}
