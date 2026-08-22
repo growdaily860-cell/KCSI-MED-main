@@ -267,13 +267,39 @@
     });
   }
 
+  // 가림 상자 여백은 캔버스가 아니라 '상자 자체'에 비례해야 한다.
+  //
+  // 종전에는 캔버스 비례 고정값만 썼다(1240×1754 문서에서 가로 5px·세로 7px).
+  // 그런데 OCR 단어 상자는 글자에 딱 맞게 잘려 나오고, 정답 영역은 칸 단위라 더 넓다.
+  // 그래서 글자를 정확히 찾고도 넓이의 90%를 못 채워 채점에서 누락으로 잡혔다.
+  // 합성 문서 120건 실측: 항목 재현율 11.3%. 합격선을 70%로 낮추면 59.7%, 50% 이하에서
+  // 62.6%로 포화 — 격차의 대부분이 탐지 실패가 아니라 여백 부족이었다.
+  // 세로 여백을 더 크게 잡는 것은 위아래 획이 단어 상자 밖으로 삐져나오기 때문이다.
+  //
+  // 같은 120건 재측정 결과(합격선 90% 유지):
+  //   항목 재현율 11.3% → 62.2%(423/680) · 고위험 9.6% → 83.8%(201/240)
+  //   누락 0건 문서 0건 → 13건 · 문서당 평균 누락 5.03개 → 2.14개
+  //   과잉 가림 0.73배 → 1.04배 (정답 칸 넓이와 거의 같아 판독성 손실은 미미하다)
+  const PAD_RATIO_X = 0.05;   // 좌우 각각 +5% (총 +10%)
+  const PAD_RATIO_Y = 0.15;   // 위아래 각각 +15% (총 +30%)
+
   function unionBoxes(boxes, canvas) {
-    const padX = Math.max(5, Math.round(canvas.width * 0.004));
-    const padY = Math.max(4, Math.round(canvas.height * 0.004));
-    const x0 = Math.max(0, Math.min(...boxes.map(b => b.x0)) - padX);
-    const y0 = Math.max(0, Math.min(...boxes.map(b => b.y0)) - padY);
-    const x1 = Math.min(canvas.width, Math.max(...boxes.map(b => b.x1)) + padX);
-    const y1 = Math.min(canvas.height, Math.max(...boxes.map(b => b.y1)) + padY);
+    const rawX0 = Math.min(...boxes.map(b => b.x0));
+    const rawY0 = Math.min(...boxes.map(b => b.y0));
+    const rawX1 = Math.max(...boxes.map(b => b.x1));
+    const rawY1 = Math.max(...boxes.map(b => b.y1));
+    // 종전 캔버스 비례 여백은 그대로 두고(하한), 그 위에 비율 여백을 얹는다.
+    // Math.max로 묶으면 안 된다 — 1754px 문서의 세로 하한이 7px인데 글자 높이 26px의
+    // 15%는 4px이라 비율 항이 통째로 밀려난다(실측으로 확인: 11.3% → 12.6%밖에 안 올랐다).
+    // 기준이 되는 폭도 하한 여백을 포함한 값이어야 정답 칸 크기와 맞는다.
+    const baseX = Math.max(5, Math.round(canvas.width * 0.004));
+    const baseY = Math.max(4, Math.round(canvas.height * 0.004));
+    const padX = baseX + Math.round(((rawX1 - rawX0) + 2 * baseX) * PAD_RATIO_X);
+    const padY = baseY + Math.round(((rawY1 - rawY0) + 2 * baseY) * PAD_RATIO_Y);
+    const x0 = Math.max(0, rawX0 - padX);
+    const y0 = Math.max(0, rawY0 - padY);
+    const x1 = Math.min(canvas.width, rawX1 + padX);
+    const y1 = Math.min(canvas.height, rawY1 + padY);
     return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
   }
 
@@ -1078,6 +1104,8 @@
     boxesFromWords,
     cancelActive,
     // 처리 기록 — 성능 수치를 뽑거나 내보낼 때 쓴다. 값이 아니라 숫자만 들어 있다.
+    // 저장 키는 /deid-report가 storage 이벤트로 갱신을 감지할 때 쓰므로 함께 노출한다.
+    DOC_LOG_KEY,
     readDocLog,
     summarizeDocLog: () => (DOC_LOG ? DOC_LOG.summarizeDocs(readDocLog()) : null),
     docLogCsv: () => (DOC_LOG ? DOC_LOG.buildDocCsv(readDocLog()) : ''),

@@ -10,6 +10,9 @@
 
   const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const SAMPLE_URL = '/samples/KCSI_MED_synthetic_docs.zip';
+  // 처리기록 저장 키. deidentify.js가 노출하는 값을 쓰되, 로드 순서가 어긋나도
+  // storage 이벤트 감시가 죽지 않도록 같은 리터럴을 대비로 둔다.
+  const DOC_LOG_KEY = (root.KCSI_DEID && root.KCSI_DEID.DOC_LOG_KEY) || 'kcsi_deident_doc_log_v1';
 
   const esc = value => String(value == null ? '' : value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -33,13 +36,19 @@
     });
   }
 
+  // 앵커를 문서에 붙이지 않고 click()하면 Chrome 데스크톱에서만 동작한다.
+  // Firefox와 iOS Safari는 조용히 아무 일도 하지 않는다 — 현장은 모바일이라 여기서 걸린다.
+  // 비식별화 화면의 내려받기 함수와 같은 방식(붙이고 → 누르고 → 떼기)으로 맞춘다.
   function download(name, content, type) {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = name;
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
     anchor.click();
+    anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
@@ -138,6 +147,12 @@
     document.getElementById('deidLiveSentences').innerHTML = summary.docs
       ? deid.docLogSentences().map(line => `<div>${esc(line)}</div>`).join('')
       : '<div>아직 처리한 문서가 없습니다. <b>/field</b>에서 의료기록을 비식별화하면 여기에 쌓입니다.</div>';
+    // 기록이 없으면 CSV 버튼은 가드에 걸려 아무 일도 하지 않는다. 눌리는데 반응이 없으면
+    // 고장으로 읽히므로, 상태를 버튼에 그대로 드러낸다.
+    const csvButton = document.getElementById('deidLiveCsv');
+    if (csvButton) csvButton.disabled = !summary.docs;
+    const clearButton = document.getElementById('deidLiveClear');
+    if (clearButton) clearButton.disabled = !summary.docs;
     const conditions = summary.conditions.filter(item => item.condition !== 'unknown');
     document.getElementById('deidLiveConditions').innerHTML = conditions.length
       ? `<div class="arena-table-wrap"><table class="arena-table"><thead><tr><th>조건</th><th>문서</th><th>자동만</th><th>가림 완료율</th></tr></thead><tbody>${
@@ -357,8 +372,23 @@
     container.innerHTML = markup();
     header.insertAdjacentElement('afterend', container);
     bind();
+    watchDocLog();
     renderLive();
     renderBatch();
+  }
+
+  // 처리기록은 /field에서 쌓이고 이 화면에서 읽는다. 종전에는 install 시점에 한 번만 그려서,
+  // 문서를 비식별화하고 이 탭으로 돌아와도 새로고침 전까지 옛 숫자가 남아 있었다.
+  //   · storage  — 다른 탭에서 쌓은 기록 (같은 탭에서는 발사되지 않는다)
+  //   · 탭 복귀  — 같은 탭에서 /field를 다녀온 경우
+  // 두 경로를 모두 받아야 화면이 실제 기록을 따라간다.
+  function watchDocLog() {
+    const refresh = () => { if (document.getElementById('deidReportRoot')) renderLive(); };
+    root.addEventListener('storage', event => {
+      if (!event.key || event.key === DOC_LOG_KEY) refresh();
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+    root.addEventListener('focus', refresh);
   }
 
   if (typeof document !== 'undefined') {
