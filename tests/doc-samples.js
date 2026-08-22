@@ -107,6 +107,63 @@ const path = require('path');
   }
 
   fs.rmSync(workRoot, { recursive: true, force: true });
+
+  // ── 5. 저장소에 커밋된 팩 ────────────────────────────────────────────────
+  // 팩은 각자 PC에서 만들어 커밋한다. 여기서 걸러 두지 않으면 깨진 정답지가 배포까지 나가고,
+  // 그 정답지로 낸 성능 수치는 전부 틀린다.
+  const committedManifest = 'samples/KCSI_MED_synthetic_docs.manifest.json';
+  const committedArchive = 'samples/KCSI_MED_synthetic_docs.zip';
+  if (!fs.existsSync(committedManifest)) {
+    console.log('[doc-samples] 커밋된 합성 문서 팩 없음 — npm run build:docs 로 만들어 커밋하면 검사한다');
+  } else {
+    assert.ok(fs.existsSync(committedArchive), '매니페스트만 있고 ZIP이 없다');
+    const committed = JSON.parse(fs.readFileSync(committedManifest, 'utf8'));
+    assert.equal(committed.set, 'synthetic-medical-docs');
+    assert.ok(committed.document_count >= 8, `문서가 ${committed.document_count}건뿐이다`);
+    assert.equal(committed.documents.length, committed.document_count);
+    assert.equal(new Set(committed.documents.map(doc => doc.doc_id)).size, committed.document_count, 'doc_id가 중복됐다');
+    assert.equal(committed.item_count, committed.documents.reduce((sum, doc) => sum + doc.items.length, 0));
+    assert.match(committed.notice, /합성 문서/, '합성 문서 고지가 없다');
+
+    const zipEntries = require('child_process').execFileSync('unzip', ['-Z1', committedArchive], { encoding: 'utf8' }).trim().split(/\r?\n/);
+    assert.ok(zipEntries.includes('answer_sheet.json') && zipEntries.includes('README.txt'));
+    assert.equal(zipEntries.filter(name => /^images\/.+\.jpg$/.test(name)).length, committed.document_count, 'ZIP 안 이미지 수가 다르다');
+
+    // 조건이 고루 들어 있어야 조건별 비교가 성립한다.
+    const perCondition = committed.documents.reduce((map, doc) => {
+      map[doc.condition] = (map[doc.condition] || 0) + 1;
+      return map;
+    }, {});
+    assert.ok(Object.keys(perCondition).length >= 6, `조건이 ${Object.keys(perCondition).length}종뿐이다`);
+    assert.ok(perCondition.original > 0, '기준이 되는 정상 스캔이 없다');
+
+    // 정답 좌표가 실제 이미지와 맞는지 — 조건마다 한 건씩 뜯어본다.
+    const seen = new Set();
+    for (const doc of committed.documents) {
+      if (seen.has(doc.condition)) continue;
+      seen.add(doc.condition);
+      const bytes = require('child_process').execFileSync('unzip', ['-p', committedArchive, `images/${doc.image}`], { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
+      const meta = await sharp(bytes).metadata();
+      assert.equal(meta.width, doc.width, `${doc.doc_id}(${doc.condition}): 정답지 너비가 실제와 다르다`);
+      assert.equal(meta.height, doc.height, `${doc.doc_id}(${doc.condition}): 정답지 높이가 실제와 다르다`);
+      for (const item of doc.items) {
+        assert.ok(item.box.x >= 0 && item.box.y >= 0 && item.box.x + item.box.w <= doc.width + 1 && item.box.y + item.box.h <= doc.height + 1,
+          `${doc.doc_id}(${doc.condition}) ${item.type}: 상자가 이미지 밖이다`);
+        const patch = await sharp(bytes).extract({
+          left: item.box.x, top: item.box.y,
+          width: Math.min(item.box.w, doc.width - item.box.x),
+          height: Math.min(item.box.h, doc.height - item.box.y),
+        }).greyscale().raw().toBuffer();
+        // 저조도 조건은 전체가 어두우므로 절대 밝기가 아니라 주변 대비로 본다.
+        const values = [...patch];
+        const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+        const ratio = values.filter(value => value < mean - 25).length / values.length;
+        assert.ok(ratio > 0.01, `${doc.doc_id}(${doc.condition}) ${item.type}: 정답 상자 안에 글자가 없다(${(ratio * 100).toFixed(1)}%)`);
+      }
+    }
+    console.log(`[doc-samples] 커밋된 팩 검사 — ${committed.document_count}건 · 항목 ${committed.item_count}개 · 조건 ${Object.keys(perCondition).length}종`);
+  }
+
   console.log(`[doc-samples] PASS — 서식 ${forms.FORMS.length}종 · 조건 ${builder.CONDITIONS.length}종 · 정답 좌표가 실제 글자 위에 있음`);
 })().catch(error => {
   console.error(error);
