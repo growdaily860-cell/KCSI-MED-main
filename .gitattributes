@@ -2,6 +2,10 @@
 pill_db.json -diff linguist-generated=true
 easy_db.json -diff linguist-generated=true
 
+# 외부 코드 복사본 — three.js 런타임(생성물)과 threeui 원본 배경 소스.
+vendor/three/** -diff linguist-vendored=true
+threeui/sources/** -diff linguist-vendored=true
+
 # Binary assets
 *.png binary
 *.zip binary

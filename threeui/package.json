@@ -1,0 +1,6 @@
+{
+  "//": "threeui/*.js를 Node가 ES 모듈로 읽게 하는 표시. 브라우저에서는 <script type=\"module\">로 그대로 쓴다.",
+  "name": "kcsi-med-threeui",
+  "private": true,
+  "type": "module"
+}

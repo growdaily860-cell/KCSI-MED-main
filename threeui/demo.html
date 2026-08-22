@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KCSI-MED · threeui 배경 확인</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: #000;
+  color: #f2f6f2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  overflow: hidden;
+}
+#bg { position: fixed; inset: 0; background: #000; }
+.panel {
+  position: fixed; left: 24px; bottom: 24px; max-width: 460px;
+  padding: 18px 20px; border-radius: 14px;
+  background: rgba(8, 12, 9, .72);
+  border: 1px solid rgba(255, 255, 255, .12);
+  backdrop-filter: blur(10px);
+  font-size: 14px; line-height: 1.6;
+}
+.panel h1 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.panel p { color: rgba(233, 241, 233, .72); }
+.panel code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+.panel a { color: #7ef79a; }
+.row { display: flex; gap: 8px; margin-top: 12px; }
+button {
+  font: inherit; font-size: 13px; color: inherit; cursor: pointer;
+  padding: 7px 12px; border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .06);
+}
+button:hover { background: rgba(255, 255, 255, .12); }
+#state { align-self: center; font-size: 12.5px; color: rgba(233, 241, 233, .6); }
+</style>
+</head>
+<body>
+<div id="bg" role="img" aria-label="threeui 배경 장면 미리보기"></div>
+
+<div class="panel">
+  <h1>threeui 배경 확인 페이지</h1>
+  <p>
+    threeui(MIT)의 <code>quantera-trading-hero</code> 배경을 React·번들러 없이
+    <code>threeui/threeui-background.js</code>로 띄운 화면입니다. three.js는 CDN이 아니라
+    저장소에 복사해 둔 <code>vendor/three</code>에서 불러오므로 네트워크 없이 동작합니다.
+    붙이는 방법은 <a href="/docs/THREEUI_INTEGRATION.md">docs/THREEUI_INTEGRATION.md</a>에 있습니다.
+  </p>
+  <div class="row">
+    <button id="toggle" type="button">배경 끄기</button>
+    <span id="state">준비 중</span>
+  </div>
+</div>
+
+<script type="module">
+import { mountThreeUIBackground, QUANTERA_BACKGROUND_REPLACEMENTS } from './threeui-background.js';
+
+const host = document.getElementById('bg');
+const toggle = document.getElementById('toggle');
+const state = document.getElementById('state');
+let scene = null;
+
+async function start() {
+  scene = await mountThreeUIBackground(host, {
+    sourceUrl: './sources/quantera-trading-hero.html',
+    label: 'threeui quantera 배경 장면',
+    replacements: QUANTERA_BACKGROUND_REPLACEMENTS,
+  });
+  state.textContent = scene.mounted ? '실행 중' : '동작 줄이기 설정 — 정지 배경';
+  toggle.textContent = '배경 끄기';
+}
+
+toggle.addEventListener('click', async () => {
+  if (scene) {
+    scene.dispose();
+    scene = null;
+    toggle.textContent = '배경 켜기';
+    state.textContent = '정지';
+    return;
+  }
+  await start();
+});
+
+start().catch(error => {
+  state.textContent = `실패: ${error.message}`;
+  console.error(error);
+});
+</script>
+</body>
+</html>

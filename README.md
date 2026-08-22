@@ -2,7 +2,7 @@
 
 현장 의약품 사진과 처방전 정보를 바탕으로 식약처 낱알식별 데이터베이스 후보를 제시하고, 조사관의 실물 대조 및 법의학 검토를 보조하는 정적 웹 애플리케이션입니다.
 
-현재 버전: **v12.11**
+현재 버전: **v12.12**
 
 > 이 도구의 결과는 의약품 신원을 자동 확정하거나 의료적 진단을 내리는 용도가 아닙니다. 모든 후보는 포장, 처방전, 식약처 등록정보 및 실물을 조사관이 직접 대조한 후 사용해야 합니다.
 
@@ -80,6 +80,17 @@ npm test
 ```
 
 테스트 항목에는 초기화 순서, DOM 로드, 자동 DB 결과 안전 게이트, 수동 확인 상태, T/1 혼동 각인, 업로드 버튼 범위, 블라인드 무작위 배정, 평가 점수·통계·CSV 안전성, PIN·서명 세션·일일 한도·미로그인 차단 및 기존 각인·색상 회귀 사례가 포함됩니다.
+
+## threeui 배경 (선택)
+
+[threeui](https://github.com/MengTo/threeui)(MIT)의 3D 배경을 React·번들러 없이 붙일 수 있습니다. three.js는 CDN이 아니라 저장소 안의 복사본(`vendor/three`)에서 불러오므로 네트워크 없이 동작합니다.
+
+```powershell
+npm run vendor:three
+npm run serve
+```
+
+`http://127.0.0.1:8765/threeui/demo.html`에서 확인합니다. 판독 화면(`index.html`)에는 기본으로 붙이지 않으며, 원하는 화면에만 두 줄로 마운트합니다. 붙이는 방법, 다른 배경으로 교체하는 절차, threeui의 `three/addons/postprocessing/OutputPass.js` 오류 해결은 [`docs/THREEUI_INTEGRATION.md`](docs/THREEUI_INTEGRATION.md)를 참고하세요.
 
 ## Vercel 배포
 
@@ -165,6 +176,11 @@ easy_db.json               효능·주의사항 데이터
 med-manifest.json          PWA manifest
 vercel.json                Vercel 캐시 헤더 설정
 scripts/update_pill_db.mjs DB 갱신 스크립트
+threeui/threeui-background.js  threeui 배경을 React 없이 띄우는 로더
+threeui/sources/           threeui에서 복사한 배경 원본 (MIT)
+threeui/demo.html          배경 확인용 페이지
+vendor/three/              three.js 런타임 복사본 (`npm run vendor:three` 생성물)
+scripts/vendor-three.mjs   배경 소스가 쓰는 three 파일만 골라 복사
 tests/                     자동 테스트 (`npm test` · 브라우저 확인은 `npm run test:browser`)
 .github/workflows/         월간 DB 갱신 작업
 ```
@@ -172,3 +188,8 @@ tests/                     자동 테스트 (`npm test` · 브라우저 확인�
 ## 라이선스
 
 현재 별도 오픈소스 라이선스는 지정하지 않았습니다. 제3자의 복제·수정·재배포를 허용하려면 저장소 공개 전에 적절한 `LICENSE` 파일을 추가하세요.
+
+포함된 제3자 코드:
+
+- [threeui](https://github.com/MengTo/threeui) — MIT, Copyright (c) 2026 Meng To (`threeui/sources/`, 원문 `threeui/LICENSE-threeui`)
+- [three.js](https://github.com/mrdoob/three.js) — MIT (`vendor/three/`, 원문 `vendor/three/LICENSE`)

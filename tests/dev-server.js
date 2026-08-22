@@ -25,7 +25,10 @@ http.createServer((req, res) => {
   }
   fs.readFile(file, (err, body) => {
     if (err) { res.writeHead(404).end('not found'); return; }
-    res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream' });
+    const headers = { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream' };
+    // 배경 장면은 sandbox iframe(고유 출처)에서 모듈로 불러오므로 vendor 파일에 CORS 허용이 필요하다.
+    if (pathname.startsWith('/vendor/')) headers['Access-Control-Allow-Origin'] = '*';
+    res.writeHead(200, headers);
     res.end(body);
   });
 }).listen(port, '127.0.0.1', () => {

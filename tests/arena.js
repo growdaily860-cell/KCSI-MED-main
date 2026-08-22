@@ -138,7 +138,7 @@ assert(html.includes('<script src="scoring/arena-rubric.js"></script>'));
 assert(html.indexOf('research/platform-browser.js') < html.indexOf('<script src="arena.js"></script>'), 'Contract platform must load before Arena');
 assert(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'), 'auto rubric must load before Arena');
 assert(html.indexOf('<script src="arena.js"></script>') < html.indexOf('<script src="research-dataset-tools.js"></script>'), 'arena core must load before dataset tools');
-assert(/APP_VERSION = 'v12\.11'/.test(html));
+assert(/APP_VERSION = 'v12\.12'/.test(html));
 assert(html.includes('id="authForm"') && html.includes('id="authPin"') && html.includes('id="authLogout"'));
 assert(html.includes('id="quotaRefillForm"') && html.includes('id="quotaRefillPin"') && html.includes('+200회 충전'));
 assert(!html.includes('id="gptTokenInput"') && !html.includes('id="gptInput"'), 'long-lived secrets must not be entered in the browser');
