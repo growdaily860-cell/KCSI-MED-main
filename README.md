@@ -136,6 +136,9 @@ deidentify.js              브라우저 로컬 OCR·PDF 변환·자동/수동 �
 deidentify.css             비식별화 검토 화면 스타일
 tools/pii-redactor/        첨부 자료 기반 오프라인 PNG 비식별화 실행 도구
 docs/                      비식별화 실행·복구·보안 운영 문서
+deident/doc-log.js         비식별화 처리기록과 성능 수치 산출
+scoring/doc-redaction.js   문서 비식별화 채점(항목 재현율·과잉 가림)
+scripts/build-doc-samples.mjs  성능 측정용 합성 의료문서 생성
 arena.js                   블라인드 모델 비교 UI·레거시 호환 연결
 arena.css                  연구 모드 전용 화면 스타일
 research/contracts/        Contract v1 데이터 계약
