@@ -190,7 +190,9 @@
     (blocks || []).forEach((block, bi) => (block.paragraphs || []).forEach((paragraph, pi) =>
       (paragraph.lines || []).forEach((line, li) => (line.words || []).forEach((word, wi) => {
         if (!word || !String(word.text || '').trim() || !word.bbox) return;
-        words.push({ text: String(word.text).trim(), bbox: word.bbox, lineKey: `${bi}:${pi}:${li}`, order: wi });
+        // 신뢰도는 판독 품질을 재는 유일한 내부 신호다. 지금까지 파싱만 하고 버려 왔다.
+        const confidence = Number(word.confidence);
+        words.push({ text: String(word.text).trim(), bbox: word.bbox, lineKey: `${bi}:${pi}:${li}`, order: wi, confidence: Number.isFinite(confidence) ? confidence : null });
       }))));
     return words;
   }
@@ -201,7 +203,8 @@
       const c = row.split('\t');
       if (c.length < 12 || c[0] !== '5' || !String(c[11] || '').trim()) return;
       const left = +c[6], top = +c[7], width = +c[8], height = +c[9];
-      words.push({ text: c[11].trim(), bbox: { x0: left, y0: top, x1: left + width, y1: top + height }, lineKey: `${c[2]}:${c[3]}:${c[4]}:${c[5]}`, order: words.length });
+      const confidence = Number(c[10]);   // TSV 10번 열이 신뢰도다. 예전에는 건너뛰었다.
+      words.push({ text: c[11].trim(), bbox: { x0: left, y0: top, x1: left + width, y1: top + height }, lineKey: `${c[2]}:${c[3]}:${c[4]}:${c[5]}`, order: words.length, confidence: Number.isFinite(confidence) ? confidence : null });
     });
     return words;
   }
@@ -215,6 +218,7 @@
     if (Array.isArray(data.words) && data.words.length) {
       return data.words.filter(w => w && w.bbox && String(w.text || '').trim()).map((w, i) => ({
         text: String(w.text).trim(), bbox: w.bbox, lineKey: `${Math.round(w.bbox.y0 / 12)}`, order: i,
+        confidence: Number.isFinite(Number(w.confidence)) ? Number(w.confidence) : null,
       }));
     }
     return wordsFromTsv(data.tsv);
@@ -726,6 +730,37 @@
     activeReview = null;
   }
 
+  function recordReviewOutcome(state) {
+    const telemetry = (state.meta && state.meta.telemetry) || {};
+    const boxes = state.boxes || [];
+    const manualBoxes = boxes.filter(box => box.auto === false).length;
+    const autoBoxes = boxes.length - manualBoxes;
+    const boxKinds = {};
+    boxes.forEach(box => {
+      const kind = String(box.kind || '기타');
+      boxKinds[kind] = (boxKinds[kind] || 0) + 1;
+    });
+    return appendDocLog({
+      docId: `DOC-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      sourceType: telemetry.sourceType,
+      sourceExt: telemetry.sourceExt,
+      condition: telemetry.condition,
+      ocrFailed: telemetry.ocrFailed,
+      ocrError: telemetry.ocrError,
+      wordCount: telemetry.wordCount,
+      meanConfidence: telemetry.meanConfidence,
+      lowConfidenceRatio: telemetry.lowConfidenceRatio,
+      elapsedMs: telemetry.elapsedMs,
+      pixels: telemetry.pixels,
+      autoBoxes,
+      manualBoxes,
+      // 자동이 찾아 준 것을 사람이 지웠으면 그만큼 과잉 탐지였다는 뜻이다.
+      erasedBoxes: Math.max(0, (Number(telemetry.autoBoxes) || 0) - autoBoxes),
+      boxKinds,
+      completed: true,
+    });
+  }
+
   function reviewCanvas(source, boxes, meta) {
     const els = reviewElements();
     return new Promise((resolve, reject) => {
@@ -777,6 +812,7 @@
           kinds: [...new Set(state.boxes.map(box => box.kind).filter(Boolean))],
           redacted: true,
         };
+        result.record = recordReviewOutcome(state);
         closeReview(state);
         resolve(result);
       };
@@ -840,23 +876,76 @@
     els.loading.hidden = true;
   }
 
+  const DOC_LOG = root.KCSIDocLog || (typeof require === 'function' ? (() => {
+    try { return require('./deident/doc-log.js'); } catch (_) { return null; }
+  })() : null);
+  const DOC_LOG_KEY = 'kcsi_deident_doc_log_v1';
+  const DOC_LOG_MAX = 500;
+
+  function readDocLog() {
+    try {
+      const raw = root.localStorage && root.localStorage.getItem(DOC_LOG_KEY);
+      const parsed = JSON.parse(raw || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) { return []; }
+  }
+
+  // 실패해도 비식별화 자체를 막지 않는다. 기록은 보조이고 가림이 본업이다.
+  // 다만 조용히 넘기지 말고 콘솔에 남겨, 수치가 비는 이유를 나중에 알 수 있게 한다.
+  function appendDocLog(record) {
+    if (!DOC_LOG || typeof DOC_LOG.createDocRecord !== 'function') return null;
+    const entry = DOC_LOG.createDocRecord(record);
+    try {
+      const rows = readDocLog();
+      rows.push(entry);
+      root.localStorage.setItem(DOC_LOG_KEY, JSON.stringify(rows.slice(-DOC_LOG_MAX)));
+    } catch (error) {
+      console.warn('비식별화 처리기록을 저장하지 못했습니다', error && error.message);
+    }
+    return entry;
+  }
+
+  function ocrQuality(words) {
+    const scores = (words || []).map(word => Number(word && word.confidence)).filter(Number.isFinite);
+    if (!scores.length) return { wordCount: (words || []).length, meanConfidence: null, lowConfidenceRatio: null };
+    const mean = scores.reduce((sum, value) => sum + value, 0) / scores.length / 100;
+    const low = scores.filter(value => value < 60).length / scores.length;
+    return { wordCount: (words || []).length, meanConfidence: mean, lowConfidenceRatio: low };
+  }
+
   async function processCanvas(canvas, meta, options) {
     showPreparing(meta, '브라우저에서 개인정보 영역을 찾는 중입니다.');
     let boxes = [];
     let ocrFailed = false;
+    let ocrError = '';
+    let quality = { wordCount: 0, meanConfidence: null, lowConfidenceRatio: null };
+    const startedAt = Date.now();
     try {
       const words = await recognize(canvas, message => {
         const els = reviewElements();
         els.loading.textContent = message;
         if (options.onProgress) options.onProgress(message);
       });
+      quality = ocrQuality(words);
       boxes = boxesFromWords(words, canvas);
     } catch (error) {
       console.warn('로컬 OCR 실패 — 수동 검토로 전환', error);
       ocrFailed = true;
+      ocrError = String(error && error.message || error);
     }
     hidePreparing();
     if (ocrFailed) meta.label += ' · 자동 탐지 실패(수동 가림 필요)';
+    meta.telemetry = {
+      ocrFailed,
+      ocrError,
+      elapsedMs: Date.now() - startedAt,
+      pixels: (canvas.width || 0) * (canvas.height || 0),
+      sourceType: options.sourceType || meta.sourceType || 'image',
+      sourceExt: options.sourceExt || meta.sourceExt || '',
+      condition: options.condition || meta.condition || 'unknown',
+      autoBoxes: boxes.length,
+      ...quality,
+    };
     return reviewCanvas(canvas, boxes, meta);
   }
 
@@ -922,6 +1011,36 @@
     }
   }
 
+  // 성능 측정용 — 검토 창 없이 자동 탐지만 수행한다.
+  // 사람 확인 없이 비식별화 사본을 만들지 않는다. 상자만 돌려주고 저장은 하지 않는다.
+  async function detectOnly(source, options = {}) {
+    const canvas = source && source.getContext ? source : await imageToCanvas(source);
+    const startedAt = Date.now();
+    let words = [];
+    let ocrFailed = false;
+    let ocrError = '';
+    try {
+      words = await recognize(canvas, options.onProgress || (() => {}));
+    } catch (error) {
+      ocrFailed = true;
+      ocrError = String(error && error.message || error);
+    }
+    const boxes = ocrFailed ? [] : boxesFromWords(words, canvas);
+    return {
+      boxes,
+      width: canvas.width,
+      height: canvas.height,
+      ocrFailed,
+      ocrError,
+      elapsedMs: Date.now() - startedAt,
+      ...ocrQuality(words),
+    };
+  }
+
+  async function closeOcr() {
+    await terminateOcr();
+  }
+
   function cancelActive() {
     if (activeReview && activeReview.els && activeReview.els.cancel) activeReview.els.cancel.click();
   }
@@ -933,6 +1052,15 @@
     detectTextRanges,
     boxesFromWords,
     cancelActive,
+    // 처리 기록 — 성능 수치를 뽑거나 내보낼 때 쓴다. 값이 아니라 숫자만 들어 있다.
+    readDocLog,
+    summarizeDocLog: () => (DOC_LOG ? DOC_LOG.summarizeDocs(readDocLog()) : null),
+    docLogCsv: () => (DOC_LOG ? DOC_LOG.buildDocCsv(readDocLog()) : ''),
+    docLogSentences: () => (DOC_LOG ? DOC_LOG.performanceSentences(DOC_LOG.summarizeDocs(readDocLog())) : []),
+    clearDocLog: () => { try { root.localStorage.removeItem(DOC_LOG_KEY); return true; } catch (_) { return false; } },
+    // 합성 문서 배치 측정에서 쓴다. 사람 확인 흐름과 분리된 자동 탐지 전용 경로다.
+    detectOnly,
+    closeOcr,
     versions: { tesseract: '7.0.0', pdfjs: '6.2.108', heic2any: '0.0.4', zipRules: '1.0.0' },
   };
 
