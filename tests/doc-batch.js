@@ -94,6 +94,9 @@ const coverSome = doc => ({ boxes: doc.items.slice(0, 1).map(item => ({ ...item.
 
   const text = runner.batchSentences(partial).join(' ');
   assert.ok(/합성 의료문서 5건/.test(text), '표본 수가 문장에 없다');
+  assert.ok(!/완전 비식별화/.test(text), '"완전 비식별화"는 법적 안전으로 오해되는 이름이라 쓰지 않는다');
+  assert.ok(/문서 한 건당 평균/.test(text), '문서당 평균 누락 수를 적지 않았다');
+  assert.ok(/누락 0건/.test(text), '누락 항목 수 분포를 적지 않았다');
   assert.ok(/정상 스캔/.test(text) && /열화 조건/.test(text), '정상/열화를 나눠 적지 않았다');
   assert.ok(/합성 문서 기준/.test(text), '합성 문서 기준임을 밝히지 않았다');
   assert.ok(/과잉 가림/.test(text), '과잉 가림을 함께 적지 않았다');
@@ -101,6 +104,36 @@ const coverSome = doc => ({ boxes: doc.items.slice(0, 1).map(item => ({ ...item.
   assert.deepEqual(runner.batchSentences(null), ['아직 채점한 합성 문서가 없습니다.']);
 
   // ── 7. 화면·경로 결선 ─────────────────────────────────────────────────────
+  // 규칙 상한선. 실측치만 보면 남은 격차가 촬영 품질 탓인지 규칙 공백 탓인지 알 수 없다.
+  const ceilingSheet = {
+    set: 'ceiling-check',
+    documents: [
+      { doc_id: 'C-1', condition: 'original', items: [
+        { type: '성명', label: '성명', value: '김하늘', box: { x: 0, y: 0, w: 60, h: 20 } },
+        { type: '기타', label: '보호자', value: '알수없음', box: { x: 0, y: 40, w: 60, h: 20 } },
+      ] },
+    ],
+  };
+  const withCeiling = await runner.runBatch(ceilingSheet, async () => ({ boxes: [] }), {
+    detectText: value => (value.startsWith('성명') ? [{ start: 0, end: value.length }] : []),
+  });
+  assert.ok(withCeiling.ceiling, '규칙 상한선이 결과에 없다');
+  assert.equal(withCeiling.ceiling.itemCeiling, 50);
+  assert.equal(withCeiling.ceiling.gaps[0].label, '보호자');
+  const ceilingText = runner.batchSentences(withCeiling).join(' ');
+  assert.ok(/규칙 상한 50% 대비 실측 0%/.test(ceilingText), '상한선과 실측을 나란히 적지 않았다');
+  assert.ok(/남은 50%p는 규칙/.test(ceilingText), '규칙 공백 몫을 적지 않았다');
+  assert.ok(/50%p는 OCR/.test(ceilingText), 'OCR 손실 몫을 적지 않았다');
+
+  // 라벨·값이 없는 옛 정답지에서는 상한선을 만들지 말고 조용히 비운다.
+  const legacy = await runner.runBatch(
+    { documents: [{ doc_id: 'L-1', condition: 'original', items: [{ type: '성명', box: { x: 0, y: 0, w: 10, h: 10 } }] }] },
+    async () => ({ boxes: [] }),
+    { detectText: () => [{ start: 0, end: 99 }] }
+  );
+  assert.equal(legacy.ceiling, null, '값이 없는 정답지에서 상한 0%를 지어내면 안 된다');
+  assert.ok(!/규칙 상한/.test(runner.batchSentences(legacy).join(' ')));
+
   const ui = fs.readFileSync('deident/report-ui.js', 'utf8');
   ['deidLiveStats', 'deidBatchStats', 'deidBatchStart', 'deidBatchStop', 'deidBatchCsv', 'deidCiteRules']
     .forEach(id => assert.ok(ui.includes(`id="${id}"`) || ui.includes(`'${id}'`), `보고 화면에 ${id}가 없다`));

@@ -18,6 +18,23 @@
   let pdfLibPromise = null;
   let activeReview = null;
 
+  // 흔한 한국 성씨. 값이 이 글자로 시작할 때만 성명 후보로 본다.
+  // 아래 의료인 성명 규칙과 zipPersonLikeBoxes가 같은 목록을 쓰므로 한 곳에 둔다 —
+  // 두 벌로 두면 한쪽만 고쳐져 조용히 어긋난다.
+  const SURNAMES = '김이박최정강조윤장임한오서신권황안송전홍유고문양손배백허남심노하곽성차주우구민진지엄채원천방공현함변염여추도소석선설마길연위표명기반라왕금옥육인맹제모탁국어은편용';
+
+  // OCR은 글자 사이에 공백을 흩뿌린다. 라벨은 글자마다 공백을 허용해 만든다.
+  const spaced = word => word.split('').join('\\s*');
+
+  // "담당의사 소견"처럼 성씨로 시작하는 서식 용어. 단어가 거기서 끝날 때만 제외해
+  // 서명수 같은 실제 이름은 계속 잡는다.
+  const NOT_A_NAME = '(?!(?:소견|소속|서명|성명|확인|면허|직인|날인|없음|미상|기재|해당)(?![가-힣]))';
+  const PERSON_NAME = `${NOT_A_NAME}[${SURNAMES}][가-힣]{1,3}(?![가-힣])`;
+
+  // 역할이 분명한 직함. 콜론이 없어도 뒤따르는 이름을 성명으로 본다.
+  const STAFF_TITLES = ['담당의사', '처방의사', '주치의', '집도의', '판독의사', '판독의', '진료의',
+    '검사자', '조제자', '조제약사', '담당약사', '의사명', '약사명'].map(spaced).join('|');
+
   // ZIP fusion: the supplied Presidio custom recognizers for Korean RRN, phone and
   // email are represented here as browser-side patterns, alongside the app's
   // existing medical-record identifiers, dates and addresses.
@@ -35,6 +52,12 @@
     { kind: '개인식별번호', re: /\b[A-Z]{1,4}\s*[-:：]\s*\d{5,}\b/gi },
     { kind: '개인식별번호', re: /제\s*\d{4,}\s*호/g },
     { kind: '성명', re: /(?:성\s*명|환\s*자\s*명|수\s*진\s*자|이\s*름|처방\s*받는\s*분)\s*[:：]?\s*[가-힣]{2,5}/g },
+    // 의료인 성명도 개인정보다. 이 규칙이 없던 동안 담당의사·처방의사 이름이 어느 경로로도
+    // 잡히지 않아 진단서·처방전 하단에 그대로 남았다.
+    { kind: '성명', re: new RegExp(`(?:${STAFF_TITLES})\\s*[:：]?\\s*${PERSON_NAME}`, 'g') },
+    // 맨 "의사"·"약사"는 콜론이 붙었을 때만 라벨로 인정한다. 콜론 없이 받으면
+    // "의사 표시", "의사 소견" 같은 일반 문구를 성명으로 잡는다.
+    { kind: '성명', re: new RegExp(`(?:${spaced('의사')}|${spaced('약사')})\\s*[:：]\\s*${PERSON_NAME}`, 'g') },
     { kind: '주소', re: /(?:주\s*소|거\s*주\s*지|소\s*재\s*지)\s*[:：]?\s*[^\r\n]{2,80}/g },
     { kind: '주소', re: /(?:서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충[청북남]*|전[라북남]*|경[상북남]*|제주)[가-힣0-9\s-]{2,45}(?:로|길|동|읍|면|리|번지|아파트)\s*\d*[가-힣0-9-]*/g },
   ];
@@ -308,8 +331,10 @@
 
   function zipNameLabelBoxes(words, canvas) {
     const boxes = [];
-    const labels = ['성명', '이름'];
-    const fieldBoundary = /^(?:성별|나이|생년월일|주민(?:등록)?번호|환자번호|주소|연락처|전화번호)$/;
+    // 긴 직함을 먼저 둔다. '판독의'가 '판독의사'보다 앞서면 "판독의사 조은결"에서
+    // 라벨이 토큰 중간에서 끊겨 이름 대신 직함만 가려진다.
+    const labels = ['담당의사', '처방의사', '조제약사', '담당약사', '판독의사', '판독의', '주치의', '집도의', '진료의', '검사자', '조제자', '성명', '이름'];
+    const fieldBoundary = /^(?:성별|나이|생년월일|주민(?:등록)?번호|환자번호|검사번호|주소|연락처|전화번호|병명|진단일|판독일|처방의약품|용법|투약일수|검사항목|결과|면허(?:등록)?번호|서명|소견|확인|직인|날인|요양기관|의료기관)$/;
     visualRows(words).forEach(row => splitVisualColumns(row).forEach(group => {
       const compactWords = group.map(word => String(word.text).replace(/\s/g, ''));
       const joined = compactWords.join('');
@@ -439,7 +464,7 @@
 
   function zipPersonLikeBoxes(words, canvas) {
     const boxes = [];
-    const surnames = new Set('김이박최정강조윤장임한오서신권황안송전홍유고문양손배백허남심노하곽성차주우구민진지엄채원천방공현함변염여추도소석선설마길연위표명기반라왕금옥육인맹제모탁국어은편용'.split(''));
+    const surnames = new Set(SURNAMES.split(''));
     const excluded = new Set(['성명', '이름', '의사', '약사', '질병', '분류', '기호', '처방', '보험']);
     buildLines(words).forEach(line => {
       const tokens = line.text.trim().split(/\s+/).filter(Boolean);
