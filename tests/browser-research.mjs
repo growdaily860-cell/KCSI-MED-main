@@ -235,6 +235,41 @@ try {
   assert.ok(overflow.documentOverflow <= 1, `모바일 가로 넘침 ${overflow.documentOverflow}px`);
   assert.equal(overflow.autoColumns, 1, '390px에서 자동 추천 영역이 1열로 접히지 않는다');
 
+  // 4b) 비식별화 성능 보고 화면이 실제로 뜨는지 — 다른 경로라 별도 페이지로 확인한다.
+  const reportPage = await context.newPage();
+  const reportErrors = [];
+  reportPage.on('pageerror', error => reportErrors.push(error.message));
+  await reportPage.goto(`${BASE}/deid-report`, { waitUntil: 'load' });
+  await reportPage.waitForSelector('#deidReportRoot');
+  const report = await reportPage.evaluate(() => {
+    const log = globalThis.KCSIDocLog;
+    const rows = [
+      log.createDocRecord({ docId: 'A', autoBoxes: 4, condition: 'original' }),
+      log.createDocRecord({ docId: 'B', ocrFailed: true, autoBoxes: 0, manualBoxes: 3, condition: 'crumple' }),
+    ];
+    localStorage.setItem('kcsi_deident_doc_log_v1', JSON.stringify(rows));
+    document.getElementById('deidReportRoot').remove();
+    globalThis.KCSIDeidReport.install();
+    return {
+      globals: ['KCSIDocLog', 'KCSIDocBatch', 'KCSIDocRedaction', 'KCSIDeidReport'].every(name => !!globalThis[name]),
+      detectOnly: typeof globalThis.KCSI_DEID.detectOnly === 'function',
+      stats: document.querySelectorAll('#deidLiveStats .arena-stat').length,
+      sentences: (document.getElementById('deidLiveSentences').textContent || '').trim().length,
+      conditionRows: document.querySelectorAll('#deidLiveConditions tbody tr').length,
+      citeRules: document.querySelectorAll('#deidCiteRules .arena-glossary-item').length,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  assert.equal(report.globals, true, '보고 화면 전역 모듈이 없다');
+  assert.equal(report.detectOnly, true, '측정용 자동 탐지 경로가 없다');
+  assert.equal(report.stats, 4, '실사용 요약 타일이 그려지지 않았다');
+  assert.ok(report.sentences > 20, '성능 문장이 비어 있다');
+  assert.equal(report.conditionRows, 2, '조건별 표가 그려지지 않았다');
+  assert.ok(report.citeRules >= 4, '인용 규칙이 표시되지 않았다');
+  assert.ok(report.overflow <= 1, `보고 화면 가로 넘침 ${report.overflow}px`);
+  assert.deepEqual(reportErrors, [], `보고 화면 오류: ${reportErrors.join(' | ')}`);
+  await reportPage.close();
+
   // 5) 정답지·이미지가 서버로 새 나가지 않는지 — 화면을 여는 것만으로 나가는 요청은
   //    정적 폰트·CDN 뿐이어야 하고, 본문을 실어 보내는 요청은 하나도 없어야 한다.
   const STATIC_HOSTS = new Set(['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net']);

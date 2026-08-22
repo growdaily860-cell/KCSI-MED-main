@@ -1011,6 +1011,36 @@
     }
   }
 
+  // 성능 측정용 — 검토 창 없이 자동 탐지만 수행한다.
+  // 사람 확인 없이 비식별화 사본을 만들지 않는다. 상자만 돌려주고 저장은 하지 않는다.
+  async function detectOnly(source, options = {}) {
+    const canvas = source && source.getContext ? source : await imageToCanvas(source);
+    const startedAt = Date.now();
+    let words = [];
+    let ocrFailed = false;
+    let ocrError = '';
+    try {
+      words = await recognize(canvas, options.onProgress || (() => {}));
+    } catch (error) {
+      ocrFailed = true;
+      ocrError = String(error && error.message || error);
+    }
+    const boxes = ocrFailed ? [] : boxesFromWords(words, canvas);
+    return {
+      boxes,
+      width: canvas.width,
+      height: canvas.height,
+      ocrFailed,
+      ocrError,
+      elapsedMs: Date.now() - startedAt,
+      ...ocrQuality(words),
+    };
+  }
+
+  async function closeOcr() {
+    await terminateOcr();
+  }
+
   function cancelActive() {
     if (activeReview && activeReview.els && activeReview.els.cancel) activeReview.els.cancel.click();
   }
@@ -1028,6 +1058,9 @@
     docLogCsv: () => (DOC_LOG ? DOC_LOG.buildDocCsv(readDocLog()) : ''),
     docLogSentences: () => (DOC_LOG ? DOC_LOG.performanceSentences(DOC_LOG.summarizeDocs(readDocLog())) : []),
     clearDocLog: () => { try { root.localStorage.removeItem(DOC_LOG_KEY); return true; } catch (_) { return false; } },
+    // 합성 문서 배치 측정에서 쓴다. 사람 확인 흐름과 분리된 자동 탐지 전용 경로다.
+    detectOnly,
+    closeOcr,
     versions: { tesseract: '7.0.0', pdfjs: '6.2.108', heic2any: '0.0.4', zipRules: '1.0.0' },
   };
 
