@@ -94,6 +94,71 @@ const mergedPhoneWords = [
 const mergedPhoneBoxes = deid.boxesFromWords(mergedPhoneWords, { width: 500, height: 700 });
 assert.strictEqual(mergedPhoneBoxes.length, 2, '두 행으로 합쳐진 전화·팩스 OCR 영역 분리 누락');
 
+// 의료인 성명 규칙. 진단서·처방전 하단의 담당의사·처방의사 이름이 그동안 어떤 경로로도
+// 잡히지 않아 합성 문서 배치에서 항목 재현율 상한을 88.2%로 묶고 있었다.
+[
+  '담당의사 백서린',
+  '처방의사 남기훈',
+  '주치의 김하늘',
+  '판독의 조은결',
+  '판독의사: 조은결',
+  '집도의 이서준',
+  '조제약사 문가온',
+  '약사: 문가온',
+  '의사: 김하늘',
+  '검사자 박도윤',
+  '담당의사 서명수',
+  '주 치 의 김하늘',
+].forEach(line => {
+  assert(deid.detectTextRanges(line).some(hit => hit.kind === '성명'), `의료인 성명 탐지 누락: ${line}`);
+});
+
+// 같은 규칙이 서식 문구까지 가리면 과가림이 된다. "의사"·"약사"는 콜론이 붙었을 때만,
+// 값은 성씨로 시작하고 서식 용어가 아닐 때만 성명으로 본다.
+[
+  '의사 표시가 명확하지 않음',
+  '의사 소견',
+  '의사 소견서를 발급함',
+  '담당의사 소견 없음',
+  '담당의사 서명',
+  '검사자 확인',
+].forEach(line => {
+  assert(!deid.detectTextRanges(line).some(hit => hit.kind === '성명'), `서식 문구 과가림: ${line}`);
+});
+
+const doctorWords = [
+  { text: '판독의사', bbox: { x0: 300, y0: 600, x1: 380, y1: 620 }, lineKey: 'doc', order: 0 },
+  { text: '조은결', bbox: { x0: 392, y0: 600, x1: 452, y1: 620 }, lineKey: 'doc', order: 1 },
+];
+const doctorBoxes = deid.boxesFromWords(doctorWords, { width: 800, height: 1000 });
+assert(doctorBoxes.length >= 1, '의료인 성명 영역 상자 생성 실패');
+assert(
+  doctorBoxes.some(box => box.x + box.w >= 452 && box.x <= 392),
+  '의료인 성명 값이 가림 영역에 포함되지 않음'
+);
+
+// 이름이 흔한 성씨로 시작하지 않게 잘못 인식되면 텍스트 규칙은 못 잡고 라벨 경로만 남는다.
+// 이때 짧은 직함('판독의')이 먼저 매칭되면 라벨이 토큰 중간에서 끊겨 이름 대신 직함이 가려진다.
+const misreadDoctorWords = [
+  { text: '판독의사', bbox: { x0: 300, y0: 600, x1: 380, y1: 620 }, lineKey: 'doc', order: 0 },
+  { text: '죠은결', bbox: { x0: 392, y0: 600, x1: 452, y1: 620 }, lineKey: 'doc', order: 1 },
+];
+const misreadBoxes = deid.boxesFromWords(misreadDoctorWords, { width: 800, height: 1000 });
+assert(
+  misreadBoxes.some(box => box.x + box.w >= 452 && box.x >= 380),
+  '긴 직함이 먼저 매칭되지 않아 이름 대신 직함만 가려짐'
+);
+
+const signatureWords = [
+  { text: '담당의사', bbox: { x0: 300, y0: 600, x1: 380, y1: 620 }, lineKey: 'sig', order: 0 },
+  { text: '서명', bbox: { x0: 392, y0: 600, x1: 432, y1: 620 }, lineKey: 'sig', order: 1 },
+];
+assert.strictEqual(
+  deid.boxesFromWords(signatureWords, { width: 800, height: 1000 }).length,
+  0,
+  '서명 칸을 성명으로 오탐'
+);
+
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('KCSI_DEID.processFiles'), '의료기록 파일 비식별화 경로 누락');
 assert(html.includes('KCSI_DEID.processDataUrls'), '의료기록 촬영 비식별화 경로 누락');

@@ -33,6 +33,10 @@ export function layoutDocument(form, seed) {
     const width = textWidth(row.value, LAYOUT.fontSize);
     items.push({
       type: row.pii,
+      // 라벨과 값을 정답지에 함께 남긴다. 좌표만으로는 "규칙이 잡을 수 있었는가"와
+      // "OCR이 읽어냈는가"를 구분할 수 없다. 값이 합성이라 저장해도 개인정보가 아니다.
+      label: row.label,
+      value: row.value,
       // baseline 기준 y이므로 위로 올려 상자를 만든다.
       box: { x: valueX - 6, y: y - LAYOUT.fontSize, w: width + 12, h: LAYOUT.fontSize + 16 },
     });
@@ -95,7 +99,7 @@ function rotatedSize(width, height, angleDeg) {
 
 // 회전한 글자 상자는 축에 나란하지 않다. 가림 상자도 축에 나란하므로
 // 네 꼭짓점을 감싸는 축정렬 사각형이 정확한 목표가 된다.
-function transformItems(items, condition, size) {
+export function transformItems(items, condition, size) {
   if (condition.angle) {
     const out = rotatedSize(size.width, size.height, condition.angle);
     return {
@@ -109,6 +113,8 @@ function transformItems(items, condition, size) {
         const ys = corners.map(point => point.y);
         return {
           type: item.type,
+          label: item.label,
+          value: item.value,
           box: {
             x: Math.round(Math.min(...xs)), y: Math.round(Math.min(...ys)),
             w: Math.round(Math.max(...xs) - Math.min(...xs)), h: Math.round(Math.max(...ys) - Math.min(...ys)),
@@ -123,6 +129,8 @@ function transformItems(items, condition, size) {
       size: { width: Math.round(size.width * factor), height: Math.round(size.height * factor) },
       items: items.map(item => ({
         type: item.type,
+        label: item.label,
+        value: item.value,
         box: {
           x: Math.round(item.box.x * factor), y: Math.round(item.box.y * factor),
           w: Math.round(item.box.w * factor), h: Math.round(item.box.h * factor),

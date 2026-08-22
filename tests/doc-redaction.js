@@ -87,4 +87,30 @@ assert.equal(crumple.completeRate, 50);
 assert.ok(summary.types.find(item => item.type === '전화번호').recall < 100, '누락된 항목 종류가 드러나지 않는다');
 assert.ok(Number.isFinite(summary.meanOverRedactionFactor));
 
+// ── 7. 주 지표 교체 ─────────────────────────────────────────────────────────
+// "누락 0건 문서"는 한 항목만 빠져도 전부 못 가린 문서와 같은 실패로 세므로,
+// 남은 위험의 크기를 문서당 누락 수와 그 분포로 따로 낸다.
+assert.equal(summary.missedItems, 1);
+assert.equal(summary.meanMissedPerDoc, 0.25);
+assert.deepEqual(summary.missDistribution, { none: 3, one: 1, twoPlus: 0 });
+assert.equal(summary.missDistributionRate.none, 75);
+assert.equal(summary.missDistributionRate.twoPlus, 0);
+
+// 유출 피해가 큰 항목은 전체 평균에 묻히면 안 된다.
+assert.deepEqual(summary.highRiskTypes, ['주민등록번호', '개인식별번호']);
+assert.ok(summary.highRiskItems > 0, '고위험 항목을 분리해 세지 않았다');
+assert.equal(summary.highRiskCoveredItems, summary.highRiskItems);
+assert.equal(summary.highRiskRecall, 100);
+
+const highRiskMiss = scorer.summarizeDocumentScores([{
+  condition: 'crumple', items: 2, covered: 1, missed: 1, complete: false,
+  byType: [{ type: '주민등록번호', items: 1, covered: 0 }, { type: '성명', items: 1, covered: 1 }],
+}]);
+assert.equal(highRiskMiss.itemRecall, 50);
+assert.equal(highRiskMiss.highRiskRecall, 0, '주민등록번호 누락이 고위험 재현율에 드러나지 않는다');
+
+const emptySummary = scorer.summarizeDocumentScores([]);
+assert.equal(emptySummary.meanMissedPerDoc, null);
+assert.equal(emptySummary.highRiskRecall, null, '표본이 없을 때 0%로 보고하면 안 된다');
+
 console.log('[doc-redaction] PASS — 항목 단위 재현율 · 분할 가림 인정 · 통째 칠하기 적발 · 조건별 합산');
