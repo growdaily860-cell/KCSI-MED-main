@@ -159,6 +159,19 @@ assert.strictEqual(
   '서명 칸을 성명으로 오탐'
 );
 
+// 가림 여백은 상자 크기에 비례해야 한다.
+// 캔버스 비례 고정값만 쓰면 글자를 정확히 찾고도 정답 칸 넓이의 90%를 못 채워
+// 채점에서 누락으로 잡힌다(합성 문서 120건 실측: 항목 재현율 11.3% → 여백 보정 후 62.2%).
+// 종전 상수(가로 5px·세로 7px)로 회귀하면 이 검사가 먼저 깨진다.
+const padWords = [{ text: '010-1481-2183', bbox: { x0: 345, y0: 520, x1: 573, y1: 546 }, lineKey: 'phone', order: 0 }];
+const padBox = deid.boxesFromWords(padWords, { width: 1240, height: 1754 })[0];
+assert(padBox, '전화번호 가림 상자 생성 실패');
+// 원시 글자 높이 26px + 종전 상하 여백 7px씩 = 40px. 비율 여백이 살아 있으면 이보다 커야 한다.
+assert(padBox.h >= 48, `세로 여백이 상자 크기에 비례하지 않음 (h=${padBox.h}, 최소 48 기대)`);
+assert(padBox.w >= 262, `가로 여백이 상자 크기에 비례하지 않음 (w=${padBox.w}, 최소 262 기대)`);
+// 여백이 무한정 커지면 문서를 통째로 칠하는 것과 같아진다. 정답 칸의 두 배를 넘지 않는다.
+assert(padBox.h <= 80 && padBox.w <= 320, `여백이 과도함 (w=${padBox.w}, h=${padBox.h})`);
+
 const html = fs.readFileSync('index.html', 'utf8');
 assert(html.includes('KCSI_DEID.processFiles'), '의료기록 파일 비식별화 경로 누락');
 assert(html.includes('KCSI_DEID.processDataUrls'), '의료기록 촬영 비식별화 경로 누락');

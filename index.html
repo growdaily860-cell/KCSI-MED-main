@@ -1091,9 +1091,26 @@ function updateAuthUi(data) {
   if (typeof checkReady === 'function') checkReady();
 }
 
+// /deid-report 는 Worker도 OpenAI도 쓰지 않는 화면이다. 브라우저 localStorage의 처리기록과
+// 로컬 채점만 다루므로 로그인할 이유가 없다. 그런데 로그인 게이트가 inset:0 · z-index:2500 으로
+// 화면 전체를 덮어, 뒤에 그려진 성능 보고 버튼이 하나도 눌리지 않았다
+// (elementFromPoint가 버튼 대신 #authGate를 돌려준다). 이 경로에서는 게이트를 띄우지 않는다.
+function isLocalOnlyRoute() {
+  const path = String(location.pathname || '').replace(/\/+$/, '') || '/';
+  return path === '/deid-report' || /(?:^|[?&])app=deid-report(?:&|$)/.test(String(location.search || ''));
+}
+
+// 게이트는 마크업에 show가 박힌 채로 온다. validateAuthSession이 돌기 전 잠깐이라도
+// 화면을 덮지 않도록 부팅 즉시 걷어낸다.
+if (isLocalOnlyRoute()) {
+  const bootGate = document.getElementById('authGate');
+  if (bootGate) bootGate.classList.remove('show');
+}
+
 function showAuthGate(message) {
   const gate = document.getElementById('authGate');
   const status = document.getElementById('authMessage');
+  if (isLocalOnlyRoute()) { if (gate) gate.classList.remove('show'); updateAuthUi(); return; }
   if (gate) gate.classList.add('show');
   if (status) { status.textContent = message || '6자리 PIN을 입력하세요.'; status.classList.remove('error'); }
   updateAuthUi();
