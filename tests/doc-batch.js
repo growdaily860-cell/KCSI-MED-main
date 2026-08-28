@@ -135,21 +135,51 @@ const coverSome = doc => ({ boxes: doc.items.slice(0, 1).map(item => ({ ...item.
   assert.ok(!/규칙 상한/.test(runner.batchSentences(legacy).join(' ')));
 
   const ui = fs.readFileSync('deident/report-ui.js', 'utf8');
-  ['deidLiveStats', 'deidBatchStats', 'deidBatchStart', 'deidBatchStop', 'deidBatchCsv', 'deidCiteRules']
+  ['deidLiveStats', 'deidBatchStats', 'deidBatchStart', 'deidBatchStop', 'deidBatchCsv', 'deidCiteRules',
+    'deidTrialPick', 'deidTrialCamera', 'deidTrialFile', 'deidTrialCanvas', 'deidTrialStats',
+    'deidSetProfileBody', 'deidLiveTrialNote']
     .forEach(id => assert.ok(ui.includes(`id="${id}"`) || ui.includes(`'${id}'`), `보고 화면에 ${id}가 없다`));
   assert.ok(ui.includes('/deid-report'), '보고 화면 경로가 없다');
   assert.ok(!/processFiles|downloadDataUrl/.test(ui), '측정 화면이 비식별화 사본을 만드는 경로를 부른다');
+
+  // 직접 테스트는 사본을 만들지 않는다. 그 사실을 화면에 적지 않으면 여기서 눌러 본 것으로
+  // 비식별화를 마쳤다고 오해한다.
+  assert.ok(/가린 사본이 만들어지지 않습니다/.test(ui), '직접 테스트가 사본을 만들지 않는다는 경고가 없다');
+  assert.ok(/실제로 가린 파일을 받으려면[\s\S]{0,80}\/field/.test(ui), '실제 비식별화 경로를 안내하지 않는다');
+
+  // 직접 테스트 기록이 실사용 분모에 섞이면 같은 문서를 열 번 돌린 것이 성능이 된다.
+  assert.ok(/summarizeDocLog\(\{ source: 'field' \}\)/.test(ui), '실사용 수치가 출처로 걸러지지 않는다');
+  assert.ok(/source: 'report_test'/.test(ui), '직접 테스트 기록에 출처를 붙이지 않는다');
+
+  // 합성 문서 구성 설명은 화면에 적어 두면 팩을 바꿔도 그대로 남아 거짓말이 된다.
+  assert.ok(/KCSISyntheticProfile/.test(ui), '세트 구성 설명을 정답지에서 뽑지 않는다');
+  assert.ok(!/진단서 · 처방전 · 검사결과지/.test(ui), '세트 구성을 화면에 하드코딩했다');
 
   const deid = fs.readFileSync('deidentify.js', 'utf8');
   assert.ok(deid.includes('async function detectOnly'), '비대화 자동 탐지 경로가 없다');
   assert.ok(/detectOnly[\s\S]{0,600}저장은 하지 않는다|사본을 만들지 않는다/.test(deid), '측정 경로가 사본을 만들지 않는다는 근거가 없다');
 
+  // display를 지정한 컨테이너는 브라우저 기본 [hidden]{display:none}을 덮어쓴다.
+  // 이 규칙이 없으면 측정 전에도 "측정결과 CSV" 버튼이 보인다.
+  const css = fs.readFileSync('arena.css', 'utf8');
+  assert.ok(
+    /\.arena-dashboard-actions\[hidden\][^{]*\{[^}]*display:\s*none/.test(css),
+    '측정 전에도 결과 버튼이 보인다 (arena-dashboard-actions[hidden] 규칙 없음)'
+  );
+
   const html = fs.readFileSync('index.html', 'utf8');
-  ['scoring/doc-redaction.js', 'deident/batch-runner.js', 'deident/report-ui.js'].forEach(src => {
+  ['scoring/doc-redaction.js', 'deident/synthetic-profile.js', 'deident/batch-runner.js', 'deident/report-ui.js'].forEach(src => {
     assert.ok(html.includes(`<script src="${src}"></script>`), `${src} 가 실려 있지 않다`);
   });
   assert.ok(html.indexOf('deident/batch-runner.js') > html.indexOf('scoring/doc-redaction.js'), '채점기가 배치 실행기보다 늦게 로드된다');
   assert.ok(html.indexOf('deident/report-ui.js') > html.indexOf('deidentify.js'), '보고 화면이 비식별화 모듈보다 먼저 로드된다');
+  assert.ok(html.indexOf('deident/report-ui.js') > html.indexOf('deident/synthetic-profile.js'), '세트 설명 모듈이 보고 화면보다 늦게 로드된다');
+
+  // 직접 테스트가 결과를 기록에 남길 경로.
+  const deidSource = fs.readFileSync('deidentify.js', 'utf8');
+  assert.ok(/function recordDetection/.test(deidSource), '탐지 결과를 기록에 남길 경로가 없다');
+  assert.ok(/source: meta\.source \|\| 'report_test'/.test(deidSource), '탐지 기록의 기본 출처가 직접 테스트가 아니다');
+  assert.ok(/source: 'field',/.test(deidSource), '사람 확인을 거친 기록에 실사용 출처를 붙이지 않는다');
 
   const vercel = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
   assert.ok((vercel.rewrites || []).some(route => route.source === '/deid-report' && route.destination === '/index.html'),

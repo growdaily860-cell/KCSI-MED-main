@@ -16,9 +16,17 @@
   // 남기는 것은 숫자와 라벨뿐이다. 문서 이미지, 인식된 글자, 개인정보 값은 남기지 않는다 —
   // 그것을 남기면 비식별화 도구가 스스로 개인정보 저장소가 된다.
 
-  const SCHEMA_VERSION = '1.0';
+  const SCHEMA_VERSION = '1.1';
   const OUTCOMES = ['auto', 'manual_assisted', 'manual_only', 'failed'];
   const CONDITIONS = ['original', 'fold', 'crumple', 'skew', 'lowlight', 'noise', 'lowres', 'unknown'];
+
+  // 기록이 어디서 나왔는지.
+  //   field       /field에서 실제로 비식별화한 문서 — 발표에 인용할 수 있는 실사용 수치
+  //   report_test /deid-report에서 눌러 본 직접 테스트 — 같은 문서를 열 번 돌릴 수도 있다
+  // 둘을 한 통에 섞으면 시험 삼아 돌린 것이 실사용 비율을 조용히 흔든다. 그래서 갈라 둔다.
+  // source가 없는 옛 기록은 직접 테스트가 없던 시절 것이므로 field로 본다.
+  const SOURCES = ['field', 'report_test'];
+  const DEFAULT_SOURCE = 'field';
 
   const safeText = value => String(value == null ? '' : value);
   const finite = value => (Number.isFinite(Number(value)) ? Number(value) : null);
@@ -51,10 +59,12 @@
     const erasedBoxes = Math.max(0, finite(input.erasedBoxes) || 0);
     const ocrFailed = !!input.ocrFailed;
     const condition = CONDITIONS.includes(safeText(input.condition)) ? safeText(input.condition) : 'unknown';
+    const source = SOURCES.includes(safeText(input.source)) ? safeText(input.source) : DEFAULT_SOURCE;
     return {
       schema_version: SCHEMA_VERSION,
       doc_id: safeText(input.docId).trim() || `DOC-${Date.now()}`,
       created_at: safeText(input.createdAt) || new Date().toISOString(),
+      source,
       source_type: safeText(input.sourceType).trim() || 'image',
       condition,
       // 파일명은 환자 이름을 담고 있는 경우가 많아 저장하지 않는다. 확장자만 남긴다.
@@ -134,7 +144,7 @@
   }
 
   const CSV_COLUMNS = [
-    'doc_id', 'created_at', 'source_type', 'source_ext', 'condition', 'outcome',
+    'doc_id', 'created_at', 'source', 'source_type', 'source_ext', 'condition', 'outcome',
     'ocr_failed', 'ocr_error', 'word_count', 'mean_confidence', 'low_confidence_ratio',
     'auto_boxes', 'manual_boxes', 'erased_boxes', 'elapsed_ms', 'pixels', 'completed',
   ];
@@ -155,11 +165,14 @@
 
   // 표본 수와 조건을 빼고 비율만 말하지 않도록, 문장을 여기서 만들어 준다.
   // "100% 판독 가능" 같은 무조건 표현을 손으로 쓰다 보면 근거가 빠진다.
-  function performanceSentences(summary) {
+  function performanceSentences(summary, options = {}) {
     const value = summary && Number.isFinite(summary.docs) ? summary : summarizeDocs([]);
-    if (!value.docs) return ['아직 처리한 문서가 없어 성능 수치를 만들 수 없습니다.'];
+    // 어느 통을 요약한 문장인지 밝힌다. 직접 테스트 수치를 실사용 수치처럼 인용하면
+    // 같은 문서를 열 번 돌린 것이 성능으로 둔갑한다.
+    const scope = safeText(options.scopeLabel) || '실사용';
+    if (!value.docs) return [`아직 ${scope} 기록이 없어 성능 수치를 만들 수 없습니다.`];
     const lines = [
-      `스캔 문서 ${value.docs}건 처리 중 ${value.ocrSucceeded}건(${value.ocrSuccessRate}%)에서 자동 탐지가 동작했습니다.`,
+      `${scope} 기준 스캔 문서 ${value.docs}건 처리 중 ${value.ocrSucceeded}건(${value.ocrSuccessRate}%)에서 자동 탐지가 동작했습니다.`,
       `자동 탐지만으로 끝난 문서는 ${value.autoOnly}건(${value.autoOnlyRate}%)이고, 사람이 손을 댄 문서는 ${value.manualTouched}건(${value.manualTouchedRate}%)입니다.`,
     ];
     if (value.manualOnly) {
@@ -176,8 +189,22 @@
     return lines;
   }
 
+  // 출처가 없는 옛 기록도 빠뜨리지 않고 field로 센다.
+  function recordSource(record) {
+    const value = safeText(record && record.source);
+    return SOURCES.includes(value) ? value : DEFAULT_SOURCE;
+  }
+
+  function splitBySource(records) {
+    const rows = (Array.isArray(records) ? records : []).filter(row => row && typeof row === 'object');
+    const out = Object.fromEntries(SOURCES.map(name => [name, []]));
+    rows.forEach(row => out[recordSource(row)].push(row));
+    return out;
+  }
+
   return {
-    SCHEMA_VERSION, OUTCOMES, CONDITIONS, CSV_COLUMNS,
+    SCHEMA_VERSION, OUTCOMES, CONDITIONS, SOURCES, DEFAULT_SOURCE, CSV_COLUMNS,
     classifyOutcome, createDocRecord, summarizeDocs, buildDocCsv, performanceSentences,
+    recordSource, splitBySource,
   };
 });

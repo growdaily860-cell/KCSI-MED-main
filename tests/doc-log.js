@@ -70,12 +70,41 @@ assert.ok(/%/.test(text), '비율이 문장에 없다');
 assert.ok(/original|fold|crumple/.test(text), '조건별 수치가 문장에 없다');
 assert.ok(/재현율|합성 문서/.test(text), '이 수치의 한계를 밝히지 않았다');
 assert.ok(/가림 상자 없이 끝난 문서가 1건/.test(text), '비식별화되지 않은 문서를 알리지 않았다');
-assert.deepEqual(log.performanceSentences(log.summarizeDocs([])), ['아직 처리한 문서가 없어 성능 수치를 만들 수 없습니다.']);
+assert.deepEqual(log.performanceSentences(log.summarizeDocs([])), ['아직 실사용 기록이 없어 성능 수치를 만들 수 없습니다.']);
+
+// 문장은 어느 통을 요약한 것인지 밝혀야 한다. 직접 테스트 수치를 실사용처럼
+// 인용하면 같은 문서를 열 번 돌린 것이 성능으로 둔갑한다.
+assert.ok(
+  /실사용 기준/.test(log.performanceSentences(summary).join(' ')),
+  '실사용 기록임을 문장이 밝히지 않는다'
+);
+assert.ok(
+  /직접 테스트 기준/.test(log.performanceSentences(summary, { scopeLabel: '직접 테스트' }).join(' ')),
+  '직접 테스트 기록임을 문장이 밝히지 않는다'
+);
+
+// ── 4-2. 출처 구분 ──────────────────────────────────────────────────────────
+// /field 실사용과 /deid-report 직접 테스트를 한 통에 섞으면 안 된다.
+assert.deepEqual(log.SOURCES, ['field', 'report_test']);
+assert.equal(log.createDocRecord({ autoBoxes: 1 }).source, 'field', '출처를 안 주면 실사용이어야 한다');
+assert.equal(log.createDocRecord({ source: 'report_test', autoBoxes: 1 }).source, 'report_test');
+assert.equal(log.createDocRecord({ source: '헛값', autoBoxes: 1 }).source, 'field', '모르는 출처는 실사용으로 되돌린다');
+// 출처 필드가 없던 옛 기록도 빠뜨리지 않고 실사용으로 센다.
+assert.equal(log.recordSource({ doc_id: 'OLD-1' }), 'field');
+const split = log.splitBySource([
+  { doc_id: 'A' },
+  { doc_id: 'B', source: 'report_test' },
+  { doc_id: 'C', source: 'field' },
+]);
+assert.equal(split.field.length, 2, '옛 기록과 실사용 기록이 함께 세어지지 않았다');
+assert.equal(split.report_test.length, 1);
+assert.deepEqual(log.splitBySource(null), { field: [], report_test: [] });
 
 // ── 5. CSV ──────────────────────────────────────────────────────────────────
 const csv = log.buildDocCsv(rows);
 const header = csv.replace('﻿', '').split('\r\n')[0];
 assert.ok(header.includes('outcome') && header.includes('condition') && header.includes('mean_confidence'));
+assert.ok(header.includes('source'), 'CSV에 출처 열이 없어 실사용과 직접 테스트를 갈라 볼 수 없다');
 assert.equal(csv.split('\r\n').length, rows.length + 1);
 assert.ok(!csv.includes('=cmd'), '수식 주입 방지 확인용');
 assert.ok(log.buildDocCsv([]).includes('doc_id'));

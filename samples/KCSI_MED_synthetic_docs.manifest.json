@@ -24,42 +24,53 @@
     {
       "id": "original",
       "label": "정상 스캔",
-      "logged": "original"
+      "logged": "original",
+      "kind": "original"
     },
     {
       "id": "fold",
       "label": "접힘(가로 음영)",
-      "logged": "fold"
+      "logged": "fold",
+      "kind": "shading"
     },
     {
       "id": "crumple",
       "label": "구겨짐(얼룩 음영)",
-      "logged": "crumple"
+      "logged": "crumple",
+      "kind": "shading"
     },
     {
       "id": "skew5",
       "label": "기울어짐 5°",
-      "logged": "skew"
+      "logged": "skew",
+      "kind": "geometry",
+      "angle": 5
     },
     {
       "id": "skew15",
       "label": "기울어짐 15°",
-      "logged": "skew"
+      "logged": "skew",
+      "kind": "geometry",
+      "angle": 15
     },
     {
       "id": "lowlight",
       "label": "저조도",
-      "logged": "lowlight"
+      "logged": "lowlight",
+      "kind": "shading"
     },
     {
       "id": "noise",
       "label": "스캔 노이즈",
-      "logged": "noise"
+      "logged": "noise",
+      "kind": "noise"
     },
     {
       "id": "lowres",
       "label": "저해상도",
-      "logged": "lowres"
+      "logged": "lowres",
+      "kind": "resolution",
+      "scale": 0.5
     }
   ],
   "per_condition": 5,

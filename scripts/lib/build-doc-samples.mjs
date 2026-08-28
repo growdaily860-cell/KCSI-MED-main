@@ -64,15 +64,17 @@ function renderSvg(form, seed) {
 // 촬영 조건. 좌표를 정확히 옮길 수 있는 변형만 쓴다 —
 // 접힘·구김은 기하 왜곡 대신 음영으로 흉내 낸다. 좌표를 못 옮기면 정답지가 틀려지고,
 // 틀린 정답지로 낸 수치는 없느니만 못하다.
+// kind는 이 조건이 실제로 무엇을 바꾸는지다. 화면에서 "접힘"을 실제 종이 왜곡으로
+// 오해하지 않도록 음영 합성(shading)과 기하 왜곡(geometry)을 갈라 적어 둔다.
 export const CONDITIONS = [
-  { id: 'original', label: '정상 스캔', logged: 'original' },
-  { id: 'fold', label: '접힘(가로 음영)', logged: 'fold' },
-  { id: 'crumple', label: '구겨짐(얼룩 음영)', logged: 'crumple' },
-  { id: 'skew5', label: '기울어짐 5°', logged: 'skew', angle: 5 },
-  { id: 'skew15', label: '기울어짐 15°', logged: 'skew', angle: 15 },
-  { id: 'lowlight', label: '저조도', logged: 'lowlight' },
-  { id: 'noise', label: '스캔 노이즈', logged: 'noise' },
-  { id: 'lowres', label: '저해상도', logged: 'lowres', scale: 0.5 },
+  { id: 'original', label: '정상 스캔', logged: 'original', kind: 'original' },
+  { id: 'fold', label: '접힘(가로 음영)', logged: 'fold', kind: 'shading' },
+  { id: 'crumple', label: '구겨짐(얼룩 음영)', logged: 'crumple', kind: 'shading' },
+  { id: 'skew5', label: '기울어짐 5°', logged: 'skew', angle: 5, kind: 'geometry' },
+  { id: 'skew15', label: '기울어짐 15°', logged: 'skew', angle: 15, kind: 'geometry' },
+  { id: 'lowlight', label: '저조도', logged: 'lowlight', kind: 'shading' },
+  { id: 'noise', label: '스캔 노이즈', logged: 'noise', kind: 'noise' },
+  { id: 'lowres', label: '저해상도', logged: 'lowres', scale: 0.5, kind: 'resolution' },
 ];
 
 function rotatePoint(x, y, angleDeg, width, height, outWidth, outHeight) {
@@ -221,7 +223,13 @@ export async function buildDocumentSamples(options = {}) {
     generated_at: options.generatedAt || new Date().toISOString(),
     page: PAGE,
     forms: forms.map(form => ({ id: form.id, label: form.label })),
-    conditions: CONDITIONS.map(item => ({ id: item.id, label: item.label, logged: item.logged })),
+    // 각도·배율·분류를 정답지에 남긴다. 화면이 "무엇을 합성했는지"를 설명할 때
+    // 조건 id를 보고 짐작하지 않고 이 값을 읽게 하려는 것이다.
+    conditions: CONDITIONS.map(item => ({
+      id: item.id, label: item.label, logged: item.logged, kind: item.kind,
+      ...(item.angle ? { angle: item.angle } : {}),
+      ...(item.scale ? { scale: item.scale } : {}),
+    })),
     per_condition: perCondition,
     document_count: answers.length,
     item_count: answers.reduce((sum, row) => sum + row.items.length, 0),
