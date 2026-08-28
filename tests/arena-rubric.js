@@ -133,7 +133,9 @@ assert.equal(parsedWithoutConfidence.confidence, null, 'missing confidence must 
 assert.equal(parsedWithoutConfidence.drug_code, '');
 
 const html = fs.readFileSync('index.html', 'utf8');
-assert(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'), 'rubric browser bundle must load before arena.js');
+const arenaScriptIndex = html.search(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/);
+assert(arenaScriptIndex >= 0, 'arena core script must remain wired');
+assert(html.indexOf('scoring/arena-rubric.js') < arenaScriptIndex, 'rubric browser bundle must load before arena.js');
 const source = fs.readFileSync('arena.js', 'utf8');
 assert(source.includes('applyAutomaticRubric') && source.includes('arenaAcceptAuto'));
 assert(source.includes("voteSource = 'manual'"), 'automatic recommendation and investigator selection must be auditable');
@@ -180,19 +182,55 @@ const honestBlank = imprintCase({ front_imprint: 'JWS SF', back_imprint: '(없�
 assert.strictEqual(honestBlank.verdict, 'correct', '무각인을 없음이라 답했는데 틀렸다고 셌다');
 assert.strictEqual(honestBlank.metrics.invented_imprints, 0);
 
+const implicitBlank = imprintCase({ front_imprint: 'JWS SF', back_imprint: '(없음)' },
+  { front_imprint: 'JWS SF', back_imprint: '' });
+assert.strictEqual(implicitBlank.verdict, 'correct', '명시적 무각인 정답에서 빈 예측을 무각인으로 해석하지 않았다');
+assert.strictEqual(implicitBlank.metrics.back_imprint_similarity, 1);
+assert.strictEqual(implicitBlank.metrics.invented_imprints, 0);
+
+const swappedNoImprint = imprintCase({ front_imprint: '(없음)', back_imprint: 'ABC' },
+  { front_imprint: 'ABC', back_imprint: '' });
+assert.strictEqual(swappedNoImprint.verdict, 'correct', '앞뒤 교환 후 무각인 면을 잘못 채점했다');
+assert.strictEqual(swappedNoImprint.metrics.imprint_orientation, 'swapped');
+assert.strictEqual(swappedNoImprint.metrics.invented_imprints, 0, '교환 전 위치로 지어낸 각인을 세었다');
+
+const oneSidedNoImprint = imprintCase({ front_imprint: '(없음)', back_imprint: '' },
+  { front_imprint: 'ABC', back_imprint: '' });
+assert.strictEqual(oneSidedNoImprint.verdict, 'wrong', '한 면 정답에서 방향 교환으로 없는 각인을 숨겼다');
+assert.strictEqual(oneSidedNoImprint.metrics.imprint_orientation, 'direct');
+assert.strictEqual(oneSidedNoImprint.metrics.invented_imprints, 1);
+
 // ── 입력 도구의 표기를 해석하는지 ──────────────────────────────────────────
-// (마크)는 로고만 있고 글자가 없다는 뜻이다. 괄호를 떼지 않으면 글자로 비교된다.
+// (마크)는 로고가 있다는 뜻이며 무각인과 다르다.
 assert.strictEqual(
   imprintCase({ front_imprint: '(마크)', back_imprint: 'VCM' },
-    { front_imprint: '없음', back_imprint: 'VCM' }).verdict,
+    { front_imprint: '(마크)', back_imprint: 'VCM' }).verdict,
   'correct',
-  '로고면 표기를 글자 각인으로 비교했다',
+  '로고 표기를 독립 각인으로 비교하지 않았다',
+);
+assert.notStrictEqual(
+  imprintCase({ front_imprint: '(마크)', back_imprint: 'VCM' },
+    { front_imprint: '', back_imprint: 'VCM' }).verdict,
+  'correct',
+  '로고 면의 빈 예측을 정답으로 처리했다',
+);
+assert.notStrictEqual(
+  imprintCase({ front_imprint: '(마크)', back_imprint: 'VCM' },
+    { front_imprint: '(없음)', back_imprint: 'VCM' }).verdict,
+  'correct',
+  '로고와 무각인을 합쳤다',
 );
 assert.strictEqual(
   imprintCase({ front_imprint: '(마크) 255', back_imprint: '(없음)' },
-    { front_imprint: '255', back_imprint: '없음' }).verdict,
+    { front_imprint: '(마크)255', back_imprint: '없음' }).verdict,
   'correct',
-  '로고와 함께 적힌 글자를 읽어내지 못했다',
+  '로고와 함께 적힌 글자를 보존하지 못했다',
+);
+assert.notStrictEqual(
+  imprintCase({ front_imprint: '(마크) P', back_imprint: '(없음)' },
+    { front_imprint: 'P', back_imprint: '없음' }).verdict,
+  'correct',
+  '로고+글자를 글자만 있는 각인과 합쳤다',
 );
 
 // (확인불가)는 사람도 판정하지 못한 면이다. 채점에서 빼야 한다.
@@ -203,6 +241,16 @@ assert.strictEqual(
   'correct',
   '판정할 수 없는 면을 채점에 넣었다',
 );
+const oneSidedComplete = imprintCase(
+  { front_imprint: 'HT', back_imprint: '(확인불가)' },
+  {
+    front_imprint: 'HT', back_imprint: '', shape: '원형', color: '흰색', confidence: 0.8,
+    evidence: '앞면 각인 HT를 관찰', uncertainty: '뒷면은 확인 불가',
+  },
+);
+assert.strictEqual(oneSidedComplete.metrics.evaluated_imprint_sides, 1);
+assert.strictEqual(oneSidedComplete.metrics.back_imprint_similarity, null);
+assert.strictEqual(oneSidedComplete.component_scores.clarity, 15, '정답이 없는 뒷면 때문에 명확성 점수를 깎았다');
 assert.strictEqual(
   imprintCase({ front_imprint: 'HT', back_imprint: '(확인불가)' },
     { front_imprint: 'ZZ', back_imprint: '무엇이든' }).verdict,
@@ -225,5 +273,22 @@ const drugMode = rubric.evaluateCase(
 );
 assert.strictEqual(drugMode.truth_mode, 'drug', '제품명 정답지가 각인 모드로 채점됐다');
 assert.strictEqual(drugMode.verdict, 'correct');
+
+const oneSidedDrugTruth = makeTruth(0, {
+  answer: { back_imprint: '' },
+  condition: { provided_sides: '앞면만' },
+});
+const oneSidedDrugResult = makeResult(oneSidedDrugTruth, { prediction: { back_imprint: '' } });
+const oneSidedDrugScore = rubric.evaluateCase(oneSidedDrugTruth, oneSidedDrugResult);
+assert.strictEqual(oneSidedDrugScore.component_scores.clarity, 15, '제공되지 않은 뒷면 때문에 약물 모드 명확성을 깎았다');
+
+const canonicalBlank = rubric.normalizeGroundTruth({
+  sample_id: 'CANONICAL-BLANK',
+  truthName: '레거시제품명',
+  truthFront: 'LEGACY',
+  answer: { mfds_item_id: 'ITEM-1', drug_name: '', front_imprint: '', back_imprint: '' },
+});
+assert.strictEqual(canonicalBlank.answer.drug_name, '', '빈 canonical 제품명을 legacy UI 값으로 되살렸다');
+assert.strictEqual(canonicalBlank.answer.front_imprint, '', '빈 canonical 각인을 legacy UI 값으로 되살렸다');
 
 console.log('[arena-rubric] PASS — automatic 40+25+20+15 scoring · audit reasons · safe manual override');

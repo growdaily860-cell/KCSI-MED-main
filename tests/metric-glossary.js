@@ -5,6 +5,7 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const arena = require('../arena.js');
 const glossary = require('../research/metric-glossary.js');
 
 assert.ok(glossary.METRICS.length >= 12, `지표가 ${glossary.METRICS.length}개뿐이다`);
@@ -56,12 +57,29 @@ assert.match(glossary.findMetric('top1').caution, /부분정답/);
 // 비용은 추정치임을 반드시 밝힌다.
 assert.match(glossary.findMetric('cost').caution, /청구|다를 수 있다/);
 
+// 배치가 1–5건으로 가변이므로 설명과 실제 누적치 모두 고정 5건 계산으로 돌아가면 안 된다.
+const variableBatchSummary = arena.summarizeRuns([
+  { cases: [{}, {}], results: {} },
+  { cases: [{}, {}, {}, {}, {}], results: {} },
+  { cases: [{}], results: {} },
+]);
+assert.equal(variableBatchSummary.experiments, 3);
+assert.equal(variableBatchSummary.cases, 8, '시험 알약 수는 실제 run.cases.length 합이어야 한다');
+assert.match(glossary.findMetric('experiments').formula, /1–5개/);
+assert.match(glossary.findMetric('experiments').formula, /4–20개/);
+assert.doesNotMatch(glossary.findMetric('experiments').formula, /알약 5개.*응답 20건/);
+assert.match(glossary.findMetric('cases').formula, /run\.cases\.length/);
+assert.doesNotMatch(glossary.findMetric('cases').formula, /총 배치\s*[×x*]\s*5|언제나 알약 5개/);
+assert.match(glossary.findMetric('model_total').formula, /알약 1–5개/);
+
 // 화면 결선
 assert.ok(source.includes('id="arenaGlossary"') && source.includes('id="arenaGlossaryBody"'), '설명 패널이 화면에 없다');
 assert.ok(source.includes('renderGlossary'), '설명 렌더러가 연결되지 않았다');
 const html = fs.readFileSync('index.html', 'utf8');
 assert.ok(html.includes('<script src="research/metric-glossary.js"></script>'));
-assert.ok(html.indexOf('research/metric-glossary.js') < html.indexOf('<script src="arena.js"></script>'));
+const arenaScriptIndex = html.search(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/);
+assert.ok(arenaScriptIndex >= 0, 'arena core script must remain wired');
+assert.ok(html.indexOf('research/metric-glossary.js') < arenaScriptIndex);
 
 // 문서와 화면 설명이 어긋나지 않아야 한다 — 지표를 추가하고 문서를 잊으면 여기서 걸린다.
 const doc = fs.readFileSync('docs/RESEARCH_DASHBOARD_METRICS.md', 'utf8');

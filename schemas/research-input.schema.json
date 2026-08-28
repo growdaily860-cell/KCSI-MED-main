@@ -12,6 +12,10 @@
       "type": "object",
       "required": ["front", "back"],
       "properties": { "front": { "type": "string" }, "back": { "type": "string" } },
+      "anyOf": [
+        { "properties": { "front": { "pattern": "\\S" } } },
+        { "properties": { "back": { "pattern": "\\S" } } }
+      ],
       "additionalProperties": false
     },
     "options": {

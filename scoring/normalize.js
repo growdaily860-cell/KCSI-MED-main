@@ -1,5 +1,9 @@
 'use strict';
 
+const NO_IMPRINT = '∅';
+const LOGO_IMPRINT = '¤';
+const UNKNOWN_IMPRINT = '?';
+
 function safeText(value) {
   return String(value == null ? '' : value);
 }
@@ -14,9 +18,34 @@ function normalizeDrugName(value) {
 }
 
 function normalizeImprint(value) {
-  const text = safeText(value).normalize('NFKC').trim();
-  if (/^(?:없음|무각인|빈면|확인불가|판독불가|none|blank|unreadable|unknown|[-—–])$/i.test(text)) return '∅';
-  return text.replace(/[^0-9A-Za-z가-힣]/g, '').toUpperCase();
+  const text = safeText(value).normalize('NFKC').trim()
+    .replace(/[()（）]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  if (/^(?:없음|무각인|빈면|none|blank|[-—–])$/i.test(text)) return NO_IMPRINT;
+  if (/^(?:확인불가|판독불가|식별불가|unreadable|unknown)$/i.test(text)) return UNKNOWN_IMPRINT;
+
+  // 로고는 무각인과 다르다. "(마크) 255"는 로고 존재와 글자 255를 모두 보존한다.
+  const logoPattern = /(?:^|\s)(?:마크|로고|logo|mark)(?=\s|$)/i;
+  const hasLogo = logoPattern.test(text);
+  const withoutLogo = text.replace(new RegExp(logoPattern.source, 'gi'), ' ').trim();
+  const cleaned = withoutLogo.replace(/[^0-9A-Za-z가-힣]/g, '').toUpperCase();
+  if (hasLogo) return `${LOGO_IMPRINT}${cleaned}`;
+  return cleaned || NO_IMPRINT;
+}
+
+function isKnownImprintTruth(value) {
+  const normalized = normalizeImprint(value);
+  return normalized !== '' && normalized !== UNKNOWN_IMPRINT;
+}
+
+function normalizeImprintPrediction(expected, predicted) {
+  const truth = normalizeImprint(expected);
+  const answer = normalizeImprint(predicted);
+  // 빈 응답은 일반적으로 "읽지 못함"이다. 다만 정답이 명시적인 무각인일 때만
+  // 빈 응답을 무각인으로 해석한다. 그래서 빈 정답 면과 (없음) 면은 합쳐지지 않는다.
+  return truth === NO_IMPRINT && answer === '' ? NO_IMPRINT : answer;
 }
 
 function levenshteinDistance(left, right) {
@@ -65,9 +94,14 @@ function meanFinite(values) {
 }
 
 module.exports = {
+  NO_IMPRINT,
+  LOGO_IMPRINT,
+  UNKNOWN_IMPRINT,
   safeText,
   normalizeDrugName,
   normalizeImprint,
+  isKnownImprintTruth,
+  normalizeImprintPrediction,
   levenshteinDistance,
   normalizedSimilarity,
   clamp01,

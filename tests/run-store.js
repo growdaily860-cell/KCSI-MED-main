@@ -167,6 +167,8 @@ assert.ok(source.includes('id="arenaBackupSave"') && source.includes('id="arenaB
 assert.ok(source.includes('saveFailureMessage'), '저장 실패를 알리는 경로가 없다');
 const html = fs.readFileSync('index.html', 'utf8');
 assert.ok(html.includes('<script src="research/run-store.js"></script>'));
-assert.ok(html.indexOf('research/run-store.js') < html.indexOf('<script src="arena.js"></script>'));
+const arenaScriptIndex = html.search(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/);
+assert.ok(arenaScriptIndex >= 0, 'arena core script must remain wired');
+assert.ok(html.indexOf('research/run-store.js') < arenaScriptIndex);
 
 console.log('[run-store] PASS — 저장 다이어트 · 용량 초과 보고 · 백업/복원 병합 · CSV 왕복');

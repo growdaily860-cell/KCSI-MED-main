@@ -9,7 +9,7 @@
 
 - 모듈 버전: `1.0.0`
 - 데이터 계약: KCSI-MED 공통 Contract v1의 GroundTruth 입력용 평면 형식
-- 기준 앱 버전: v12.11
+- 기준 앱 버전: v12.12
 
 템플릿은 별도 열 정의를 만들지 않고 `arena.js`의 `DATASET_COLUMNS`를 그대로 사용합니다. 이후 공통 계약 변환 경계에서 `case_id`는 `GroundTruth.sample_id`, `front_image`/`back_image`는 `images`, 정답 열은 `answer`, 촬영 조건 열은 `condition`으로 매핑하고 `schema_version: "1.0"`을 부여할 수 있습니다. 이 모듈은 병렬 작업 중인 공통 스키마를 다시 선언하지 않습니다.
 

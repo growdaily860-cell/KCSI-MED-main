@@ -26,8 +26,18 @@ var KCSIResearchPlatform = (() => {
       function normalizeGroundTruth(value = {}) {
         const source = isObject(value) ? value : {};
         const images = isObject(source.images) ? source.images : {};
-        const answer = isObject(source.answer) ? source.answer : {};
+        const hasCanonicalAnswer = isObject(source.answer);
+        const answer = hasCanonicalAnswer ? source.answer : {};
         const condition = isObject(source.condition) ? source.condition : {};
+        const answerValue = (keys, ...legacyValues) => {
+          if (hasCanonicalAnswer) {
+            for (const key of keys) {
+              if (Object.prototype.hasOwnProperty.call(answer, key)) return answer[key];
+            }
+            return void 0;
+          }
+          return legacyValues.find((value2) => value2 != null && text(value2) !== "");
+        };
         return {
           schema_version: SCHEMA_VERSION,
           sample_id: text(source.sample_id || source.case_id || source.id),
@@ -37,12 +47,12 @@ var KCSIResearchPlatform = (() => {
             back: text(images.back || source.back_image || source.back)
           },
           answer: {
-            mfds_item_id: text(answer.mfds_item_id || source.mfds_item_id || source.item_seq),
-            drug_name: text(answer.drug_name || source.drug_name || source.item_name || source.truthName),
-            front_imprint: text(answer.front_imprint || answer.imprint_front || source.front_imprint || source.imprint_front || source.truthFront),
-            back_imprint: text(answer.back_imprint || answer.imprint_back || source.back_imprint || source.imprint_back || source.truthBack),
-            shape: text(answer.shape || source.shape),
-            color: text(answer.color || source.color)
+            mfds_item_id: text(answerValue(["mfds_item_id", "item_seq"], source.mfds_item_id, source.item_seq)),
+            drug_name: text(answerValue(["drug_name", "item_name"], source.drug_name, source.item_name, source.truthName)),
+            front_imprint: text(answerValue(["front_imprint", "imprint_front"], source.front_imprint, source.imprint_front, source.truthFront)),
+            back_imprint: text(answerValue(["back_imprint", "imprint_back"], source.back_imprint, source.imprint_back, source.truthBack)),
+            shape: text(answerValue(["shape"], source.shape)),
+            color: text(answerValue(["color"], source.color))
           },
           condition: {
             expected_readable: normalizeBoolean(
@@ -53,7 +63,9 @@ var KCSIResearchPlatform = (() => {
             background: text(condition.background || source.background),
             blur: text(condition.blur || source.blur || source.clarity),
             angle: text(condition.angle || source.angle),
-            variant: text(condition.variant || source.variant) || "original"
+            variant: text(condition.variant || source.variant) || "original",
+            provided_sides: text(condition.provided_sides || source.provided_sides || source.providedSides),
+            score_line: text(condition.score_line || source.score_line || source.scoreLine)
           },
           notes: text(source.notes)
         };
@@ -121,8 +133,11 @@ var KCSIResearchPlatform = (() => {
         if (typeof value.sample_id !== "string" || !value.sample_id.trim()) errors.push("sample_id must be a non-empty string.");
         if (!isObject(value.images)) errors.push("images must be an object.");
         if (requireImages && isObject(value.images)) {
-          if (typeof value.images.front !== "string" || !value.images.front) errors.push("images.front must be a non-empty string.");
-          if (typeof value.images.back !== "string" || !value.images.back) errors.push("images.back must be a non-empty string.");
+          const front = typeof value.images.front === "string" ? value.images.front.trim() : "";
+          const back = typeof value.images.back === "string" ? value.images.back.trim() : "";
+          if (typeof value.images.front !== "string") errors.push("images.front must be a string.");
+          if (typeof value.images.back !== "string") errors.push("images.back must be a string.");
+          if (!front && !back) errors.push("at least one of images.front or images.back must be a non-empty string.");
         }
         if (!isObject(value.options)) errors.push("options must be an object.");
         if (isObject(value.options) && !COST_MODES.has(value.options.cost_mode)) errors.push('options.cost_mode must be "practice" or "research".');
@@ -1516,6 +1531,9 @@ var KCSIResearchPlatform = (() => {
   var require_normalize = __commonJS({
     "scoring/normalize.js"(exports, module) {
       "use strict";
+      var NO_IMPRINT = "\u2205";
+      var LOGO_IMPRINT = "\xA4";
+      var UNKNOWN_IMPRINT = "?";
       function safeText(value) {
         return String(value == null ? "" : value);
       }
@@ -1523,9 +1541,25 @@ var KCSIResearchPlatform = (() => {
         return safeText(value).normalize("NFKC").replace(/\([^)]*\)|\[[^\]]*\]/g, "").replace(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|g)\b/gi, "").replace(/\d+(?:\.\d+)?\s*(?:㎎|밀리그램|그램)/g, "").replace(/[^0-9A-Za-z가-힣]/g, "").toLowerCase();
       }
       function normalizeImprint(value) {
-        const text = safeText(value).normalize("NFKC").trim();
-        if (/^(?:없음|무각인|빈면|확인불가|판독불가|none|blank|unreadable|unknown|[-—–])$/i.test(text)) return "\u2205";
-        return text.replace(/[^0-9A-Za-z가-힣]/g, "").toUpperCase();
+        const text = safeText(value).normalize("NFKC").trim().replace(/[()（）]/g, " ").replace(/\s+/g, " ").trim();
+        if (!text) return "";
+        if (/^(?:없음|무각인|빈면|none|blank|[-—–])$/i.test(text)) return NO_IMPRINT;
+        if (/^(?:확인불가|판독불가|식별불가|unreadable|unknown)$/i.test(text)) return UNKNOWN_IMPRINT;
+        const logoPattern = /(?:^|\s)(?:마크|로고|logo|mark)(?=\s|$)/i;
+        const hasLogo = logoPattern.test(text);
+        const withoutLogo = text.replace(new RegExp(logoPattern.source, "gi"), " ").trim();
+        const cleaned = withoutLogo.replace(/[^0-9A-Za-z가-힣]/g, "").toUpperCase();
+        if (hasLogo) return `${LOGO_IMPRINT}${cleaned}`;
+        return cleaned || NO_IMPRINT;
+      }
+      function isKnownImprintTruth(value) {
+        const normalized = normalizeImprint(value);
+        return normalized !== "" && normalized !== UNKNOWN_IMPRINT;
+      }
+      function normalizeImprintPrediction(expected, predicted) {
+        const truth = normalizeImprint(expected);
+        const answer = normalizeImprint(predicted);
+        return truth === NO_IMPRINT && answer === "" ? NO_IMPRINT : answer;
       }
       function levenshteinDistance(left, right) {
         const a = safeText(left);
@@ -1568,9 +1602,14 @@ var KCSIResearchPlatform = (() => {
         return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : null;
       }
       module.exports = {
+        NO_IMPRINT,
+        LOGO_IMPRINT,
+        UNKNOWN_IMPRINT,
         safeText,
         normalizeDrugName,
         normalizeImprint,
+        isKnownImprintTruth,
+        normalizeImprintPrediction,
         levenshteinDistance,
         normalizedSimilarity,
         clamp01,
@@ -1604,38 +1643,78 @@ var KCSIResearchPlatform = (() => {
   var require_imprint = __commonJS({
     "scoring/imprint.js"(exports, module) {
       "use strict";
-      var { normalizeImprint, normalizedSimilarity, levenshteinDistance, meanFinite } = require_normalize();
-      function cer(expected, predicted) {
+      var {
+        NO_IMPRINT,
+        UNKNOWN_IMPRINT,
+        normalizeImprint,
+        normalizeImprintPrediction,
+        normalizedSimilarity,
+        levenshteinDistance,
+        meanFinite
+      } = require_normalize();
+      function sideMetric(expected, predicted) {
         const truth = normalizeImprint(expected);
-        const answer = normalizeImprint(predicted);
-        if (!truth.length) return answer.length ? 1 : 0;
-        return levenshteinDistance(truth, answer) / Math.max(1, truth.length);
-      }
-      function orientationMetrics(frontTruth, backTruth, frontPrediction, backPrediction) {
+        if (!truth || truth === UNKNOWN_IMPRINT) {
+          return {
+            evaluated: false,
+            truth,
+            prediction: normalizeImprint(predicted),
+            similarity: null,
+            cer: null,
+            invented: false
+          };
+        }
+        const answer = normalizeImprintPrediction(expected, predicted);
+        const invented = truth === NO_IMPRINT && !!answer && answer !== NO_IMPRINT && answer !== UNKNOWN_IMPRINT;
         return {
-          front_similarity: normalizedSimilarity(normalizeImprint(frontTruth), normalizeImprint(frontPrediction)),
-          back_similarity: normalizedSimilarity(normalizeImprint(backTruth), normalizeImprint(backPrediction)),
-          front_cer: cer(frontTruth, frontPrediction),
-          back_cer: cer(backTruth, backPrediction)
+          evaluated: true,
+          truth,
+          prediction: answer,
+          similarity: normalizedSimilarity(truth, answer),
+          cer: levenshteinDistance(truth, answer) / Math.max(1, truth.length),
+          invented
+        };
+      }
+      function cer(expected, predicted) {
+        return sideMetric(expected, predicted).cer;
+      }
+      function orientationMetrics(frontTruth, backTruth, frontPrediction, backPrediction, swapped = false) {
+        const front = sideMetric(frontTruth, swapped ? backPrediction : frontPrediction);
+        const back = sideMetric(backTruth, swapped ? frontPrediction : backPrediction);
+        const sides = [front, back];
+        return {
+          front_similarity: front.similarity,
+          back_similarity: back.similarity,
+          front_cer: front.cer,
+          back_cer: back.cer,
+          similarity: meanFinite(sides.map((side) => side.similarity)),
+          aggregate_cer: meanFinite(sides.map((side) => side.cer)),
+          evaluated_sides: sides.filter((side) => side.evaluated).length,
+          invented_imprints: sides.filter((side) => side.invented).length,
+          front_prediction_normalized: front.prediction,
+          back_prediction_normalized: back.prediction
         };
       }
       function evaluateImprints(frontTruth, backTruth, frontPrediction, backPrediction) {
-        const direct = orientationMetrics(frontTruth, backTruth, frontPrediction, backPrediction);
-        const swapped = orientationMetrics(frontTruth, backTruth, backPrediction, frontPrediction);
-        const directMean = meanFinite([direct.front_similarity, direct.back_similarity]) || 0;
-        const swappedMean = meanFinite([swapped.front_similarity, swapped.back_similarity]) || 0;
-        const chosen = swappedMean > directMean ? swapped : direct;
+        const direct = orientationMetrics(frontTruth, backTruth, frontPrediction, backPrediction, false);
+        const swapped = orientationMetrics(frontTruth, backTruth, frontPrediction, backPrediction, true);
+        const useSwapped = direct.evaluated_sides === 2 && swapped.evaluated_sides === 2 && Number.isFinite(swapped.similarity) && (!Number.isFinite(direct.similarity) || swapped.similarity > direct.similarity);
+        const chosen = useSwapped ? swapped : direct;
         return {
-          orientation: swappedMean > directMean ? "swapped" : "direct",
+          orientation: useSwapped ? "swapped" : "direct",
           front_imprint_similarity: chosen.front_similarity,
           back_imprint_similarity: chosen.back_similarity,
-          imprint_similarity: meanFinite([chosen.front_similarity, chosen.back_similarity]),
+          imprint_similarity: chosen.similarity,
           front_imprint_CER: chosen.front_cer,
           back_imprint_CER: chosen.back_cer,
-          imprint_CER: meanFinite([chosen.front_cer, chosen.back_cer])
+          imprint_CER: chosen.aggregate_cer,
+          evaluated_imprint_sides: chosen.evaluated_sides,
+          invented_imprints: chosen.invented_imprints,
+          front_prediction_normalized: chosen.front_prediction_normalized,
+          back_prediction_normalized: chosen.back_prediction_normalized
         };
       }
-      module.exports = { cer, evaluateImprints };
+      module.exports = { sideMetric, cer, orientationMetrics, evaluateImprints };
     }
   });
 
@@ -1755,24 +1834,89 @@ var KCSIResearchPlatform = (() => {
   var require_scorer = __commonJS({
     "scoring/scorer.js"(exports, module) {
       "use strict";
-      var { safeText, normalizeConfidence, meanFinite } = require_normalize();
+      var {
+        NO_IMPRINT,
+        UNKNOWN_IMPRINT,
+        safeText,
+        normalizeDrugName,
+        normalizeImprint,
+        normalizeConfidence
+      } = require_normalize();
       var { evaluateDrugName } = require_drug_name();
       var { evaluateImprints } = require_imprint();
-      var { brierLoss, responseCompleteness, isHighConfidenceMisidentification } = require_confidence();
+      var { brierLoss, isHighConfidenceMisidentification } = require_confidence();
       var { calculateCost } = require_cost();
-      function predictionLooksUnreadable(prediction) {
+      function normalizeIdentifier(value) {
+        return safeText(value).normalize("NFKC").trim().toUpperCase().replace(/[^0-9A-Z가-힣]/g, "");
+      }
+      function imageReference(value) {
+        const reference = safeText(value).trim();
+        if (/^(?:data|blob):/i.test(reference)) return "";
+        return reference;
+      }
+      function truthMode(groundTruth, imprintMetric) {
+        const answer = groundTruth && groundTruth.answer || {};
+        if (normalizeDrugName(answer.drug_name) || normalizeIdentifier(answer.mfds_item_id)) return "drug";
+        const evaluatedSides = imprintMetric && Number(imprintMetric.evaluated_imprint_sides);
+        if (Number.isFinite(evaluatedSides)) return evaluatedSides > 0 ? "imprint" : "none";
+        const hasKnownImprint = [answer.front_imprint, answer.back_imprint].map(normalizeImprint).some((value) => value && value !== UNKNOWN_IMPRINT);
+        return hasKnownImprint ? "imprint" : "none";
+      }
+      function predictionLooksUnreadable(prediction, options = {}) {
         const value = prediction || {};
-        if (safeText(value.drug_name).trim()) return false;
+        if (!options.ignoreDrugName && safeText(value.drug_name).trim()) return false;
         const text = `${safeText(value.evidence)} ${safeText(value.uncertainty)}`;
         return /판독\s*불가|식별\s*불가|확인\s*불가|unreadable|cannot\s+(?:read|identify)|insufficient/i.test(text);
       }
-      function classify(groundTruth, researchResult, drugMetric) {
+      function classify(groundTruth, researchResult, drugMetric, imprintMetric, requestedMode) {
         if (researchResult && researchResult.error) return "error";
         const prediction = researchResult && researchResult.prediction || {};
+        const mode = requestedMode || truthMode(groundTruth, imprintMetric);
+        if (mode === "imprint") {
+          if (imprintMetric && imprintMetric.invented_imprints > 0) return "incorrect";
+          const similarity = imprintMetric && imprintMetric.imprint_similarity;
+          if (Number.isFinite(similarity) && similarity >= 0.9) return "correct";
+          if (Number.isFinite(similarity) && similarity >= 0.6) return "partial";
+          if (predictionLooksUnreadable(prediction, { ignoreDrugName: true }) || groundTruth && groundTruth.condition && groundTruth.condition.expected_readable === false) return "unreadable";
+          return "incorrect";
+        }
         if (predictionLooksUnreadable(prediction) || !safeText(prediction.drug_name).trim() && groundTruth && groundTruth.condition && groundTruth.condition.expected_readable === false) return "unreadable";
-        if (drugMetric.exact_match) return "correct";
-        if (drugMetric.partial_match) return "partial";
+        if (drugMetric && drugMetric.exact_match) return "correct";
+        if (drugMetric && drugMetric.partial_match) return "partial";
         return "incorrect";
+      }
+      function imprintCompleteness(answer, prediction, imprint) {
+        const truthSides = [answer.front_imprint, answer.back_imprint].map(normalizeImprint);
+        const predictedSides = [imprint.front_prediction_normalized, imprint.back_prediction_normalized];
+        const parts = [];
+        truthSides.forEach((truth, index) => {
+          if (!truth || truth === UNKNOWN_IMPRINT) return;
+          const predicted = predictedSides[index];
+          parts.push(truth === NO_IMPRINT ? predicted === NO_IMPRINT : !!predicted);
+        });
+        parts.push(normalizeConfidence(prediction.confidence) != null);
+        parts.push(!!safeText(prediction.evidence || prediction.uncertainty).trim());
+        return parts.length ? parts.filter(Boolean).length / parts.length : 0;
+      }
+      function providedSideMask(truth) {
+        const value = safeText(truth && truth.condition && truth.condition.provided_sides).normalize("NFKC").trim().toLowerCase();
+        if (/^(?:앞면만|앞만|front(?:\s*only)?|front_only)$/.test(value)) return { front: true, back: false };
+        if (/^(?:뒷면만|뒤면만|뒷만|back(?:\s*only)?|back_only)$/.test(value)) return { front: false, back: true };
+        if (value) return { front: true, back: true };
+        const images = truth && truth.images || {};
+        const hasFront = !!safeText(images.front).trim();
+        const hasBack = !!safeText(images.back).trim();
+        if (hasFront !== hasBack) return { front: hasFront, back: hasBack };
+        return { front: true, back: true };
+      }
+      function drugCompleteness(truth, prediction, imprint) {
+        const available = providedSideMask(truth);
+        const parts = [!!safeText(prediction.drug_name).trim()];
+        if (available.front) parts.push(!!imprint.front_prediction_normalized);
+        if (available.back) parts.push(!!imprint.back_prediction_normalized);
+        parts.push(normalizeConfidence(prediction.confidence) != null);
+        parts.push(!!safeText(prediction.evidence || prediction.uncertainty).trim());
+        return parts.filter(Boolean).length / parts.length;
       }
       function scoreResearchResult(groundTruth, researchResult, options = {}) {
         const truth = groundTruth || {};
@@ -1780,14 +1924,22 @@ var KCSIResearchPlatform = (() => {
         const answer = truth.answer || {};
         const prediction = result.prediction || {};
         const drug = evaluateDrugName(answer.drug_name, prediction.drug_name);
+        const codeExact = !!normalizeIdentifier(answer.mfds_item_id) && normalizeIdentifier(answer.mfds_item_id) === normalizeIdentifier(prediction.drug_code);
+        const drugMetric = {
+          ...drug,
+          exact_match: drug.exact_match || codeExact,
+          partial_match: !codeExact && drug.partial_match,
+          code_exact: codeExact
+        };
         const imprint = evaluateImprints(answer.front_imprint, answer.back_imprint, prediction.front_imprint, prediction.back_imprint);
-        const classification = classify(truth, result, drug);
+        const mode = truthMode(truth, imprint);
+        const classification = classify(truth, result, drugMetric, imprint, mode);
         const confidence = normalizeConfidence(prediction.confidence);
         const top1Outcome = classification === "correct";
         const brier = brierLoss(prediction.confidence, top1Outcome);
-        const completeness = responseCompleteness(prediction);
+        const completeness = mode === "imprint" ? imprintCompleteness(answer, prediction, imprint) : drugCompleteness(truth, prediction, imprint);
         const cost = calculateCost(result, options.pricingTable);
-        const highRisk = isHighConfidenceMisidentification(classification, prediction, options.highConfidenceThreshold == null ? 0.8 : options.highConfidenceThreshold);
+        const highRisk = mode === "drug" && isHighConfidenceMisidentification(classification, prediction, options.highConfidenceThreshold == null ? 0.8 : options.highConfidenceThreshold);
         const identificationScore = classification === "correct" ? 40 : classification === "partial" ? 20 : 0;
         const imprintScore = Number.isFinite(imprint.imprint_similarity) ? imprint.imprint_similarity * 25 : 0;
         const confidenceScore = brier == null ? 0 : Math.max(0, 1 - brier) * 15;
@@ -1800,25 +1952,39 @@ var KCSIResearchPlatform = (() => {
           sample_id: result.sample_id || truth.sample_id || "",
           provider: result.provider || "",
           model: result.model || "",
+          truth_mode: mode,
           classification,
           high_confidence_misidentification: highRisk,
           variant,
           ground_truth: {
             sample_id: truth.sample_id || "",
+            pill_id: truth.pill_id || "",
+            images: {
+              front: imageReference(truth.images && truth.images.front),
+              back: imageReference(truth.images && truth.images.back)
+            },
             answer: { ...answer },
-            condition: { ...truth.condition || {} }
+            condition: { ...truth.condition || {} },
+            notes: truth.notes || ""
           },
           prediction: { ...prediction },
           metrics: {
-            exact_match: drug.exact_match,
-            partial_match: drug.partial_match,
+            truth_mode: mode,
+            exact_match: drugMetric.exact_match,
+            partial_match: drugMetric.partial_match,
+            drug_code_exact: drugMetric.code_exact,
             drug_name_similarity: drug.similarity,
+            imprint_exact_match: imprint.invented_imprints === 0 && Number.isFinite(imprint.imprint_similarity) && imprint.imprint_similarity >= 0.9,
+            imprint_partial_match: imprint.invented_imprints === 0 && Number.isFinite(imprint.imprint_similarity) && imprint.imprint_similarity >= 0.6 && imprint.imprint_similarity < 0.9,
             front_imprint_similarity: imprint.front_imprint_similarity,
             back_imprint_similarity: imprint.back_imprint_similarity,
+            imprint_similarity: imprint.imprint_similarity,
             imprint_CER: imprint.imprint_CER,
             front_imprint_CER: imprint.front_imprint_CER,
             back_imprint_CER: imprint.back_imprint_CER,
             imprint_orientation: imprint.orientation,
+            evaluated_imprint_sides: imprint.evaluated_imprint_sides,
+            invented_imprints: imprint.invented_imprints,
             confidence,
             Brier_loss: brier,
             latency: Number.isFinite(Number(result.latency_ms)) ? Number(result.latency_ms) : 0,
@@ -1850,7 +2016,17 @@ var KCSIResearchPlatform = (() => {
           return scoreResearchResult(truth, result, options);
         });
       }
-      module.exports = { classify, predictionLooksUnreadable, scoreResearchResult, scoreMany };
+      module.exports = {
+        truthMode,
+        classify,
+        predictionLooksUnreadable,
+        imageReference,
+        providedSideMask,
+        imprintCompleteness,
+        drugCompleteness,
+        scoreResearchResult,
+        scoreMany
+      };
     }
   });
 
@@ -1923,12 +2099,32 @@ var KCSIResearchPlatform = (() => {
   var require_summary = __commonJS({
     "scoring/summary.js"(exports, module) {
       "use strict";
-      var { meanFinite } = require_normalize();
+      var {
+        UNKNOWN_IMPRINT,
+        meanFinite,
+        normalizeDrugName,
+        normalizeImprint,
+        safeText
+      } = require_normalize();
+      function recordTruthMode(record) {
+        const row = record || {};
+        const explicit = safeText(row.truth_mode || row.metrics && row.metrics.truth_mode).trim().toLowerCase();
+        if (explicit === "drug" || explicit === "imprint" || explicit === "none") return explicit;
+        const answer = row.ground_truth && row.ground_truth.answer || row.answer || {};
+        if (normalizeDrugName(answer.drug_name) || safeText(answer.mfds_item_id).trim()) return "drug";
+        const hasKnownImprint = [answer.front_imprint, answer.back_imprint].map(normalizeImprint).some((value) => value && value !== UNKNOWN_IMPRINT);
+        return hasKnownImprint ? "imprint" : "none";
+      }
       function summarizeModel(records) {
         const rows = records || [];
         const count = rows.length;
-        const correct = rows.filter((row) => row.classification === "correct").length;
-        const partial = rows.filter((row) => row.classification === "partial").length;
+        const drugRows = rows.filter((row) => recordTruthMode(row) === "drug");
+        const imprintRows = rows.filter((row) => recordTruthMode(row) === "imprint");
+        const unscoredRows = rows.filter((row) => recordTruthMode(row) === "none");
+        const correct = drugRows.filter((row) => row.classification === "correct").length;
+        const partial = drugRows.filter((row) => row.classification === "partial").length;
+        const imprintCorrect = imprintRows.filter((row) => row.classification === "correct").length;
+        const imprintPartial = imprintRows.filter((row) => row.classification === "partial").length;
         const unreadable = rows.filter((row) => row.classification === "unreadable").length;
         const errors = rows.filter((row) => row.classification === "error").length;
         const dangerous = rows.filter((row) => row.high_confidence_misidentification).length;
@@ -1936,10 +2132,18 @@ var KCSIResearchPlatform = (() => {
         const totalCost = costs.length ? costs.reduce((sum, value) => sum + value, 0) : null;
         return {
           samples: count,
+          truth_mode: drugRows.length && imprintRows.length ? "mixed" : drugRows.length ? "drug" : imprintRows.length ? "imprint" : "none",
+          drug_samples: drugRows.length,
+          imprint_samples: imprintRows.length,
+          unscored_samples: unscoredRows.length,
           completed: count - errors,
           errors,
-          top1_accuracy: count ? correct / count : null,
-          partial_rate: count ? partial / count : null,
+          top1_accuracy: drugRows.length ? correct / drugRows.length : null,
+          partial_rate: drugRows.length ? partial / drugRows.length : null,
+          imprint_accuracy: imprintRows.length ? imprintCorrect / imprintRows.length : null,
+          imprint_partial_rate: imprintRows.length ? imprintPartial / imprintRows.length : null,
+          evaluated_imprint_sides: imprintRows.reduce((sum, row) => sum + (Number(row.metrics && row.metrics.evaluated_imprint_sides) || 0), 0),
+          invented_imprints: imprintRows.reduce((sum, row) => sum + (Number(row.metrics && row.metrics.invented_imprints) || 0), 0),
           unreadable_rate: count ? unreadable / count : null,
           error_rate: count ? errors / count : null,
           high_confidence_misidentification: dangerous,
@@ -1969,7 +2173,7 @@ var KCSIResearchPlatform = (() => {
           return { provider, model, ...summary, robustness_score: robustnessMap.get(key)?.robustness_score ?? null };
         });
       }
-      module.exports = { summarizeModel, summarizeByModel };
+      module.exports = { recordTruthMode, summarizeModel, summarizeByModel };
     }
   });
 
@@ -1998,6 +2202,10 @@ var KCSIResearchPlatform = (() => {
       var { calculateRobustness } = require_robustness();
       var { summarizeByModel, summarizeModel } = require_summary();
       var { meanFinite } = require_normalize();
+      function imageReference(value) {
+        const reference = value == null ? "" : String(value).trim();
+        return /^(?:data|blob):/i.test(reference) ? "" : reference;
+      }
       function conditionKeyValues(record) {
         const condition = record.ground_truth && record.ground_truth.condition || {};
         const values = {
@@ -2005,7 +2213,9 @@ var KCSIResearchPlatform = (() => {
           light: condition.light,
           background: condition.background,
           blur: condition.blur,
-          angle: condition.angle
+          angle: condition.angle,
+          provided_sides: condition.provided_sides,
+          score_line: condition.score_line
         };
         return Object.entries(values).filter(([, value]) => value != null && String(value).trim() !== "");
       }
@@ -2032,6 +2242,7 @@ var KCSIResearchPlatform = (() => {
         const overall = summarizeModel(scored);
         const costsKnown = scored.map((row) => row.usage && row.usage.cost_usd).filter(Number.isFinite);
         const totalCost = costsKnown.length ? costsKnown.reduce((sum, value) => sum + value, 0) : null;
+        const truthMode = overall.drug_samples && overall.imprint_samples ? "mixed" : overall.drug_samples ? "drug" : overall.imprint_samples ? "imprint" : "none";
         const dataset = {
           schema_version: "1.0",
           dataset_version: "kcsi-result-dataset-v1",
@@ -2045,11 +2256,20 @@ var KCSIResearchPlatform = (() => {
             total_samples: scored.length,
             completed: scored.filter((row) => row.classification !== "error").length,
             errors: scored.filter((row) => row.classification === "error").length,
+            truth_mode: truthMode,
+            drug_samples: overall.drug_samples,
+            imprint_samples: overall.imprint_samples,
+            unscored_samples: overall.unscored_samples,
             high_confidence_misidentification: scored.filter((row) => row.high_confidence_misidentification).length,
             top1_accuracy: overall.top1_accuracy,
             partial_rate: overall.partial_rate,
+            imprint_accuracy: overall.imprint_accuracy,
+            imprint_partial_rate: overall.imprint_partial_rate,
             front_imprint_CER: overall.front_imprint_CER,
             back_imprint_CER: overall.back_imprint_CER,
+            imprint_CER: overall.imprint_CER,
+            evaluated_imprint_sides: overall.evaluated_imprint_sides,
+            invented_imprints: overall.invented_imprints,
             average_confidence: overall.average_confidence,
             Brier_loss: overall.Brier_loss,
             average_latency_ms: overall.average_latency_ms,
@@ -2063,12 +2283,20 @@ var KCSIResearchPlatform = (() => {
             run_id: row.run_id,
             provider: row.provider,
             model: row.model,
+            truth_mode: row.truth_mode || row.metrics && row.metrics.truth_mode || "none",
             variant: row.variant,
             classification: row.classification,
             high_confidence_misidentification: row.high_confidence_misidentification,
+            pill_id: row.ground_truth && row.ground_truth.pill_id || "",
+            images: {
+              front: imageReference(row.ground_truth && row.ground_truth.images && row.ground_truth.images.front),
+              back: imageReference(row.ground_truth && row.ground_truth.images && row.ground_truth.images.back)
+            },
             prediction: { ...row.prediction },
             answer: { ...row.ground_truth && row.ground_truth.answer || {} },
             condition: { ...row.ground_truth && row.ground_truth.condition || {} },
+            provided_sides: row.ground_truth && row.ground_truth.condition && row.ground_truth.condition.provided_sides || "",
+            score_line: row.ground_truth && row.ground_truth.condition && row.ground_truth.condition.score_line || "",
             metrics: { ...row.metrics },
             legacy_score: { ...row.legacy_score },
             usage: { ...row.usage },
@@ -2151,7 +2379,22 @@ var KCSIResearchPlatform = (() => {
           "cached_tokens",
           "cost_usd",
           "cost_source",
-          "error"
+          "error",
+          "truth_mode",
+          "drug_code_exact",
+          "imprint_exact_match",
+          "imprint_partial_match",
+          "imprint_similarity",
+          "front_imprint_CER",
+          "back_imprint_CER",
+          "imprint_orientation",
+          "evaluated_imprint_sides",
+          "invented_imprints",
+          "pill_id",
+          "source_front_image",
+          "source_back_image",
+          "provided_sides",
+          "score_line"
         ];
         const rows = (dataset.samples || []).map((sample) => [
           sample.sample_id,
@@ -2183,7 +2426,22 @@ var KCSIResearchPlatform = (() => {
           sample.usage && sample.usage.cached_tokens,
           sample.usage && sample.usage.cost_usd,
           sample.usage && sample.usage.source,
-          sample.error && (sample.error.message || sample.error.code || sample.error)
+          sample.error && (sample.error.message || sample.error.code || sample.error),
+          sample.truth_mode || sample.metrics && sample.metrics.truth_mode,
+          sample.metrics && sample.metrics.drug_code_exact,
+          sample.metrics && sample.metrics.imprint_exact_match,
+          sample.metrics && sample.metrics.imprint_partial_match,
+          sample.metrics && sample.metrics.imprint_similarity,
+          sample.metrics && sample.metrics.front_imprint_CER,
+          sample.metrics && sample.metrics.back_imprint_CER,
+          sample.metrics && sample.metrics.imprint_orientation,
+          sample.metrics && sample.metrics.evaluated_imprint_sides,
+          sample.metrics && sample.metrics.invented_imprints,
+          sample.pill_id,
+          sample.images && sample.images.front,
+          sample.images && sample.images.back,
+          sample.provided_sides || sample.condition && sample.condition.provided_sides,
+          sample.score_line || sample.condition && sample.condition.score_line
         ]);
         return { headers, rows };
       }
@@ -2307,8 +2565,128 @@ var KCSIResearchPlatform = (() => {
       function buildSheets(dataset) {
         const summary = dataset.summary || {};
         const summaryRows = [["Metric", "Value"], ...Object.entries(summary).map(([key, value]) => [key, safe(value)])];
-        const modelRows = [["Provider", "Model", "Samples", "Top1 Accuracy", "Partial Rate", "Dangerous Misidentification", "Front CER", "Back CER", "Brier Loss", "Latency ms", "Total Cost USD", "Cost/Sample USD", "Robustness Score"], ...(dataset.models || []).map((m) => [m.provider, m.model, m.samples, safe(m.top1_accuracy), safe(m.partial_rate), m.high_confidence_misidentification, safe(m.front_imprint_CER), safe(m.back_imprint_CER), safe(m.Brier_loss), safe(m.average_latency_ms), safe(m.total_cost_usd), safe(m.cost_per_sample_usd), safe(m.robustness_score)])];
-        const perSampleRows = [["Sample ID", "Run ID", "Provider", "Model", "Variant", "Classification", "Dangerous Misidentification", "Truth Drug", "Predicted Drug", "Truth Front", "Pred Front", "Truth Back", "Pred Back", "Drug Similarity", "Front Similarity", "Back Similarity", "Imprint CER", "Confidence", "Brier Loss", "Latency ms", "Cost USD", "Legacy Score"], ...(dataset.samples || []).map((s) => [s.sample_id, s.run_id, s.provider, s.model, s.variant, s.classification, s.high_confidence_misidentification, s.answer?.drug_name, s.prediction?.drug_name, s.answer?.front_imprint, s.prediction?.front_imprint, s.answer?.back_imprint, s.prediction?.back_imprint, s.metrics?.drug_name_similarity, s.metrics?.front_imprint_similarity, s.metrics?.back_imprint_similarity, s.metrics?.imprint_CER, s.metrics?.confidence, s.metrics?.Brier_loss, s.metrics?.latency, s.usage?.cost_usd, s.legacy_score?.total])];
+        const modelRows = [[
+          "Provider",
+          "Model",
+          "Samples",
+          "Truth Mode",
+          "Drug Samples",
+          "Top1 Accuracy",
+          "Drug Partial Rate",
+          "Imprint Samples",
+          "Imprint Accuracy",
+          "Imprint Partial Rate",
+          "Imprint CER",
+          "Evaluated Imprint Sides",
+          "Invented Imprints",
+          "Dangerous Misidentification",
+          "Front CER",
+          "Back CER",
+          "Brier Loss",
+          "Latency ms",
+          "Total Cost USD",
+          "Cost/Sample USD",
+          "Robustness Score"
+        ], ...(dataset.models || []).map((m) => [
+          m.provider,
+          m.model,
+          m.samples,
+          m.truth_mode,
+          m.drug_samples,
+          safe(m.top1_accuracy),
+          safe(m.partial_rate),
+          m.imprint_samples,
+          safe(m.imprint_accuracy),
+          safe(m.imprint_partial_rate),
+          safe(m.imprint_CER),
+          m.evaluated_imprint_sides,
+          m.invented_imprints,
+          m.high_confidence_misidentification,
+          safe(m.front_imprint_CER),
+          safe(m.back_imprint_CER),
+          safe(m.Brier_loss),
+          safe(m.average_latency_ms),
+          safe(m.total_cost_usd),
+          safe(m.cost_per_sample_usd),
+          safe(m.robustness_score)
+        ])];
+        const perSampleRows = [[
+          "Sample ID",
+          "Pill ID",
+          "Source Front Image",
+          "Source Back Image",
+          "Provided Sides",
+          "Score Line",
+          "Run ID",
+          "Provider",
+          "Model",
+          "Variant",
+          "Truth Mode",
+          "Classification",
+          "Dangerous Misidentification",
+          "Truth Drug",
+          "Predicted Drug",
+          "Truth Front",
+          "Pred Front",
+          "Truth Back",
+          "Pred Back",
+          "Drug Similarity",
+          "Drug Code Exact",
+          "Front Similarity",
+          "Back Similarity",
+          "Imprint Exact",
+          "Imprint Partial",
+          "Imprint Similarity",
+          "Front CER",
+          "Back CER",
+          "Imprint CER",
+          "Imprint Orientation",
+          "Evaluated Imprint Sides",
+          "Invented Imprints",
+          "Confidence",
+          "Brier Loss",
+          "Latency ms",
+          "Cost USD",
+          "Legacy Score"
+        ], ...(dataset.samples || []).map((s) => [
+          s.sample_id,
+          s.pill_id,
+          s.images?.front,
+          s.images?.back,
+          s.provided_sides || s.condition?.provided_sides,
+          s.score_line || s.condition?.score_line,
+          s.run_id,
+          s.provider,
+          s.model,
+          s.variant,
+          s.truth_mode || s.metrics?.truth_mode,
+          s.classification,
+          s.high_confidence_misidentification,
+          s.answer?.drug_name,
+          s.prediction?.drug_name,
+          s.answer?.front_imprint,
+          s.prediction?.front_imprint,
+          s.answer?.back_imprint,
+          s.prediction?.back_imprint,
+          s.metrics?.drug_name_similarity,
+          s.metrics?.drug_code_exact,
+          s.metrics?.front_imprint_similarity,
+          s.metrics?.back_imprint_similarity,
+          s.metrics?.imprint_exact_match,
+          s.metrics?.imprint_partial_match,
+          s.metrics?.imprint_similarity,
+          s.metrics?.front_imprint_CER,
+          s.metrics?.back_imprint_CER,
+          s.metrics?.imprint_CER,
+          s.metrics?.imprint_orientation,
+          s.metrics?.evaluated_imprint_sides,
+          s.metrics?.invented_imprints,
+          s.metrics?.confidence,
+          s.metrics?.Brier_loss,
+          s.metrics?.latency,
+          s.usage?.cost_usd,
+          s.legacy_score?.total
+        ])];
         const errorRows = [["Sample ID", "Provider", "Model", "Classification", "Dangerous Misidentification", "Predicted Drug", "Confidence", "Error"], ...(dataset.failures || []).map((f) => [f.sample_id, f.provider, f.model, f.classification, f.high_confidence_misidentification, f.predicted_drug_name, safe(f.confidence), f.error && (f.error.message || f.error.code || f.error)])];
         const robustnessRows = [["Sample ID", "Provider", "Model", "Variants", "Original Accuracy", "Variant Accuracy", "Accuracy Drop", "Consistency", "Robustness Score"], ...(dataset.robustness?.per_sample || []).map((r) => [r.sample_id, r.provider, r.model, (r.variants || []).join("|"), r.original_accuracy, safe(r.variant_accuracy), safe(r.accuracy_drop), safe(r.consistency), safe(r.robustness_score)])];
         const costRows = [["Provider", "Model", "Total Cost USD", "Cost/Sample USD"], ...(dataset.costs?.by_model || []).map((c) => [c.provider, c.model, safe(c.total_cost_usd), safe(c.cost_per_sample_usd)])];
@@ -2361,14 +2739,16 @@ var KCSIResearchPlatform = (() => {
         const models = dataset?.models || [];
         const failures = dataset?.failures || [];
         const summary = dataset?.summary || {};
-        const modelRows = models.map((model) => `<tr><td>${esc(model.provider)}</td><td>${esc(model.model)}</td><td>${model.samples}</td><td>${pct(model.top1_accuracy)}</td><td>${fmt(model.front_imprint_CER)}</td><td>${fmt(model.back_imprint_CER)}</td><td>${fmt(model.Brier_loss)}</td><td>${fmt(model.average_latency_ms, 1)}</td><td>${fmt(model.total_cost_usd, 6)}</td><td>${pct(model.robustness_score)}</td></tr>`).join("");
+        const modelRows = models.map((model) => `<tr><td>${esc(model.provider)}</td><td>${esc(model.model)}</td><td>${model.samples}</td><td>${model.drug_samples ?? 0}</td><td>${pct(model.top1_accuracy)}</td><td>${model.imprint_samples ?? 0}</td><td>${pct(model.imprint_accuracy)}</td><td>${pct(model.imprint_partial_rate)}</td><td>${fmt(model.imprint_CER)}</td><td>${model.evaluated_imprint_sides ?? 0}</td><td>${model.invented_imprints ?? 0}</td></tr>`).join("");
+        const operationRows = models.map((model) => `<tr><td>${esc(model.provider)}</td><td>${esc(model.model)}</td><td>${fmt(model.front_imprint_CER)}</td><td>${fmt(model.back_imprint_CER)}</td><td>${fmt(model.Brier_loss)}</td><td>${fmt(model.average_latency_ms, 1)}</td><td>${fmt(model.total_cost_usd, 6)}</td><td>${pct(model.robustness_score)}</td></tr>`).join("");
         const errorRows = failures.slice(0, 100).map((row) => `<tr><td>${esc(row.sample_id)}</td><td>${esc(row.provider)} / ${esc(row.model)}</td><td>${esc(row.classification)}</td><td>${esc(row.predicted_drug_name)}</td><td>${row.high_confidence_misidentification ? "\uC608" : "\uC544\uB2C8\uC624"}</td><td>${esc(row.error && (row.error.message || row.error.code || row.error) || "")}</td></tr>`).join("");
         return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
   @page{size:A4;margin:14mm}body{font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#111;font-size:10.5pt;line-height:1.45}h1{font-size:20pt;margin:0 0 5mm}h2{font-size:14pt;margin:8mm 0 3mm}table{width:100%;border-collapse:collapse;font-size:8.5pt}th,td{border:1px solid #bbb;padding:5px;vertical-align:top}th{background:#f3f4f6}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.kpi{border:1px solid #ccc;padding:7px}.muted{color:#555}.avoid{break-inside:avoid}</style></head><body>
   <h1>${esc(title)}</h1><div class="muted">Result Dataset ${esc(dataset?.dataset_version || "")} \xB7 ${esc(dataset?.experiment?.created_at || "")}</div>
-  <h2>\uC5F0\uAD6C \uAC1C\uC694</h2><p>\uACF5\uD1B5 Contract v1 ResearchResult\uC640 GroundTruth\uB97C \uAE30\uC900\uC73C\uB85C \uBAA8\uB378 \uC2DD\uBCC4 \uC131\uB2A5, \uAC01\uC778 CER, \uC2E0\uB8B0\uB3C4 \uBCF4\uC815, \uBE44\uC6A9, \uC9C0\uC5F0\uC2DC\uAC04\uACFC \uAC15\uAC74\uC131\uC744 \uBE44\uAD50\uD55C \uBCF4\uACE0\uC11C\uC785\uB2C8\uB2E4. \uC6D0\uBCF8 \uC774\uBBF8\uC9C0\uC640 \uAC1C\uC778\uC815\uBCF4\uB294 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.</p>
-  <div class="kpis avoid"><div class="kpi"><b>\uC0D8\uD50C</b><br>${summary.total_samples ?? 0}</div><div class="kpi"><b>Top-1 \uC815\uD655\uB3C4</b><br>${pct(summary.top1_accuracy)}</div><div class="kpi"><b>\uC704\uD5D8 \uC624\uC2DD\uBCC4</b><br>${summary.high_confidence_misidentification ?? 0}</div><div class="kpi"><b>\uCD1D \uBE44\uC6A9(USD)</b><br>${fmt(summary.total_cost_usd, 6)}</div></div>
-  <h2>\uBAA8\uB378\uBCC4 \uC131\uB2A5\uD45C</h2><table><thead><tr><th>Provider</th><th>Model</th><th>N</th><th>\uC815\uD655\uB3C4</th><th>Front CER</th><th>Back CER</th><th>Brier</th><th>Latency ms</th><th>Cost USD</th><th>Robustness</th></tr></thead><tbody>${modelRows || '<tr><td colspan="10">\uB370\uC774\uD130 \uC5C6\uC74C</td></tr>'}</tbody></table>
+  <h2>\uC5F0\uAD6C \uAC1C\uC694</h2><p>\uACF5\uD1B5 Contract v1 ResearchResult\uC640 GroundTruth\uB97C \uAE30\uC900\uC73C\uB85C \uC57D\uBB3C \uC815\uB2F5\uC740 Top-1 \uC2DD\uBCC4 \uC131\uB2A5\uC73C\uB85C, \uAC01\uC778 \uC804\uC6A9 \uC815\uB2F5\uC740 \uAC01\uC778 \uC815\uD655\uB3C4\xB7\uBD80\uBD84\uC815\uB2F5\xB7CER\xB7\uC9C0\uC5B4\uB0B8 \uAC01\uC778\uC73C\uB85C \uBD84\uB9AC\uD574 \uBE44\uAD50\uD55C \uBCF4\uACE0\uC11C\uC785\uB2C8\uB2E4. \uC6D0\uBCF8 \uC774\uBBF8\uC9C0\uC640 \uAC1C\uC778\uC815\uBCF4\uB294 \uD3EC\uD568\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.</p>
+  <div class="kpis avoid"><div class="kpi"><b>\uC804\uCCB4 \uC0D8\uD50C</b><br>${summary.total_samples ?? 0}</div><div class="kpi"><b>\uC57D\uBB3C \uC815\uB2F5 \uC0D8\uD50C</b><br>${summary.drug_samples ?? 0}</div><div class="kpi"><b>\uC57D\uBB3C Top-1 \uC815\uD655\uB3C4</b><br>${pct(summary.top1_accuracy)}</div><div class="kpi"><b>\uC704\uD5D8 \uC624\uC2DD\uBCC4</b><br>${summary.high_confidence_misidentification ?? 0}</div><div class="kpi"><b>\uAC01\uC778 \uC815\uB2F5 \uC0D8\uD50C</b><br>${summary.imprint_samples ?? 0}</div><div class="kpi"><b>\uAC01\uC778 \uC815\uD655\uB3C4</b><br>${pct(summary.imprint_accuracy)}</div><div class="kpi"><b>\uAC01\uC778 \uBD80\uBD84\uC815\uB2F5</b><br>${pct(summary.imprint_partial_rate)}</div><div class="kpi"><b>\uC9C0\uC5B4\uB0B8 \uAC01\uC778</b><br>${summary.invented_imprints ?? 0}</div></div>
+  <h2>\uBAA8\uB378\uBCC4 \uC131\uB2A5\uD45C \u2014 \uC2DD\uBCC4\xB7\uAC01\uC778</h2><table><thead><tr><th>Provider</th><th>Model</th><th>\uC804\uCCB4 N</th><th>\uC57D\uBB3C N</th><th>\uC57D\uBB3C Top-1</th><th>\uAC01\uC778 N</th><th>\uAC01\uC778 \uC815\uD655\uB3C4</th><th>\uAC01\uC778 \uBD80\uBD84\uC815\uB2F5</th><th>\uAC01\uC778 CER</th><th>\uCC44\uC810 \uBA74</th><th>\uC9C0\uC5B4\uB0B8 \uAC01\uC778</th></tr></thead><tbody>${modelRows || '<tr><td colspan="11">\uB370\uC774\uD130 \uC5C6\uC74C</td></tr>'}</tbody></table>
+  <h2>\uBAA8\uB378\uBCC4 \uC6B4\uC601 \uC9C0\uD45C</h2><table><thead><tr><th>Provider</th><th>Model</th><th>Front CER</th><th>Back CER</th><th>Brier</th><th>Latency ms</th><th>Cost USD</th><th>Robustness</th></tr></thead><tbody>${operationRows || '<tr><td colspan="8">\uB370\uC774\uD130 \uC5C6\uC74C</td></tr>'}</tbody></table>
   <h2>\uC624\uB958 \uC694\uC57D</h2><table><thead><tr><th>Sample</th><th>Model</th><th>\uBD84\uB958</th><th>\uC608\uCE21 \uC81C\uD488\uBA85</th><th>\uACE0\uC2E0\uB8B0 \uC624\uC2DD\uBCC4</th><th>\uC624\uB958</th></tr></thead><tbody>${errorRows || '<tr><td colspan="6">\uAE30\uB85D\uB41C \uC624\uB958 \uC5C6\uC74C</td></tr>'}</tbody></table>
   <h2>\uC5F0\uAD6C \uD55C\uACC4</h2><ul><li>\uC815\uB2F5\uC9C0 \uD488\uC9C8\uACFC \uCD2C\uC601 \uC870\uAC74\uC5D0 \uB530\uB77C \uACB0\uACFC\uAC00 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</li><li>\uAC00\uACA9\uD45C\uC5D0 \uC5C6\uB294 \uBAA8\uB378\uC758 \uBE44\uC6A9\uC740 \uCD94\uC815\uD558\uC9C0 \uC54A\uACE0 null\uB85C \uC720\uC9C0\uD569\uB2C8\uB2E4.</li><li>\uAC15\uAC74\uC131 \uC810\uC218\uB294 \uC6D0\uBCF8\uACFC \uBCC0\uD615 \uC870\uAC74\uC774 \uB3D9\uC77C sample_id\uB85C \uC5F0\uACB0\uB41C \uACBD\uC6B0\uC5D0\uB9CC \uACC4\uC0B0\uB429\uB2C8\uB2E4.</li><li>\uBCF8 \uACB0\uACFC\uB294 \uC5F0\uAD6C\xB7\uBCF4\uC870\uC6A9\uC774\uBA70 \uB2E8\uB3C5\uC73C\uB85C \uC758\uD559\uC801 \uB610\uB294 \uBC95\uC758\uD559\uC801 \uACB0\uB860\uC744 \uD655\uC815\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.</li></ul>
   </body></html>`;
@@ -2399,15 +2779,62 @@ var KCSIResearchPlatform = (() => {
       function pct(value) {
         return Number.isFinite(value) ? value * 100 : null;
       }
+      function meanFinite(values) {
+        const finite = (values || []).filter(Number.isFinite);
+        return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : null;
+      }
+      function ratio(rows, classification) {
+        return rows.length ? rows.filter((row) => row.classification === classification).length / rows.length : null;
+      }
+      function sampleTruthMode(sample) {
+        const explicit = sample && (sample.truth_mode || sample.metrics && sample.metrics.truth_mode);
+        if (explicit) return explicit;
+        const answer = sample && sample.answer || {};
+        if (String(answer.drug_name || answer.mfds_item_id || "").trim()) return "drug";
+        const imprints = [answer.front_imprint, answer.back_imprint].map((value) => String(value == null ? "" : value).trim());
+        return imprints.some((value) => value && !/^\(?\s*(?:확인불가|판독불가|식별불가)\s*\)?$/i.test(value)) ? "imprint" : "none";
+      }
+      function combinedTruthMode(rows) {
+        const modes = Array.from(new Set(rows.map(sampleTruthMode).filter((mode) => mode && mode !== "none")));
+        return modes.length === 1 ? modes[0] : modes.length > 1 ? "mixed" : "none";
+      }
+      function imprintStats(rows) {
+        return {
+          samples: rows.length,
+          accuracy: ratio(rows, "correct"),
+          partial_rate: ratio(rows, "partial"),
+          imprint_CER: meanFinite(rows.map((row) => row.metrics && row.metrics.imprint_CER)),
+          front_imprint_CER: meanFinite(rows.map((row) => row.metrics && row.metrics.front_imprint_CER)),
+          back_imprint_CER: meanFinite(rows.map((row) => row.metrics && row.metrics.back_imprint_CER)),
+          evaluated_imprint_sides: rows.reduce((sum, row) => sum + (Number(row.metrics && row.metrics.evaluated_imprint_sides) || 0), 0),
+          invented_imprints: rows.reduce((sum, row) => sum + (Number(row.metrics && row.metrics.invented_imprints) || 0), 0)
+        };
+      }
       function buildDashboardViewModel(dataset) {
         const summary = dataset && dataset.summary || {};
+        const samples = dataset && dataset.samples || [];
+        const drugRows = samples.filter((sample) => sampleTruthMode(sample) === "drug");
+        const imprintRows = samples.filter((sample) => sampleTruthMode(sample) === "imprint");
+        const imprint = samples.length ? imprintStats(imprintRows) : {
+          samples: summary.imprint_samples || 0,
+          accuracy: summary.imprint_accuracy,
+          partial_rate: summary.imprint_partial_rate,
+          imprint_CER: summary.imprint_CER,
+          front_imprint_CER: summary.front_imprint_CER,
+          back_imprint_CER: summary.back_imprint_CER,
+          evaluated_imprint_sides: summary.evaluated_imprint_sides || 0,
+          invented_imprints: summary.invented_imprints || 0
+        };
+        const top1Accuracy = samples.length ? ratio(drugRows, "correct") : summary.top1_accuracy;
+        const drugPartialRate = samples.length ? ratio(drugRows, "partial") : summary.partial_rate;
+        const dangerous = samples.length ? drugRows.filter((row) => row.high_confidence_misidentification).length : summary.high_confidence_misidentification;
         const cards = [
           ["\uC804\uCCB4 \uC0D8\uD50C", summary.total_samples, "count"],
           ["\uC644\uB8CC", summary.completed, "count"],
           ["\uC624\uB958", summary.errors, "count"],
-          ["Top-1 Accuracy", summary.top1_accuracy, "ratio"],
-          ["\uBD80\uBD84\uC815\uB2F5", summary.partial_rate, "ratio"],
-          ["\uC704\uD5D8 \uC624\uC2DD\uBCC4", summary.high_confidence_misidentification, "count"],
+          ["Top-1 Accuracy", top1Accuracy, "ratio"],
+          ["\uBD80\uBD84\uC815\uB2F5", drugPartialRate, "ratio"],
+          ["\uC704\uD5D8 \uC624\uC2DD\uBCC4", dangerous, "count"],
           ["\uC55E\uBA74 imprint CER", summary.front_imprint_CER, "ratio"],
           ["\uB4B7\uBA74 imprint CER", summary.back_imprint_CER, "ratio"],
           ["\uD3C9\uADE0 confidence", summary.average_confidence, "ratio"],
@@ -2415,31 +2842,75 @@ var KCSIResearchPlatform = (() => {
           ["\uD3C9\uADE0 latency", summary.average_latency_ms, "ms"],
           ["\uCD1D \uBE44\uC6A9", summary.total_cost_usd, "usd"],
           ["sample\uB2F9 \uBE44\uC6A9", summary.cost_per_sample_usd, "usd"],
-          ["robustness score", summary.robustness_score, "ratio"]
+          ["robustness score", summary.robustness_score, "ratio"],
+          ["\uAC01\uC778 \uCC44\uC810 \uC0D8\uD50C", imprint.samples, "count"],
+          ["\uAC01\uC778 \uC815\uD655\uB3C4", imprint.accuracy, "ratio"],
+          ["\uAC01\uC778 \uBD80\uBD84\uC815\uB2F5", imprint.partial_rate, "ratio"],
+          ["\uC804\uCCB4 imprint CER", imprint.imprint_CER, "ratio"],
+          ["\uC9C0\uC5B4\uB0B8 \uAC01\uC778", imprint.invented_imprints, "count"]
         ].map(([label, value, format]) => ({ label, value, format }));
-        const models = (dataset && dataset.models || []).map((model) => ({
-          provider: model.provider,
-          model: model.model,
-          samples: model.samples,
-          accuracy: pct(model.top1_accuracy),
-          partial: pct(model.partial_rate),
-          dangerous_misidentification: model.high_confidence_misidentification,
-          front_imprint_CER: model.front_imprint_CER,
-          back_imprint_CER: model.back_imprint_CER,
-          confidence: model.average_confidence,
-          Brier_loss: model.Brier_loss,
-          latency_ms: model.average_latency_ms,
-          total_cost_usd: model.total_cost_usd,
-          cost_per_sample_usd: model.cost_per_sample_usd,
-          robustness_score: model.robustness_score
-        }));
+        const models = (dataset && dataset.models || []).map((model) => {
+          const modelRows = samples.filter((row) => row.provider === model.provider && row.model === model.model);
+          const modelDrugRows = modelRows.filter((row) => sampleTruthMode(row) === "drug");
+          const modelImprintRows = modelRows.filter((row) => sampleTruthMode(row) === "imprint");
+          const modelImprint = imprintStats(modelImprintRows);
+          return {
+            provider: model.provider,
+            model: model.model,
+            samples: model.samples,
+            truth_mode: modelRows.length ? combinedTruthMode(modelRows) : model.truth_mode || "unknown",
+            accuracy: pct(modelRows.length ? ratio(modelDrugRows, "correct") : model.top1_accuracy),
+            partial: pct(modelRows.length ? ratio(modelDrugRows, "partial") : model.partial_rate),
+            imprint_accuracy: pct(modelRows.length ? modelImprint.accuracy : model.imprint_accuracy),
+            imprint_partial: pct(modelRows.length ? modelImprint.partial_rate : model.imprint_partial_rate),
+            imprint_CER: modelRows.length ? modelImprint.imprint_CER : model.imprint_CER,
+            evaluated_imprint_sides: modelRows.length ? modelImprint.evaluated_imprint_sides : model.evaluated_imprint_sides,
+            invented_imprints: modelRows.length ? modelImprint.invented_imprints : model.invented_imprints,
+            dangerous_misidentification: model.high_confidence_misidentification,
+            front_imprint_CER: model.front_imprint_CER,
+            back_imprint_CER: model.back_imprint_CER,
+            confidence: model.average_confidence,
+            Brier_loss: model.Brier_loss,
+            latency_ms: model.average_latency_ms,
+            total_cost_usd: model.total_cost_usd,
+            cost_per_sample_usd: model.cost_per_sample_usd,
+            robustness_score: model.robustness_score
+          };
+        });
         const conditions = [];
         for (const [field, values] of Object.entries(dataset && dataset.conditions || {})) {
           for (const [value, stat] of Object.entries(values || {})) {
-            conditions.push({ condition: field, value, samples: stat.samples, accuracy: pct(stat.top1_accuracy), error_rate: pct(stat.error_rate) });
+            const matchingRows = samples.filter((sample) => {
+              const conditionValue = field === "variant" ? sample.variant || sample.condition && sample.condition.variant : sample.condition && sample.condition[field];
+              return String(conditionValue) === String(value);
+            });
+            const matchingDrugRows = matchingRows.filter((row) => sampleTruthMode(row) === "drug");
+            const matchingImprintRows = matchingRows.filter((row) => sampleTruthMode(row) === "imprint");
+            conditions.push({
+              condition: field,
+              value,
+              samples: stat.samples,
+              truth_mode: matchingRows.length ? combinedTruthMode(matchingRows) : "unknown",
+              accuracy: pct(matchingRows.length ? ratio(matchingDrugRows, "correct") : stat.top1_accuracy),
+              imprint_accuracy: pct(ratio(matchingImprintRows, "correct")),
+              invented_imprints: matchingImprintRows.reduce((sum, row) => sum + (Number(row.metrics && row.metrics.invented_imprints) || 0), 0),
+              error_rate: pct(stat.error_rate)
+            });
           }
         }
-        return { cards, models, conditions };
+        const truthModeCounts = samples.reduce((counts, sample) => {
+          const mode = sampleTruthMode(sample);
+          counts[mode] = (counts[mode] || 0) + 1;
+          return counts;
+        }, { drug: 0, imprint: 0, none: 0 });
+        return {
+          truth_mode: combinedTruthMode(samples),
+          truth_mode_counts: truthModeCounts,
+          imprint_metrics: imprint,
+          cards,
+          models,
+          conditions
+        };
       }
       module.exports = { buildDashboardViewModel };
     }
@@ -2649,25 +3120,41 @@ var KCSIResearchPlatform = (() => {
       }
       function truthFromArenaCase(run, testCase = {}, index = 0) {
         const sampleId = text(testCase.id || testCase.sample_id || testCase.case_id) || `${text(run && run.id) || "RUN"}-${index + 1}`;
+        const canonicalAnswer = isObject(testCase.answer) ? testCase.answer : null;
+        const answer = canonicalAnswer || {
+          mfds_item_id: testCase.mfdsItemId || testCase.mfds_item_id,
+          drug_name: testCase.truthName || testCase.drug_name,
+          front_imprint: testCase.truthFront || testCase.front_imprint,
+          back_imprint: testCase.truthBack || testCase.back_imprint,
+          shape: testCase.truthShape || testCase.shape,
+          color: testCase.truthColor || testCase.color
+        };
+        const canonicalCondition = isObject(testCase.condition) ? testCase.condition : null;
+        const canonicalImages = isObject(testCase.images) ? testCase.images : null;
+        const imageValue = (key, fallback) => canonicalImages && Object.prototype.hasOwnProperty.call(canonicalImages, key) ? canonicalImages[key] : fallback;
+        const conditionValue = (key, fallback) => canonicalCondition && Object.prototype.hasOwnProperty.call(canonicalCondition, key) ? canonicalCondition[key] : fallback;
         return contracts.normalizeGroundTruth({
           sample_id: sampleId,
           pill_id: testCase.pillId || testCase.pill_id,
-          images: { front: "", back: "" },
-          answer: {
-            mfds_item_id: testCase.mfdsItemId || testCase.mfds_item_id,
-            drug_name: testCase.truthName || testCase.drug_name,
-            front_imprint: testCase.truthFront || testCase.front_imprint,
-            back_imprint: testCase.truthBack || testCase.back_imprint,
-            shape: testCase.truthShape || testCase.shape,
-            color: testCase.truthColor || testCase.color
+          images: {
+            front: imageValue("front", testCase.sourceFrontImage || testCase.front_image),
+            back: imageValue("back", testCase.sourceBackImage || testCase.back_image)
           },
+          // Contract answer is authoritative as a whole, including intentionally blank
+          // fields. Legacy UI mirrors are consulted only when no answer object exists.
+          answer,
           condition: {
-            expected_readable: testCase.expectedReadable == null ? true : testCase.expectedReadable,
-            light: testCase.light,
-            background: testCase.background,
-            blur: testCase.blur || testCase.clarity,
-            angle: testCase.angle,
-            variant: testCase.variant || "original"
+            expected_readable: conditionValue(
+              "expected_readable",
+              testCase.expectedReadable == null ? true : testCase.expectedReadable
+            ),
+            light: conditionValue("light", testCase.light),
+            background: conditionValue("background", testCase.background),
+            blur: conditionValue("blur", testCase.blur || testCase.clarity),
+            angle: conditionValue("angle", testCase.angle),
+            variant: conditionValue("variant", testCase.variant || "original"),
+            provided_sides: conditionValue("provided_sides", testCase.providedSides || testCase.provided_sides),
+            score_line: conditionValue("score_line", testCase.scoreLine || testCase.score_line)
           },
           notes: ""
         });

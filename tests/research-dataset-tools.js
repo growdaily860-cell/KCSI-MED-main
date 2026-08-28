@@ -87,15 +87,16 @@ try {
 assert.ok(headerError, '알 수 없는 머리글인데 오류가 나지 않았다');
 assert.ok(/이름/.test(headerError) && /사진1/.test(headerError),
   '파일에서 실제로 읽은 이름을 알려주지 않아 무엇을 고쳐야 할지 알 수 없다');
-assert.ok(/case_id/.test(headerError) && /front_image/.test(headerError) && /back_image/.test(headerError),
-  '필요한 열 이름을 알려주지 않는다');
-assert.ok(/drug_name/.test(headerError) && /mfds_item_id/.test(headerError),
-  '정답 열이 둘 중 하나면 된다는 사실을 알려주지 않는다');
+assert.ok(/case_id/.test(headerError) && /알약번호/.test(headerError),
+  '시험번호 또는 알약번호가 필요하다는 사실을 알려주지 않는다');
+assert.ok(/drug_name/.test(headerError) && /mfds_item_id/.test(headerError) && /각인1/.test(headerError),
+  '제품 정답 또는 각인 정답 중 하나면 된다는 사실을 알려주지 않는다');
+assert.ok(!/back_image/.test(headerError), '단면 정답지에 선택 열인 back_image를 필수라고 안내한다');
 
 // 일부만 맞은 경우에는 몇 개가 인식됐는지 말해 준다.
 let partial = null;
 try {
-  arena.normalizeDatasetTable([['case_id', '사진1', '사진2'], ['C1', 'a.jpg', 'b.jpg']]);
+  arena.normalizeDatasetTable([['case_id', '알수없는사진1', '알수없는사진2'], ['C1', 'a.jpg', 'b.jpg']]);
 } catch (error) {
   partial = error.message;
 }

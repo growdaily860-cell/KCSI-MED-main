@@ -36,7 +36,9 @@
         "background": { "type": "string" },
         "blur": { "type": "string" },
         "angle": { "type": "string" },
-        "variant": { "type": "string" }
+        "variant": { "type": "string" },
+        "provided_sides": { "type": "string" },
+        "score_line": { "type": "string" }
       },
       "additionalProperties": false
     },

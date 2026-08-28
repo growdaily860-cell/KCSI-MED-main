@@ -58,6 +58,10 @@ class ElementStub {
   }
   querySelectorAll() { return []; }
   insertAdjacentElement(_position, element) { this.ownerDocument.register(element); }
+  getContext() {
+    return { fillStyle: '', fillRect() {}, drawImage() {} };
+  }
+  toDataURL() { return 'data:image/jpeg;base64,c3ludGhldGlj'; }
   click() {}
   scrollIntoView() {}
 }
@@ -106,6 +110,8 @@ assert.ok(
 );
 (async () => {
   const document = new DocumentStub();
+  let bitmapCalls = 0;
+  let bitmapFactory = async () => ({ width: 16, height: 16, close() {} });
   const window = {
     document,
     location: { pathname: '/research', search: '' },
@@ -118,6 +124,10 @@ assert.ok(
     Blob,
     URL,
     console,
+    createImageBitmap(file, options) {
+      bitmapCalls += 1;
+      return bitmapFactory(file, options);
+    },
   };
   window.window = window;
   window.self = window;
@@ -200,11 +210,110 @@ assert.ok(
   await confirmation.trigger('change', { target: confirmation });
   assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, false, 'reviewing the corrected rows must unlock import again');
 
+  // 한 행이라도 실패하면 나머지 4행만 조용히 축소해 모델 비교로 넘기면 안 된다.
+  await preview.trigger('change', {
+    target: { dataset: { datasetRow: '0', datasetColumn: 'front_image' }, value: 'missing-front.jpg' },
+  });
+  confirmation.checked = true;
+  await confirmation.trigger('change', { target: confirmation });
+  assert.equal(document.getElementById('arenaDatasetValid').textContent, '4');
+  assert.equal(document.getElementById('arenaDatasetInvalid').textContent, '1');
+  assert.equal(document.getElementById('arenaDatasetImport').hidden, true, '부분 유효 데이터셋의 import 영역을 숨겨야 한다');
+  assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, true);
+  assert.equal(document.getElementById('arenaDatasetRandomBatch').disabled, true);
+
+  await preview.trigger('change', {
+    target: { dataset: { datasetRow: '0', datasetColumn: 'front_image' }, value: 'CASE-1_front.jpg' },
+  });
+  confirmation.checked = true;
+  await confirmation.trigger('change', { target: confirmation });
+  assert.equal(document.getElementById('arenaDatasetValid').textContent, '5');
+  assert.equal(document.getElementById('arenaDatasetInvalid').textContent, '0');
+  assert.equal(document.getElementById('arenaDatasetImport').hidden, false);
+  assert.equal(document.getElementById('arenaDatasetLoadBatch').disabled, false);
+
+  // 정상 로드 뒤 "다음 배치"는 결과 DOM과 정답/ID/사진/loadedRows에 해당하는 폼을 전부 초기화한다.
+  const loadButton = document.getElementById('arenaDatasetLoadBatch');
+  await loadButton.trigger('click');
+  assert.equal(bitmapCalls, 10, '5쌍의 앞·뒷면을 각각 한 번씩 최적화해야 한다');
+  assert.equal(document.getElementById('arenaCaseId1').value, 'CASE-1');
+  assert.equal(document.getElementById('arenaTruthName2').value, '수정된 테스트정2');
+  assert(document.getElementById('arenaBatchId').value.includes('001-005'));
+  document.getElementById('arenaCompare').innerHTML = '<div>STALE RESULT</div>';
+  document.getElementById('arenaReveal').innerHTML = '<div>STALE REVEAL</div>';
+  document.getElementById('arenaReveal').classList.add('show');
+  document.getElementById('arenaTotalA').textContent = '99.0';
+  document.getElementById('arenaConsent').checked = true;
+  await document.getElementById('arenaNew').trigger('click');
+  assert.equal(document.getElementById('arenaBatchId').value, '');
+  assert.equal(document.getElementById('arenaCaseId1').value, 'CASE-1');
+  assert.equal(document.getElementById('arenaCaseId5').value, 'CASE-5');
+  assert.equal(document.getElementById('arenaTruthName2').value, '');
+  assert.equal(document.getElementById('arenaTruthFront2').value, '');
+  assert.equal(document.getElementById('arenaTruthBack2').value, '');
+  assert.equal(document.getElementById('arenaCompare').innerHTML, '');
+  assert.equal(document.getElementById('arenaReveal').innerHTML, '');
+  assert.equal(document.getElementById('arenaReveal').classList.contains('show'), false);
+  assert.equal(document.getElementById('arenaTotalA').textContent, '—');
+  assert.equal(document.getElementById('arenaConsent').checked, false);
+  assert.equal(document.getElementById('arenaBatchCount').textContent, '0 / 10');
+
+  // 로딩 중 두 번째 클릭은 시작되지 않고, clear 뒤 늦게 끝난 bitmap await도 폼을 되살리지 않는다.
+  let resolveSlowBitmap;
+  bitmapFactory = () => new Promise(resolve => { resolveSlowBitmap = resolve; });
+  const callsBeforeSlowLoad = bitmapCalls;
+  const pendingBatchLoad = loadButton.trigger('click');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(loadButton.disabled, true, '배치 로딩 중 불러오기 버튼을 비활성화해야 한다');
+  assert.equal(document.getElementById('arenaDatasetRandomBatch').disabled, true);
+  await loadButton.trigger('click');
+  assert.equal(bitmapCalls, callsBeforeSlowLoad + 1, '중복 클릭이 두 번째 비동기 배치를 시작하면 안 된다');
+  document.getElementById('arenaBatchId').value = 'STALE-WHILE-LOADING';
+  document.getElementById('arenaTruthName1').value = 'STALE TRUTH';
+  document.getElementById('arenaCompare').innerHTML = '<div>STALE RESULT</div>';
   await document.getElementById('arenaDatasetClear').trigger('click');
   assert.equal(document.getElementById('arenaDatasetOcrPanel').hidden, true, 'clear must remove the OCR review from memory/UI');
   assert.equal(document.getElementById('arenaDatasetRows').textContent, '0');
+  assert.equal(document.getElementById('arenaBatchId').value, '');
+  assert.equal(document.getElementById('arenaTruthName1').value, '');
+  assert.equal(document.getElementById('arenaCompare').innerHTML, '');
+  assert.equal(loadButton.disabled, true, '비어 있는 데이터셋은 clear 뒤 다시 잠겨야 한다');
+  const clearStatus = document.getElementById('arenaDatasetStatus').textContent;
+  assert.equal(typeof resolveSlowBitmap, 'function');
+  resolveSlowBitmap({ width: 16, height: 16, close() {} });
+  await pendingBatchLoad;
+  assert.equal(document.getElementById('arenaDatasetRows').textContent, '0');
+  assert.equal(document.getElementById('arenaBatchId').value, '', '늦은 배치 결과가 clear 뒤 폼을 덮었다');
+  assert.equal(document.getElementById('arenaTruthName1').value, '');
+  assert.equal(document.getElementById('arenaCompare').innerHTML, '');
+  assert.equal(document.getElementById('arenaDatasetStatus').textContent, clearStatus, '늦은 배치 상태문구가 clear 문구를 덮었다');
 
-  console.log('[research-dataset-integration] PASS — PDF fallback · editable OCR review · confirmation gate · clear');
+  // 느린 ZIP을 읽는 도중 새 사진을 올리면 이전 ZIP 결과가 새 업로드를 덮지 않는다.
+  let resolveZip;
+  window.JSZip = {
+    loadAsync() { return new Promise(resolve => { resolveZip = resolve; }); },
+  };
+  imageInput.files = [{ name: 'slow.zip', type: 'application/zip', size: 1024 }];
+  const pendingZip = imageInput.trigger('change', { target: imageInput });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof resolveZip, 'function');
+  imageInput.files = [{ name: 'fresh.jpg', type: 'image/jpeg', size: 1000 }];
+  await imageInput.trigger('change', { target: imageInput });
+  assert.equal(document.getElementById('arenaDatasetImageName').textContent, '1장');
+  const freshStatus = document.getElementById('arenaDatasetStatus').textContent;
+  resolveZip({
+    files: {
+      'old.jpg': {
+        name: 'old.jpg', dir: false, _data: { uncompressedSize: 10 },
+        async: async () => new Blob(['old']),
+      },
+    },
+  });
+  await pendingZip;
+  assert.equal(document.getElementById('arenaDatasetImageName').textContent, '1장', '늦은 ZIP 결과가 새 사진 목록을 덮었다');
+  assert.equal(document.getElementById('arenaDatasetStatus').textContent, freshStatus, '늦은 ZIP 상태문구가 새 업로드 문구를 덮었다');
+
+  console.log('[research-dataset-integration] PASS — strict import gate · async ZIP/batch cancellation · full reset');
 })().catch(error => {
   console.error(error.stack || error);
   process.exit(1);

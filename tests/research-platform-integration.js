@@ -75,7 +75,9 @@ const imageResolver = Object.fromEntries(rows.flatMap(row => [
   const bundlePath = path.join(root, 'research', 'platform-browser.js');
   const bundleSource = fs.readFileSync(bundlePath, 'utf8');
   assert(html.includes('<script src="research/platform-browser.js"></script>'));
-  assert(html.indexOf('research/platform-browser.js') < html.indexOf('<script src="arena.js"></script>'));
+  const arenaScriptIndex = html.search(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/);
+  assert(arenaScriptIndex >= 0, 'arena core script must remain wired');
+  assert(html.indexOf('research/platform-browser.js') < arenaScriptIndex);
   assert(!/api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com/.test(bundleSource));
 
   const sandbox = {

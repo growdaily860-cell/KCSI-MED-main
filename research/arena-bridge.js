@@ -29,25 +29,47 @@ function apportionUsage(usage, count) {
 
 function truthFromArenaCase(run, testCase = {}, index = 0) {
   const sampleId = text(testCase.id || testCase.sample_id || testCase.case_id) || `${text(run && run.id) || 'RUN'}-${index + 1}`;
+  const canonicalAnswer = isObject(testCase.answer) ? testCase.answer : null;
+  const answer = canonicalAnswer || {
+    mfds_item_id: testCase.mfdsItemId || testCase.mfds_item_id,
+    drug_name: testCase.truthName || testCase.drug_name,
+    front_imprint: testCase.truthFront || testCase.front_imprint,
+    back_imprint: testCase.truthBack || testCase.back_imprint,
+    shape: testCase.truthShape || testCase.shape,
+    color: testCase.truthColor || testCase.color,
+  };
+  const canonicalCondition = isObject(testCase.condition) ? testCase.condition : null;
+  const canonicalImages = isObject(testCase.images) ? testCase.images : null;
+  const imageValue = (key, fallback) => canonicalImages
+    && Object.prototype.hasOwnProperty.call(canonicalImages, key)
+    ? canonicalImages[key]
+    : fallback;
+  const conditionValue = (key, fallback) => canonicalCondition
+    && Object.prototype.hasOwnProperty.call(canonicalCondition, key)
+    ? canonicalCondition[key]
+    : fallback;
   return contracts.normalizeGroundTruth({
     sample_id: sampleId,
     pill_id: testCase.pillId || testCase.pill_id,
-    images: { front: '', back: '' },
-    answer: {
-      mfds_item_id: testCase.mfdsItemId || testCase.mfds_item_id,
-      drug_name: testCase.truthName || testCase.drug_name,
-      front_imprint: testCase.truthFront || testCase.front_imprint,
-      back_imprint: testCase.truthBack || testCase.back_imprint,
-      shape: testCase.truthShape || testCase.shape,
-      color: testCase.truthColor || testCase.color,
+    images: {
+      front: imageValue('front', testCase.sourceFrontImage || testCase.front_image),
+      back: imageValue('back', testCase.sourceBackImage || testCase.back_image),
     },
+    // Contract answer is authoritative as a whole, including intentionally blank
+    // fields. Legacy UI mirrors are consulted only when no answer object exists.
+    answer,
     condition: {
-      expected_readable: testCase.expectedReadable == null ? true : testCase.expectedReadable,
-      light: testCase.light,
-      background: testCase.background,
-      blur: testCase.blur || testCase.clarity,
-      angle: testCase.angle,
-      variant: testCase.variant || 'original',
+      expected_readable: conditionValue(
+        'expected_readable',
+        testCase.expectedReadable == null ? true : testCase.expectedReadable,
+      ),
+      light: conditionValue('light', testCase.light),
+      background: conditionValue('background', testCase.background),
+      blur: conditionValue('blur', testCase.blur || testCase.clarity),
+      angle: conditionValue('angle', testCase.angle),
+      variant: conditionValue('variant', testCase.variant || 'original'),
+      provided_sides: conditionValue('provided_sides', testCase.providedSides || testCase.provided_sides),
+      score_line: conditionValue('score_line', testCase.scoreLine || testCase.score_line),
     },
     notes: '',
   });

@@ -88,6 +88,35 @@ const legacySeen = [];
 for (let index = 0; index < 4; index += 1) legacySeen.push(...arena.drawRandomBatch(legacy, SIZE).indices);
 assert.equal(new Set(legacySeen).size, 20);
 
+// 74행 정답지는 14개의 5건 배치 뒤 4건이 남는다. 부분 배치 모드에서는
+// 그 4건을 버리거나 다음 회차와 섞지 않고 15번째 배치로 정확히 반환해야 한다.
+const remainderTotal = 74;
+const remainderQueue = arena.createRandomBatchQueue(remainderTotal, 'REMAIN74');
+const remainderSeen = [];
+let finalPartial = null;
+for (let index = 0; index < Math.ceil(remainderTotal / SIZE); index += 1) {
+  const draw = arena.drawRandomBatch(remainderQueue, SIZE, { allowPartial:true });
+  const expectedSize = index === 14 ? 4 : 5;
+  assert.equal(draw.indices.length, expectedSize, `${index + 1}번째 배치 크기가 잘못됐다`);
+  assert.equal(draw.round, 1, '74건을 모두 쓰기 전에 다음 회차로 넘어갔다');
+  assert.equal(draw.drawsPerRound, 15);
+  assert.equal(draw.remaining, Math.max(0, remainderTotal - remainderSeen.length - expectedSize));
+  remainderSeen.push(...draw.indices);
+  finalPartial = draw;
+}
+assert.equal(finalPartial.indices.length, 4);
+assert.equal(finalPartial.remaining, 0);
+assert.equal(remainderSeen.length, remainderTotal);
+assert.equal(new Set(remainderSeen).size, remainderTotal, '부분 배치까지 포함한 한 회차에 중복이 있다');
+assert.deepEqual([...remainderSeen].sort((a, b) => a - b), Array.from({ length: remainderTotal }, (_, index) => index));
+const remainderNextRound = arena.drawRandomBatch(remainderQueue, SIZE, { allowPartial:true });
+assert.equal(remainderNextRound.round, 2);
+assert.equal(remainderNextRound.indices.length, 5);
+assert.equal(remainderNextRound.remaining, 69);
+
+const underFivePartial = arena.drawRandomBatch(arena.createRandomBatchQueue(4, 'PARTIAL4'), SIZE, { allowPartial:true });
+assert.equal(underFivePartial.indices.length, 4, '부분 배치는 전체가 5건 미만이어도 실행 가능해야 한다');
+
 // ── 6. 쏠림 확인 — 특정 알약만 계속 나오면 무작위 출제가 아니다 ────────────
 const spread = arena.createRandomBatchQueue(total, 'SPREAD');
 const counts = new Array(total).fill(0);

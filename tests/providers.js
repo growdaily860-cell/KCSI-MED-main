@@ -224,7 +224,7 @@ async function exerciseProvider(providerId, model, makePayload) {
 
   const source = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const arenaSource = fs.readFileSync(path.join(__dirname, '..', 'arena.js'), 'utf8');
-  assert(source.includes('<script src="arena.js"></script>'));
+  assert(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/.test(source));
   assert(arenaSource.includes('ensureProviderAdapters') && arenaSource.includes("'providers/contract.js'"));
   const adapterSource = fs.readdirSync(path.join(__dirname, '..', 'providers'))
     .filter(name => name.endsWith('.js'))

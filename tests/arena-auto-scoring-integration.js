@@ -230,8 +230,10 @@ assert.equal(truth.condition.variant, 'original');
 const html = fs.readFileSync('index.html', 'utf8');
 assert.ok(html.includes('<script src="scoring/arena-rubric.js"></script>'));
 assert.ok(html.includes('<script src="research/platform-browser.js"></script>'));
-assert.ok(html.indexOf('scoring/arena-rubric.js') < html.indexOf('<script src="arena.js"></script>'));
-assert.ok(html.indexOf('research/platform-browser.js') < html.indexOf('<script src="arena.js"></script>'));
+const arenaScriptIndex = html.search(/<script src="arena\.js(?:\?[^\"]*)?"><\/script>/);
+assert.ok(arenaScriptIndex >= 0, 'arena core script must remain wired');
+assert.ok(html.indexOf('scoring/arena-rubric.js') < arenaScriptIndex);
+assert.ok(html.indexOf('research/platform-browser.js') < arenaScriptIndex);
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 ['tests/arena-rubric.js', 'tests/research-platform-integration.js', 'tests/arena-auto-scoring-integration.js'].forEach(suite => {

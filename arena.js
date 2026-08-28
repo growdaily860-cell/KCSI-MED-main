@@ -34,6 +34,9 @@
   const STORAGE_LIMIT_BYTES = 5 * 1024 * 1024;
   const MAX_REQUEST_IMAGE_CHARS = 10.5 * 1024 * 1024;
   const MAX_DATASET_IMAGES = 1000;
+  const MAX_DATASET_ARCHIVE_BYTES = 1024 * 1024 * 1024;
+  const MAX_DATASET_UNCOMPRESSED_BYTES = 2 * 1024 * 1024 * 1024;
+  const DATASET_IMAGE_PATTERN = /\.(?:jpe?g|png|webp)$/i;
   const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
   const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
@@ -51,12 +54,12 @@
   const DATASET_COLUMNS = [
     { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', 'caseno', 'case no', 'sample_id', 'sample id', '시험번호', '익명시험번호', '검체번호', '샘플번호', '사례번호', '연번'] },
     { key: 'pill_id', label: '알약번호', aliases: ['pill_id', 'pill id', '알약번호', '약물번호'] },
-    { key: 'front_image', label: '앞면 이미지', aliases: ['front_image', 'front image', 'image_front', 'img_front', 'front_file', 'front_photo', 'frontfilename', '앞면이미지', '앞면사진', '앞사진', '앞면파일', '앞면파일명', '앞면', '전면사진', '전면이미지'] },
-    { key: 'back_image', label: '뒷면 이미지', aliases: ['back_image', 'back image', 'image_back', 'img_back', 'back_file', 'back_photo', 'backfilename', '뒷면이미지', '뒷면사진', '뒤사진', '뒷면파일', '뒷면파일명', '뒷면', '후면사진', '후면이미지'] },
+    { key: 'front_image', label: '앞면 이미지', aliases: ['front_image', 'front image', 'image_front', 'img_front', 'front_file', 'front_photo', 'frontfilename', '앞면이미지', '앞면사진', '앞사진', '앞면파일', '앞면파일명', '앞면', '전면사진', '전면이미지', '파일1', '사진1', '이미지1'] },
+    { key: 'back_image', label: '뒷면 이미지', aliases: ['back_image', 'back image', 'image_back', 'img_back', 'back_file', 'back_photo', 'backfilename', '뒷면이미지', '뒷면사진', '뒤사진', '뒷면파일', '뒷면파일명', '뒷면', '후면사진', '후면이미지', '파일2', '사진2', '이미지2'] },
     { key: 'mfds_item_id', label: '식약처 품목ID', aliases: ['mfds_item_id', 'mfds id', 'item_seq', '품목일련번호', '품목id', '식약처id'] },
     { key: 'drug_name', label: '정답 의약품명', aliases: ['drug_name', 'drug name', 'item_name', 'product_name', 'name', '의약품명', '제품명', '정답의약품명', '약품명', '약명', '품명', '정답', '정답명'] },
-    { key: 'front_imprint', label: '앞면 각인', aliases: ['front_imprint', 'imprint_front', 'front_mark', '앞면각인', '앞각인', '앞면표기', '전면각인', '앞면마크'] },
-    { key: 'back_imprint', label: '뒷면 각인', aliases: ['back_imprint', 'imprint_back', 'back_mark', '뒷면각인', '뒤각인', '뒷면표기', '후면각인', '뒷면마크'] },
+    { key: 'front_imprint', label: '앞면 각인', aliases: ['front_imprint', 'imprint_front', 'front_mark', '앞면각인', '앞각인', '앞면표기', '전면각인', '앞면마크', '각인1', '표기1'] },
+    { key: 'back_imprint', label: '뒷면 각인', aliases: ['back_imprint', 'imprint_back', 'back_mark', '뒷면각인', '뒤각인', '뒷면표기', '후면각인', '뒷면마크', '각인2', '표기2'] },
     { key: 'shape', label: '모양', aliases: ['shape', '모양', '제형모양'] },
     { key: 'color', label: '색상', aliases: ['color', 'colour', '색상', '색깔'] },
     { key: 'mark_id', label: '마크 ID', aliases: ['mark_id', 'mark id', 'logo_id', '마크id', '로고id', '마크'] },
@@ -105,8 +108,20 @@
   })();
 
   function datasetImageKey(value) {
-    const name = safeText(value).normalize('NFKC').trim().replace(/\\/g, '/').split('/').pop() || '';
+    const name = safeText(value).normalize('NFC').trim().replace(/\\/g, '/').split('/').pop() || '';
     return name.toLocaleLowerCase('en-US');
+  }
+
+  function datasetImageBaseName(value) {
+    return safeText(value).normalize('NFC').trim().replace(/\\/g, '/').split('/').pop() || '';
+  }
+
+  function isDatasetImageName(value) {
+    const path = safeText(value).normalize('NFC').trim().replace(/\\/g, '/');
+    if (!path || /(?:^|\/)__MACOSX(?:\/|$)/i.test(path)) return false;
+    const name = datasetImageBaseName(path);
+    if (!name || /^\.(?:DS_Store|_)/i.test(name) || /^(?:desktop\.ini|thumbs\.db)$/i.test(name)) return false;
+    return DATASET_IMAGE_PATTERN.test(name);
   }
 
   function detectDelimiter(text) {
@@ -150,28 +165,23 @@
 
   // 머리글 인식에 실패했을 때 "인식하지 못했습니다"만 말하면 고칠 방법이 없다.
   // 파일에서 실제로 읽은 이름과 필요한 열을 함께 돌려줘야 사용자가 첫 줄만 고치면 된다.
-  const REQUIRED_DATASET_KEYS = ['case_id', 'front_image', 'back_image'];
-
   function headerFailureMessage(rows, headerRowIndex, bestMatches) {
     const candidate = headerRowIndex >= 0 ? (rows[headerRowIndex] || []) : (rows[0] || []);
     const names = candidate.map(value => safeText(value).trim()).filter(Boolean).slice(0, 10);
     const recognized = candidate
       .map(value => DATASET_HEADER_LOOKUP.get(normalizeDatasetHeader(value)))
       .filter(Boolean);
-    const missing = REQUIRED_DATASET_KEYS
-      .filter(key => !recognized.includes(key))
-      .map(key => {
-        const column = DATASET_COLUMNS.find(item => item.key === key);
-        return `${column.label}(${key})`;
-      });
-    if (!recognized.includes('drug_name') && !recognized.includes('mfds_item_id')) {
-      missing.push('정답 의약품명(drug_name) 또는 식약처 품목ID(mfds_item_id)');
+    const missing = [];
+    if (!recognized.includes('case_id') && !recognized.includes('pill_id')) missing.push('시험번호(case_id) 또는 알약번호');
+    if (!recognized.includes('front_image')) missing.push('앞면 이미지(front_image 또는 파일1)');
+    if (!recognized.includes('drug_name') && !recognized.includes('mfds_item_id') && !recognized.includes('front_imprint')) {
+      missing.push('정답 의약품명(drug_name)·식약처 품목ID(mfds_item_id) 또는 앞면 각인(각인1)');
     }
     const found = names.length ? `첫 줄에서 읽은 이름: ${names.join(' · ')}` : '첫 줄이 비어 있습니다';
     const matched = bestMatches > 0
       ? `이 중 ${bestMatches}개만 아는 열 이름이라 3개에 못 미칩니다.`
       : '아는 열 이름이 하나도 없습니다.';
-    return `정답지 머리글을 인식하지 못했습니다. ${found} · ${matched} 필요한 열: ${missing.join(' · ')}`;
+    return `정답지 머리글을 인식하지 못했습니다. ${found} · ${matched} 필요한 열: ${(missing.length ? missing : ['지원되는 열 이름 3개 이상']).join(' · ')}`;
   }
 
   function normalizeDatasetTable(table) {
@@ -200,6 +210,13 @@
         if (header.key && record[header.key] == null) record[header.key] = safeText(values[columnIndex]).trim();
       });
       DATASET_COLUMNS.forEach(column => { if (record[column.key] == null) record[column.key] = ''; });
+      // 각인 정답 입력 도구는 별도 case_id 없이 알약번호만 내보낸다. 원문 번호는
+      // pill_id에 보존하고, 재현 가능한 시험번호를 파생해 기존 연구 계약에 연결한다.
+      if (!safeText(record.case_id).trim() && safeText(record.pill_id).trim()) {
+        const pillId = safeText(record.pill_id).trim();
+        record.case_id = /^\d+$/.test(pillId) ? `PILL-${pillId.padStart(3, '0')}` : `PILL-${pillId}`;
+        record._derivedCaseId = true;
+      }
       return record;
     }).filter(record => DATASET_COLUMNS.some(column => safeText(record[column.key]).trim()));
     if (!normalizedRows.length) throw new Error('정답지에 데이터 행이 없습니다');
@@ -224,6 +241,16 @@
       const key = safeText(row.case_id).normalize('NFKC').trim().toLocaleLowerCase('en-US');
       if (key) caseCounts.set(key, (caseCounts.get(key) || 0) + 1);
     });
+    // 업로드 목록의 basename 중복과 별개로, 정답지 안에서 같은 사진을 여러 슬롯이나
+    // 여러 알약에 재사용하는 것도 매핑 오류다. 그렇지 않으면 두 행이 모두 통과하면서
+    // matchedImages만 부족한 모순된 상태가 된다.
+    const referenceCounts = new Map();
+    (rows || []).forEach(row => {
+      [datasetImageKey(row.front_image), datasetImageKey(row.back_image)].filter(Boolean).forEach(key => {
+        referenceCounts.set(key, (referenceCounts.get(key) || 0) + 1);
+      });
+    });
+    const duplicateReferences = [...referenceCounts.entries()].filter(([, count]) => count > 1).map(([key]) => key);
     const usedImages = new Set();
     const checkedRows = (rows || []).map(row => {
       const errors = [], warnings = [];
@@ -231,7 +258,8 @@
       if (!caseId) errors.push('시험번호(case_id)가 없습니다');
       else if ((caseCounts.get(caseId.normalize('NFKC').toLocaleLowerCase('en-US')) || 0) > 1) errors.push('시험번호가 중복되었습니다');
       if (!safeText(row.front_image).trim()) errors.push('앞면 이미지 파일명이 없습니다');
-      if (!safeText(row.back_image).trim()) errors.push('뒷면 이미지 파일명이 없습니다');
+      const hasBackImage = !!safeText(row.back_image).trim();
+      const hasBackImprint = !!safeText(row.back_imprint).trim();
       // 정답지는 두 종류다. 제품명이 있으면 "이 약을 맞혔나"를 채점하고,
       // 각인 정답만 있으면 "각인을 제대로 읽었나"를 채점한다. 각인 정답지도
       // 그 자체로 정당한 정답지이므로 제품명이 없다는 이유로 막지 않는다.
@@ -242,11 +270,20 @@
       } else if (!hasDrugAnswer) {
         warnings.push('각인 정답지입니다 — 각인 판독을 채점하며 약물 식별 정확도는 나오지 않습니다');
       }
+      if (!hasDrugAnswer && !safeText(row.front_imprint).trim()) errors.push('앞면 각인 정답이 비어 있습니다');
+      if (hasBackImage && !hasDrugAnswer && !hasBackImprint) errors.push('뒷면 사진은 있지만 뒷면 각인 정답이 비어 있습니다');
+      if (!hasBackImage && hasBackImprint) errors.push('뒷면 각인 정답은 있지만 뒷면 이미지 파일명이 없습니다');
+      if (!hasBackImage && !hasBackImprint) warnings.push('한 면 데이터입니다 — 제공된 앞면만 채점합니다');
+      const scoreLine = safeText(row.score_line).normalize('NFKC').trim().toLowerCase();
+      if (scoreLine && !/^(?:있음|없음|모름|unknown|yes|no|y|n|true|false|1|0)$/.test(scoreLine)) {
+        warnings.push(`분할선 값 '${safeText(row.score_line).trim()}'은 있음·없음·모름 중 하나를 권장합니다`);
+      }
       const frontKey = datasetImageKey(row.front_image), backKey = datasetImageKey(row.back_image);
       if (frontKey && backKey && frontKey === backKey) errors.push('앞면과 뒷면에 같은 파일이 지정되었습니다');
       [[frontKey, '앞면'], [backKey, '뒷면']].forEach(([key, label]) => {
         if (!key) return;
         usedImages.add(key);
+        if ((referenceCounts.get(key) || 0) > 1) errors.push(`${label} 이미지가 정답지의 여러 면 또는 행에 중복 지정되었습니다`);
         const count = imageCounts.get(key) || 0;
         if (!count) errors.push(`${label} 이미지 파일을 찾지 못했습니다`);
         else if (count > 1) errors.push(`${label} 이미지 파일명이 업로드 목록에서 중복됩니다`);
@@ -256,18 +293,25 @@
     const orphanImages = [...imageCounts.keys()].filter(key => !usedImages.has(key));
     const duplicateImages = [...imageCounts.entries()].filter(([, count]) => count > 1).map(([key]) => key);
     const validRows = checkedRows.filter(row => row._valid);
+    const expectedImages = checkedRows.reduce((sum, row) => sum + (datasetImageKey(row.front_image) ? 1 : 0) + (datasetImageKey(row.back_image) ? 1 : 0), 0);
+    const singleSidedRows = checkedRows.filter(row => datasetImageKey(row.front_image) && !datasetImageKey(row.back_image)).length;
+    const matchedImages = [...usedImages].filter(key => imageCounts.get(key) === 1).length;
     return {
       rows: checkedRows,
       validRows,
       invalidRows: checkedRows.filter(row => !row._valid),
       orphanImages,
       duplicateImages,
+      duplicateReferences,
       summary: {
         totalRows: checkedRows.length,
         validRows: validRows.length,
         invalidRows: checkedRows.length - validRows.length,
         imageCount: files.length,
-        matchedImages: [...usedImages].filter(key => imageCounts.get(key) === 1).length,
+        expectedImages,
+        matchedImages,
+        missingImages: Math.max(0, expectedImages - matchedImages),
+        singleSidedRows,
       },
     };
   }
@@ -457,7 +501,7 @@
 
     return {
       experiments: (runs || []).length,
-      cases: (runs || []).length * CASE_COUNT,
+      cases: (runs || []).reduce((sum, run) => sum + ((run.cases && run.cases.length) || CASE_COUNT), 0),
       responses: (runs || []).length * MODEL_LABELS.length,
       ratedCases,
       accuracy: ratedCases ? weightedCorrect / ratedCases * 100 : null,
@@ -468,9 +512,9 @@
 
   function buildCsv(runs) {
     const columns = [
-      'batch_id','created_at','case_index','case_id','image_sides','image_clarity','cost_mode','prompt_version','blind_label',
+      'batch_id','created_at','case_index','case_id','pill_id','image_sides','source_front_image','source_back_image','truth_score_line','image_clarity','cost_mode','prompt_version','blind_label',
       'provider','model','truth_mfds_item_id','truth_drug_name','truth_imprint_front','truth_imprint_back','drug_name','drug_code','imprint_front','imprint_back',
-      'mfds_match','mfds_candidate','verdict','accuracy_score','evidence_score','hallucination_score','clarity_score','total_score',
+      'truth_mode','imprint_similarity','imprint_orientation','invented_imprints','mfds_match','mfds_candidate','verdict','accuracy_score','evidence_score','hallucination_score','clarity_score','total_score',
       'rating_source','evaluation_version','automatic_total_score','rating_override_fields','vote','vote_source','latency_ms','call_error',
     ];
     const rows = [columns];
@@ -478,17 +522,22 @@
       const result = run.results && run.results[label] || {};
       const model = run.blindOrder && run.blindOrder[label] || {};
       const rating = result.rating || {};
-      Array.from({ length: CASE_COUNT }, (_, index) => {
+      Array.from({ length: (run.cases && run.cases.length) || CASE_COUNT }, (_, index) => {
         const testCase = run.cases && run.cases[index] || {};
         const parsed = result.cases && result.cases[index] || {};
         const db = result.db && result.db[index] || {};
+        const metric = result.autoRating && result.autoRating.caseMetrics && result.autoRating.caseMetrics[index] || {};
         const verdict = rating.caseVerdicts && rating.caseVerdicts[index] || '';
         rows.push([
-          run.id, run.createdAt, index + 1, testCase.id, run.condition && run.condition.sides, testCase.clarity,
+          run.id, run.createdAt, index + 1, testCase.id, testCase.pillId, testCase.providedSides || run.condition && run.condition.sides,
+          testCase.sourceFrontImage, testCase.sourceBackImage, testCase.scoreLine, testCase.clarity,
           run.condition && (run.condition.costModeLabel || run.condition.costMode), run.promptVersion, label,
           model.providerLabel || model.provider, model.model, testCase.mfdsItemId || testCase.answer && testCase.answer.mfds_item_id,
           testCase.truthName, testCase.truthFront, testCase.truthBack,
-          parsed.drug_name, parsed.drug_code, parsed.imprint_front, parsed.imprint_back, db.matched ? db.confidence || 'matched' : 'not_matched',
+          parsed.drug_name, parsed.drug_code, parsed.imprint_front, parsed.imprint_back,
+          metric.truth_mode, metric.metrics && metric.metrics.imprint_similarity, metric.metrics && metric.metrics.imprint_orientation,
+          metric.metrics && metric.metrics.invented_imprints,
+          db.matched ? db.confidence || 'matched' : 'not_matched',
           db.candidate, verdict, accuracyPoints(verdict, rating.caseScores && rating.caseScores[index]), rating.evidence, rating.hallucination, rating.clarity,
           computeBatchTotal(rating), rating.source || 'manual', rating.evaluationMode || rating.rubricVersion || 'manual-v1',
           result.autoRating && result.autoRating.total, (rating.overrideFields || []).join('|'), run.vote, run.voteSource || 'manual',
@@ -562,16 +611,18 @@
 
   // 한 회차 안에서는 같은 알약이 다시 나오지 않는다. 전부 소진하면 다음 회차로 넘어가
   // 새로 섞는다 — 100건이 넘는 데이터셋을 빠짐없이 돌기 위한 구조다.
-  function drawRandomBatch(queue, size) {
+  function drawRandomBatch(queue, size, options) {
     const count = Math.max(1, Math.floor(Number(size)) || CASE_COUNT);
-    if (!queue || queue.total < count) return null;
-    if (queue.cursor + count > queue.order.length) {
+    const allowPartial = !!(options && options.allowPartial);
+    if (!queue || queue.total < (allowPartial ? 1 : count)) return null;
+    if (!queue.order.length || queue.cursor >= queue.order.length || (!allowPartial && queue.cursor + count > queue.order.length)) {
       queue.round += 1;
       queue.order = shuffledIndices(queue.total, seededRandom(`${queue.seed}#${queue.round}`));
       queue.cursor = 0;
     }
-    const indices = queue.order.slice(queue.cursor, queue.cursor + count);
-    queue.cursor += count;
+    const drawCount = allowPartial ? Math.min(count, queue.order.length - queue.cursor) : count;
+    const indices = queue.order.slice(queue.cursor, queue.cursor + drawCount);
+    queue.cursor += drawCount;
     queue.draws += 1;
     return {
       indices,
@@ -579,13 +630,24 @@
       round: queue.round,
       draw: queue.draws,
       remaining: queue.order.length - queue.cursor,
-      drawsPerRound: Math.floor(queue.total / count),
+      drawsPerRound: allowPartial ? Math.ceil(queue.total / count) : Math.floor(queue.total / count),
     };
   }
 
-  function makePrompt(caseCount = CASE_COUNT) {
+  function makePrompt(caseCount = CASE_COUNT, imagePairs) {
+    const pairs = Array.isArray(imagePairs) ? imagePairs.slice(0, caseCount) : [];
+    const missingSides = pairs.map((pair, index) => {
+      const missing = [];
+      if (!pair || !pair.front) missing.push('앞면');
+      if (!pair || !pair.back) missing.push('뒷면');
+      return missing.length ? `CASE-${index + 1}: ${missing.join('·')} 이미지 미제공` : '';
+    }).filter(Boolean);
+    const availabilityNote = missingSides.length
+      ? `\n[제공 면 안내]\n${missingSides.join('\n')}\n미제공 면은 추측하지 말고 해당 각인 값을 빈 문자열로 두세요. 제공된 면만 판독하세요.\n`
+      : '';
     return `당신은 대한민국 의약품 낱알 이미지 비교평가에 참여하는 시각 판독 모델입니다.
-아래에는 서로 다른 알약 ${caseCount}개의 앞면과 뒷면 사진이 CASE-1부터 CASE-${caseCount}까지 순서대로 제공됩니다.
+아래에는 서로 다른 알약 ${caseCount}개의 사진이 CASE-1부터 CASE-${caseCount}까지 순서대로 제공됩니다. 각 CASE는 앞면과 뒷면을 기본으로 하되, 정답지에 한 면만 기록된 CASE는 제공된 한 면만 있습니다.
+${availabilityNote}
 
 [중요 규칙]
 1. 각 CASE의 앞면과 뒷면만 한 쌍으로 보고, 서로 다른 CASE의 정보를 절대 섞지 마세요.
@@ -640,15 +702,19 @@
       }));
       return adapter.mapOpenAIBatchRequest(inputs, {
         model, cost_mode: costMode || 'practice', detail: mode.detail,
-        max_completion_tokens: mode.maxCompletionTokens, prompt: makePrompt(pairs.length || CASE_COUNT),
+        max_completion_tokens: mode.maxCompletionTokens, prompt: makePrompt(pairs.length || CASE_COUNT, pairs),
       });
     }
-    const content = [{ type: 'text', text: makePrompt(pairs.length || CASE_COUNT) }];
+    const content = [{ type: 'text', text: makePrompt(pairs.length || CASE_COUNT, pairs) }];
     pairs.forEach((pair, index) => {
-      content.push({ type: 'text', text: `CASE-${index + 1} 앞면` });
-      content.push({ type: 'image_url', image_url: { url: pair.front, detail: mode.detail } });
-      content.push({ type: 'text', text: `CASE-${index + 1} 뒷면` });
-      content.push({ type: 'image_url', image_url: { url: pair.back, detail: mode.detail } });
+      if (pair.front) {
+        content.push({ type: 'text', text: `CASE-${index + 1} 앞면` });
+        content.push({ type: 'image_url', image_url: { url: pair.front, detail: mode.detail } });
+      }
+      if (pair.back) {
+        content.push({ type: 'text', text: `CASE-${index + 1} 뒷면` });
+        content.push({ type: 'image_url', image_url: { url: pair.back, detail: mode.detail } });
+      }
     });
     const body = { model, response_format: { type: 'json_object' }, messages: [{ role: 'user', content }] };
     if (/^gpt-5(?:[.\-]|$)/i.test(model)) body.max_completion_tokens = mode.maxCompletionTokens;
@@ -672,7 +738,7 @@
           cost_mode: costMode || 'practice',
           detail: mode.detail,
           max_completion_tokens: mode.maxCompletionTokens,
-          prompt: makePrompt(inputs.length || CASE_COUNT),
+          prompt: makePrompt(inputs.length || CASE_COUNT, imagePairs),
         });
         if (batch.error) {
           const error = new Error(batch.error.message || 'Provider call failed');
@@ -712,7 +778,7 @@
       throw new Error(apiMessage ? `${apiMessage} (${response.status})` : `API 오류 ${response.status}`);
     }
     const raw = extractAssistantContent(payload);
-    return { raw, cases: parseBatchModelOutput(raw, CASE_COUNT), latencyMs };
+    return { raw, cases: parseBatchModelOutput(raw, Math.max(1, Math.min(CASE_COUNT, (imagePairs || []).length || CASE_COUNT))), latencyMs };
   }
 
   function dbCrossCheck(parsed) {
@@ -785,26 +851,44 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  function fileToDataUrl(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다'));
-      reader.onload = () => {
-        const image = new Image();
-        image.onerror = () => reject(new Error('지원하지 않는 이미지 형식입니다'));
-        image.onload = () => {
-          const maxSide = 1280;
-          const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, Math.round(image.width * scale));
-          canvas.height = Math.max(1, Math.round(image.height * scale));
-          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', .80));
-        };
-        image.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
+  async function fileToDataUrl(file) {
+    if (!file) throw new Error('이미지를 찾지 못했습니다');
+    let image = null;
+    let objectUrl = '';
+    try {
+      if (typeof root.createImageBitmap === 'function') {
+        try { image = await root.createImageBitmap(file, { imageOrientation: 'from-image' }); }
+        catch (_) { image = await root.createImageBitmap(file); }
+      } else {
+        objectUrl = URL.createObjectURL(file);
+        image = await new Promise((resolve, reject) => {
+          const element = new Image();
+          element.onload = () => resolve(element);
+          element.onerror = () => reject(new Error('지원하지 않는 이미지 형식입니다'));
+          element.src = objectUrl;
+        });
+      }
+      // EXIF orientation을 실제 픽셀에 반영한 뒤 한 번만 축소한다. 화면 CSS 회전은
+      // 모델에 전송되는 바이트를 바꾸지 않으므로 createImageBitmap 결과를 캔버스에 굽는다.
+      const width = Number(image.width || image.naturalWidth) || 0;
+      const height = Number(image.height || image.naturalHeight) || 0;
+      if (!width || !height) throw new Error('이미지 크기를 읽지 못했습니다');
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(width, height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const context = canvas.getContext('2d', { alpha: false });
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', .86);
+    } catch (error) {
+      throw error && error.message ? error : new Error('이미지를 읽지 못했습니다');
+    } finally {
+      if (image && typeof image.close === 'function') image.close();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    }
   }
 
   let xlsxPromise = null;
@@ -836,6 +920,66 @@
   function ensureZipLib() {
     if (!zipPromise) zipPromise = loadArenaScript(JSZIP_URL, () => !!root.JSZip).then(() => root.JSZip);
     return zipPromise;
+  }
+
+  function isZipFile(file) {
+    const name = safeText(file && file.name).trim();
+    const type = safeText(file && file.type).toLowerCase();
+    return /\.zip$/i.test(name) || /^(?:application\/(?:zip|x-zip-compressed)|multipart\/x-zip)$/.test(type);
+  }
+
+  function datasetImageMimeType(name) {
+    if (/\.png$/i.test(name)) return 'image/png';
+    if (/\.webp$/i.test(name)) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  function zipEntrySize(entry) {
+    const data = entry && entry._data;
+    const value = Number(data && (data.uncompressedSize != null ? data.uncompressedSize : data.length));
+    return Number.isFinite(value) && value >= 0 ? value : 0;
+  }
+
+  async function readDatasetImageArchive(file) {
+    if (!file || !isZipFile(file)) throw new Error('ZIP 사진 묶음을 선택하세요');
+    if (file.size > MAX_DATASET_ARCHIVE_BYTES) throw new Error('사진 ZIP은 1GB 이하만 사용할 수 있습니다');
+    const JSZip = await ensureZipLib();
+    const archive = await JSZip.loadAsync(file, { createFolders: false });
+    const allEntries = Object.values(archive.files || {}).filter(entry => entry && !entry.dir);
+    const imageEntries = allEntries.filter(entry => isDatasetImageName(entry.name));
+    if (!imageEntries.length) throw new Error('ZIP에서 JPG, PNG 또는 WEBP 사진을 찾지 못했습니다');
+    if (imageEntries.length > MAX_DATASET_IMAGES) throw new Error(`ZIP 사진은 최대 ${MAX_DATASET_IMAGES.toLocaleString('ko-KR')}장까지 사용할 수 있습니다`);
+    const uncompressedBytes = imageEntries.reduce((sum, entry) => sum + zipEntrySize(entry), 0);
+    if (uncompressedBytes > MAX_DATASET_UNCOMPRESSED_BYTES) throw new Error('ZIP을 풀었을 때 사진 용량이 2GB를 초과합니다');
+    if (file.size && uncompressedBytes > file.size * 200) throw new Error('ZIP 압축률이 비정상적으로 높아 안전하게 열 수 없습니다');
+    const oversized = imageEntries.find(entry => zipEntrySize(entry) > 30 * 1024 * 1024);
+    if (oversized) throw new Error(`${datasetImageBaseName(oversized.name)} 파일이 30MB를 초과합니다`);
+    const imageFiles = imageEntries.map(entry => {
+      const name = datasetImageBaseName(entry.name);
+      const type = datasetImageMimeType(name);
+      return {
+        name,
+        type,
+        size: zipEntrySize(entry),
+        archivePath: safeText(entry.name).normalize('NFC').replace(/\\/g, '/'),
+        async materialize() {
+          const blob = await entry.async('blob');
+          if (blob.size > 30 * 1024 * 1024) throw new Error(`${name} 파일이 30MB를 초과합니다`);
+          return new File([blob], name, { type });
+        },
+      };
+    });
+    return {
+      imageFiles,
+      ignoredEntries: allEntries.length - imageEntries.length,
+      uncompressedBytes,
+      archiveName: safeText(file.name).trim() || 'dataset.zip',
+    };
+  }
+
+  async function materializeDatasetImage(file) {
+    if (!file) return null;
+    return typeof file.materialize === 'function' ? file.materialize() : file;
   }
 
   function ensurePdfLib() {
@@ -936,20 +1080,113 @@
     computeBatchTotal, computeTotal, accuracyPoints, friendlyCallError, summarizeRuns, buildCsv, randomizedBlindOrder,
     scoreBatchWithRubric, determineAutomaticWinner,
     normalizeDrugName, suggestedVerdict, makePrompt, dbCrossCheck, DATASET_COLUMNS, parseDelimitedRows,
-    normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, pdfTableFromLines,
-    datasetRequiresConfirmation, buildContractDatasetFromRuns,
+    normalizeDatasetTable, validateDatasetRows, buildDatasetTemplateCsv, datasetImageKey, datasetImageBaseName, isDatasetImageName, pdfTableFromLines,
+    datasetRequiresConfirmation, datasetValidationCanImport, buildContractDatasetFromRuns,
     seededRandom, randomSeedText, shuffledIndices, createRandomBatchQueue, drawRandomBatch,
   };
   root.KCSIArenaCore = core;
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
 
-  const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
+  const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '', frontMissing: false, backMissing: false }));
   // answerError는 정답지가 실패한 이유를 들고 있는다. 사진을 올리면 상태 줄이 덮이는데,
   // 그러면 왜 안 되는지 볼 방법이 사라진다. 정답지가 풀릴 때까지 다시 보여 준다.
-  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null, answerError: '' });
-  const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset(), lastSave: null };
+  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], imageSourceName: '', validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null, answerError: '' });
+  const state = { images: blankImages(), activeCaseCount: CASE_COUNT, current: null, runs: readRuns(), dataset: blankDataset(), lastSave: null };
   let datasetOcrAbort = null;
+  let datasetEpoch = 0;
+  let answerImportToken = 0;
+  let imageImportToken = 0;
+  let sampleImportToken = 0;
+  let datasetBatchToken = 0;
+  let datasetBatchLoading = false;
+  let sampleLoadButton = null;
+  let experimentImageGeneration = 0;
+  const slotImportTokens = new Map();
+
+  function setDatasetBatchLoading(loading) {
+    datasetBatchLoading = !!loading;
+    const select = document.getElementById('arenaDatasetBatchSelect');
+    const load = document.getElementById('arenaDatasetLoadBatch');
+    const random = document.getElementById('arenaDatasetRandomBatch');
+    if (select) select.disabled = datasetBatchLoading;
+    if (load) load.disabled = datasetBatchLoading;
+    if (random) random.disabled = datasetBatchLoading;
+  }
+
+  function releaseSampleLoadButton() {
+    if (sampleLoadButton) sampleLoadButton.disabled = false;
+    sampleLoadButton = null;
+  }
+
+  function invalidateDatasetBatchLoad() {
+    datasetBatchToken += 1;
+    setDatasetBatchLoading(false);
+  }
+
+  function invalidateAllDatasetAsync() {
+    datasetEpoch += 1;
+    answerImportToken += 1;
+    imageImportToken += 1;
+    sampleImportToken += 1;
+    invalidateDatasetBatchLoad();
+    releaseSampleLoadButton();
+  }
+
+  function beginAnswerImport() {
+    sampleImportToken += 1;
+    releaseSampleLoadButton();
+    invalidateDatasetBatchLoad();
+    return { epoch: datasetEpoch, token: ++answerImportToken };
+  }
+
+  function answerImportIsCurrent(operation) {
+    return !!operation && operation.epoch === datasetEpoch && operation.token === answerImportToken;
+  }
+
+  function beginImageImport() {
+    sampleImportToken += 1;
+    releaseSampleLoadButton();
+    invalidateDatasetBatchLoad();
+    return { epoch: datasetEpoch, token: ++imageImportToken };
+  }
+
+  function imageImportIsCurrent(operation) {
+    return !!operation && operation.epoch === datasetEpoch && operation.token === imageImportToken;
+  }
+
+  function beginSampleImport(button) {
+    invalidateAllDatasetAsync();
+    sampleLoadButton = button || null;
+    if (sampleLoadButton) sampleLoadButton.disabled = true;
+    return { epoch: datasetEpoch, token: sampleImportToken };
+  }
+
+  function sampleImportIsCurrent(operation) {
+    return !!operation && operation.epoch === datasetEpoch && operation.token === sampleImportToken;
+  }
+
+  function beginDatasetBatchLoad() {
+    if (datasetBatchLoading) return null;
+    const operation = { epoch: datasetEpoch, token: ++datasetBatchToken, experiment: ++experimentImageGeneration };
+    slotImportTokens.clear();
+    setDatasetBatchLoading(true);
+    return operation;
+  }
+
+  function datasetBatchLoadIsCurrent(operation) {
+    return !!operation && operation.epoch === datasetEpoch && operation.token === datasetBatchToken
+      && operation.experiment === experimentImageGeneration;
+  }
+
+  function finishDatasetBatchLoad(operation) {
+    if (datasetBatchLoadIsCurrent(operation)) setDatasetBatchLoading(false);
+  }
+
+  function invalidateExperimentImageOperations() {
+    experimentImageGeneration += 1;
+    slotImportTokens.clear();
+  }
 
   function modelForm(number, preset) {
     return `<div class="arena-model" data-model-form="${number}">
@@ -999,12 +1236,12 @@
           <div class="arena-sample-actions"><select class="arena-select" id="arenaDatasetSampleSet" aria-label="확장 샘플 세트">${EXTENDED_SAMPLE_SETS.map(item => `<option value="${item.id}">${item.count}건 · 사진 ${item.count * 2}장 · ${item.size}</option>`).join('')}</select><button class="arena-action" type="button" id="arenaDatasetSampleLoadExtended">확장 샘플 불러오기</button><a class="arena-action secondary" id="arenaDatasetSampleDownload120" href="/samples/KCSI_MED_MFDS_sample_120.zip" download="KCSI_MED_MFDS_sample_120.zip">ZIP 내려받기</a></div>
         </div>
         <div class="arena-dataset-upload-grid">
-          <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · PDF(텍스트·스캔)</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
+          <label class="arena-dataset-drop" for="arenaDatasetAnswer"><span class="arena-dataset-icon">📋</span><b>정답지 선택</b><small>CSV · Excel(XLSX/XLS) · PDF · 파일1/각인1 형식 지원</small><strong id="arenaDatasetAnswerName">선택된 파일 없음</strong></label>
           <input class="arena-file-input" type="file" id="arenaDatasetAnswer" accept=".csv,.tsv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-          <label class="arena-dataset-drop" for="arenaDatasetImages"><span class="arena-dataset-icon">💊</span><b>알약 사진 선택</b><small>앞·뒷면 이미지를 여러 장 동시 선택</small><strong id="arenaDatasetImageName">선택된 사진 없음</strong></label>
-          <input class="arena-file-input" type="file" id="arenaDatasetImages" accept="image/*" multiple>
+          <label class="arena-dataset-drop" for="arenaDatasetImages"><span class="arena-dataset-icon">💊</span><b>사진 또는 ZIP 선택</b><small>사진 여러 장 또는 폴더가 든 ZIP 1개 · 서버 전송 없음</small><strong id="arenaDatasetImageName">선택된 사진 없음</strong></label>
+          <input class="arena-file-input" type="file" id="arenaDatasetImages" accept="image/*,.zip,application/zip,application/x-zip-compressed" multiple>
         </div>
-        <div class="arena-dataset-guide"><b>필수 열</b><span>case_id</span><span>front_image</span><span>back_image</span><span>drug_name 또는 mfds_item_id</span><span>front_imprint</span><span>back_imprint</span></div>
+        <div class="arena-dataset-guide"><b>필수</b><span>case_id 또는 알약번호</span><span>front_image 또는 파일1</span><span>drug_name 또는 각인1</span><span>파일2·각인2는 단면이면 공란 허용</span></div>
         <div class="arena-ocr-note"><b>스캔 PDF도 로컬 처리</b><span>텍스트 표가 없으면 브라우저가 자동으로 한글·영문 OCR로 전환합니다. 첫 실행은 글자 모델을 내려받아 시간이 걸릴 수 있습니다.</span></div>
         <div class="arena-ocr-panel" id="arenaDatasetOcrPanel" hidden>
           <div class="arena-ocr-head"><div><b>스캔 PDF 로컬 OCR</b><span id="arenaDatasetOcrStatus">준비 중</span></div><button class="arena-preset arena-preset-danger" type="button" id="arenaDatasetOcrCancel">OCR 취소</button></div>
@@ -1020,27 +1257,29 @@
           <div class="arena-dataset-stat ok"><b id="arenaDatasetValid">0</b><span>검증 통과</span></div>
           <div class="arena-dataset-stat bad"><b id="arenaDatasetInvalid">0</b><span>수정 필요</span></div>
           <div class="arena-dataset-stat"><b id="arenaDatasetImagesCount">0</b><span>업로드 사진</span></div>
+          <div class="arena-dataset-stat ok"><b id="arenaDatasetMatched">0 / 0</b><span>파일명 일치</span></div>
+          <div class="arena-dataset-stat"><b id="arenaDatasetSingleSided">0</b><span>한 면 알약</span></div>
         </div>
         <div id="arenaDatasetNotices"></div>
         <div class="arena-dataset-preview" id="arenaDatasetPreview"><div class="arena-empty">정답지와 알약 사진을 선택하면 검증 결과가 표시됩니다.</div></div>
-        <div class="arena-dataset-import" id="arenaDatasetImport" hidden><div><b>검증된 데이터를 기존 5알약 비교에 적용</b><span>한 번에 5건씩 앞·뒷면과 정답을 자동 입력합니다.</span><span class="arena-dataset-random" id="arenaDatasetRandomNote"></span></div><select class="arena-select" id="arenaDatasetBatchSelect" aria-label="불러올 데이터셋 범위"></select><button class="arena-action" type="button" id="arenaDatasetLoadBatch">선택한 5건 불러오기</button><button class="arena-action arena-action-ghost" type="button" id="arenaDatasetRandomBatch">🎲 랜덤 5건 뽑기</button></div>
+        <div class="arena-dataset-import" id="arenaDatasetImport" hidden><div><b>검증된 데이터를 모델 비교에 적용</b><span id="arenaDatasetPlan">최대 5건씩 사진과 정답을 자동 입력합니다.</span><span class="arena-dataset-random" id="arenaDatasetRandomNote"></span></div><select class="arena-select" id="arenaDatasetBatchSelect" aria-label="불러올 데이터셋 범위"></select><button class="arena-action" type="button" id="arenaDatasetLoadBatch">선택 배치 불러오기</button><button class="arena-action arena-action-ghost" type="button" id="arenaDatasetRandomBatch">🎲 랜덤 배치</button></div>
       </section>
     </div>`;
   }
 
   function rootMarkup() {
     const modelHeads = MODEL_LABELS.map(label => `<th>모델 ${label}</th>`).join('');
-    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr><td>알약 ${index + 1} 정확성 (0–40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
+    const accuracyRows = Array.from({ length: CASE_COUNT }, (_, index) => `<tr data-score-case="${index + 1}"><td>알약 ${index + 1} 정확성 (0–40)</td>${MODEL_LABELS.map(label => `<td>${verdictSelect(label, index)}</td>`).join('')}</tr>`).join('');
     const rubricRow = (title, field, max) => `<tr><td>${title}</td>${MODEL_LABELS.map(label => `<td>${scoreInput(label, field, max)}</td>`).join('')}</tr>`;
     return `<div class="arena-shell">
-      <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Blind Evaluation</div><h1>4개 OpenAI 모델 · 알약 5개 일괄 비교</h1><p>알약 5개의 앞·뒷면 사진 10장을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 채점 전까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 20회로 쪼개지 않고 각 모델이 사진 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
+      <section class="arena-hero"><div class="arena-eyebrow">KCSI OpenAI Batch Arena · Blind Evaluation</div><h1>4개 OpenAI 모델 · 알약 최대 5개 비교</h1><p>알약 1–5개의 제공된 면 사진(최대 10장)을 한 번 등록하고, 동일 사진과 동일 프롬프트를 GPT-4o 이상 4개 모델에 동시에 전송합니다. 채점 전까지 실제 모델명은 숨겨집니다.</p><div class="arena-cost-notice"><b>💳 비용·호출</b><span>배치 1회는 모델별 한 번씩 <strong>총 4회 API 호출</strong>입니다. 알약별로 쪼개지 않고 각 모델이 사진 최대 10장을 한 요청으로 판독하므로 현재 일일 40회 제한 기준 최대 10배치까지 연습할 수 있습니다.</span></div><div class="arena-privacy">🔐 원본 사진은 연구기록에 저장하지 않습니다. 성명·주민번호·사건번호 등 개인 식별정보를 제거한 연구용 이미지만 사용하세요.</div></section>
       <div class="arena-nav"><button class="active" data-arena-view="dataset">데이터셋 검증</button><button data-arena-view="experiment">새 배치 비교</button><button data-arena-view="dashboard">누적 연구결과</button></div>
       ${datasetViewMarkup()}
       <div class="arena-view" id="arenaExperiment">
-        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>한 배치에 알약 5개, 사진 10장을 등록합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>정답지 사용</label><small>제품명·각인 정답은 AI에 전송되지 않고 블라인드 채점 보조와 CSV에만 사용됩니다.</small></div></div></section>
-        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>5쌍 이미지와 정답지</h2><p>일괄 선택 시 반드시 1앞, 1뒤, 2앞, 2뒤 … 5앞, 5뒤 순서로 10장을 선택하세요.</p></div><div class="arena-batch-count" id="arenaBatchCount">0 / 10</div></div><div class="arena-bulk-actions"><label class="arena-action" for="arenaBatchFiles">📚 사진 10장 한꺼번에 선택</label><input class="arena-file-input" type="file" id="arenaBatchFiles" accept="image/*" multiple><button class="arena-action secondary" type="button" id="arenaClearImages">사진 전체 지우기</button></div><div class="arena-order-guide"><b>자동 배치 순서</b><span>① 1번 앞</span><span>② 1번 뒤</span><span>③ 2번 앞</span><span>④ 2번 뒤</span><span>…</span><span>⑨ 5번 앞</span><span>⑩ 5번 뒤</span></div><div class="arena-cases">${Array.from({ length: CASE_COUNT }, (_, index) => caseForm(index)).join('')}</div></section>
-        <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 5개 알약 채점과 투표가 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span>10장 모두 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 사진 10장 · 모델 4개 블라인드 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
-        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">👁️ 실제 모델명은 숨겨져 있습니다. 정답지는 API에 보내지 않고, 응답 뒤 브라우저 메모리에서만 자동채점합니다. 자동점수는 저장 전 수정할 수 있습니다.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-auto-status" id="arenaAutoStatus" role="status" aria-live="polite">자동채점 대기</div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${rubricRow('근거 타당성 (0–25)','evidence',25)}${rubricRow('환각 억제 (0–20)','hallucination',20)}${rubricRow('명확성 (0–15)','clarity',15)}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" id="arenaTotal${label}">—</span></td>`).join('')}</tr></tbody></table></div><details class="arena-auto-details" id="arenaAutoDetails"><summary>자동채점 산식과 사례별 근거 보기</summary><div id="arenaAutoReasons"></div></details><div class="arena-auto-accept"><button class="arena-action" type="button" id="arenaAcceptAuto" disabled>자동 추천 결과로 평가 저장</button><span>점수 검토가 필요하면 위 값을 수정하거나 아래 모델을 직접 선택하세요.</span></div><div class="arena-vote-title">어느 모델의 5개 종합 결과가 가장 우수합니까?</div><div class="arena-votes">${MODEL_LABELS.map(label => `<button class="arena-vote" data-vote="${label}">${label}가 더 우수</button>`).join('')}<button class="arena-vote" data-vote="tie">동등</button></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
+        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">1</span>배치 정보</h2><p>정답지 데이터셋은 알약 1–5개, 직접 일괄 등록은 알약 5개·사진 10장으로 구성합니다.</p></div></div><div class="arena-grid"><div class="arena-field"><label for="arenaBatchId">익명 배치번호</label><input class="arena-input mono" id="arenaBatchId" placeholder="예: BATCH-2026-001"></div><div class="arena-field"><label>정답지 사용</label><small>제품명·각인 정답은 AI에 전송되지 않고 블라인드 채점 보조와 CSV에만 사용됩니다.</small></div></div></section>
+        <section class="arena-card"><div class="arena-card-h"><div><h2><span class="arena-step">2</span>최대 5개 알약 사진과 정답지</h2><p>직접 일괄 선택할 때는 1앞, 1뒤 … 5앞, 5뒤 순서로 10장을 선택합니다. 검증 데이터셋은 단면과 마지막 1–4건 배치를 자동 처리합니다.</p></div><div class="arena-batch-count" id="arenaBatchCount">0 / 10</div></div><div class="arena-bulk-actions"><label class="arena-action" for="arenaBatchFiles">📚 사진 10장 한꺼번에 선택</label><input class="arena-file-input" type="file" id="arenaBatchFiles" accept="image/*" multiple><button class="arena-action secondary" type="button" id="arenaClearImages">사진 전체 지우기</button></div><div class="arena-order-guide"><b>자동 배치 순서</b><span>① 1번 앞</span><span>② 1번 뒤</span><span>③ 2번 앞</span><span>④ 2번 뒤</span><span>…</span><span>⑨ 5번 앞</span><span>⑩ 5번 뒤</span></div><div class="arena-cases">${Array.from({ length: CASE_COUNT }, (_, index) => caseForm(index)).join('')}</div></section>
+        <section class="arena-card" id="arenaSetupCard"><div class="arena-card-h"><div><h2><span class="arena-step">3</span>OpenAI 비교 모델 4개</h2><p>4개 모델은 실행할 때 A–D에 무작위 배정됩니다.</p></div><button type="button" class="arena-preset" id="arenaOpenAiPreset">기본값 복원</button></div><div class="arena-cost-mode"><div><b>API 비용 모드</b><span id="arenaCostHint">저비용 연습 · 이미지 low · 최대 출력 3,000 토큰</span></div><select class="arena-select" id="arenaCostMode"><option value="practice">저비용 연습 (기본)</option><option value="research">정밀 비교 (비용 증가)</option></select><p>화면·절차 연습은 저비용 모드, 작은 각인 판독의 실제 정확도 비교는 정밀 비교를 권장합니다.</p></div><div class="arena-models">${MODEL_PRESETS.map((preset, index) => modelForm(index + 1, preset)).join('')}</div><div class="arena-setup-lock">🔒 모델 설정이 잠겼습니다. 현재 배치 채점과 투표가 끝날 때까지 A–D의 실제 모델을 표시하지 않습니다.</div><label class="arena-check" style="margin-top:12px"><input type="checkbox" id="arenaConsent"><span id="arenaConsentText">등록 사진이 같은 배치의 연구용 이미지이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.</span></label><button class="arena-action" id="arenaRun" style="margin-top:10px" disabled>🧪 모델 4개 블라인드 비교 시작</button><div class="arena-status" id="arenaStatus" role="status" aria-live="polite"></div></section>
+        <section class="arena-results" id="arenaResults"><div class="arena-blind-note">👁️ 실제 모델명은 숨겨져 있습니다. 정답지는 API에 보내지 않고, 응답 뒤 브라우저 메모리에서만 자동채점합니다. 자동점수는 저장 전 수정할 수 있습니다.</div><div class="arena-compare" id="arenaCompare"></div><div class="arena-auto-status" id="arenaAutoStatus" role="status" aria-live="polite">자동채점 대기</div><div class="arena-score-wrap"><table class="arena-score"><thead><tr><th>평가 기준</th>${modelHeads}</tr></thead><tbody>${accuracyRows}${rubricRow('근거 타당성 (0–25)','evidence',25)}${rubricRow('환각 억제 (0–20)','hallucination',20)}${rubricRow('명확성 (0–15)','clarity',15)}<tr><td>배치 총점 (100점)</td>${MODEL_LABELS.map(label => `<td><span class="arena-total" id="arenaTotal${label}">—</span></td>`).join('')}</tr></tbody></table></div><details class="arena-auto-details" id="arenaAutoDetails"><summary>자동채점 산식과 사례별 근거 보기</summary><div id="arenaAutoReasons"></div></details><div class="arena-auto-accept"><button class="arena-action" type="button" id="arenaAcceptAuto" disabled>자동 추천 결과로 평가 저장</button><span>점수 검토가 필요하면 위 값을 수정하거나 아래 모델을 직접 선택하세요.</span></div><div class="arena-vote-title" id="arenaVoteTitle">어느 모델의 5개 종합 결과가 가장 우수합니까?</div><div class="arena-votes">${MODEL_LABELS.map(label => `<button class="arena-vote" data-vote="${label}">${label}가 더 우수</button>`).join('')}<button class="arena-vote" data-vote="tie">동등</button></div><div class="arena-reveal" id="arenaReveal"></div><div class="arena-post-actions" id="arenaPostActions" hidden><button class="arena-action secondary" id="arenaNew">다음 배치 시작</button><button class="arena-action secondary" id="arenaGoDashboard">누적 결과 보기</button></div></section>
       </div>
       <div class="arena-view" id="arenaDashboard">
         <div class="arena-stat-grid" id="arenaStats"></div>
@@ -1075,7 +1314,7 @@
     const arenaRoot = document.createElement('div');
     arenaRoot.id = 'arenaRoot'; arenaRoot.innerHTML = rootMarkup();
     header.insertAdjacentElement('afterend', arenaRoot);
-    bindUi(); renderDashboard(); refreshUploadCount();
+    bindUi(); setActiveCaseCount(CASE_COUNT); renderDashboard(); refreshUploadCount();
   }
 
   function bindUi() {
@@ -1149,6 +1388,21 @@
     document.querySelectorAll('.arena-view').forEach(view => view.classList.toggle('active', view.id === (viewIds[name] || viewIds.dataset)));
     document.querySelectorAll('[data-arena-view]').forEach(button => button.classList.toggle('active', button.dataset.arenaView === name));
     if (name === 'dashboard') renderDashboard();
+  }
+
+  function activeCaseCount() {
+    const count = Number(state && state.activeCaseCount);
+    return Number.isFinite(count) ? Math.max(1, Math.min(CASE_COUNT, Math.floor(count))) : CASE_COUNT;
+  }
+
+  function setActiveCaseCount(value) {
+    const count = Math.max(1, Math.min(CASE_COUNT, Math.floor(Number(value)) || CASE_COUNT));
+    state.activeCaseCount = count;
+    document.querySelectorAll('[data-case]').forEach(card => { card.hidden = Number(card.dataset.case) > count; });
+    document.querySelectorAll('[data-score-case]').forEach(row => { row.hidden = Number(row.dataset.scoreCase) > count; });
+    const voteTitle = document.getElementById('arenaVoteTitle');
+    if (voteTitle) voteTitle.textContent = `어느 모델의 ${count}개 종합 결과가 가장 우수합니까?`;
+    refreshUploadCount();
   }
 
   function setDatasetStatus(message, error) {
@@ -1276,7 +1530,7 @@
     refreshDatasetValidation();
   }
 
-  async function importScannedAnswerKey(file) {
+  async function importScannedAnswerKey(file, operation) {
     const tools = researchDatasetTools();
     const controller = new AbortController();
     datasetOcrAbort = controller;
@@ -1291,8 +1545,9 @@
         arenaCore: core,
         maxPages: 20,
         signal: controller.signal,
-        onProgress: setDatasetOcrProgress,
+        onProgress: info => { if (answerImportIsCurrent(operation)) setDatasetOcrProgress(info); },
       });
+      if (!answerImportIsCurrent(operation)) return;
       renderDatasetOcrReview(result);
       if (result.errors && result.errors.length) {
         const error = new Error(result.errors[0].message || '스캔 PDF에서 정답지 표를 만들지 못했습니다');
@@ -1303,7 +1558,7 @@
       setDatasetStatus(`${file.name} · OCR로 ${result.rows.length}개 데이터 행을 읽었습니다 · 원문과 변환 표를 확인하세요`);
     } finally {
       if (datasetOcrAbort === controller) datasetOcrAbort = null;
-      if (cancel) cancel.hidden = true;
+      if (cancel && answerImportIsCurrent(operation)) cancel.hidden = true;
     }
   }
 
@@ -1315,26 +1570,36 @@
   async function loadFixedSampleDataset(setId) {
     const set = sampleDatasetById(setId);
     const button = document.getElementById(set.id === 'fixed20' ? 'arenaDatasetSampleLoad' : 'arenaDatasetSampleLoadExtended');
-    button.disabled = true;
+    if (datasetOcrAbort) cancelDatasetOcr();
+    const operation = beginSampleImport(button);
     setDatasetStatus(`식약처 ${set.label}을 내려받고 압축을 푸는 중...`);
     try {
       const response = await fetch(set.url, { cache: 'no-store' });
+      if (!sampleImportIsCurrent(operation)) return;
       // 확장 세트 ZIP은 저장소에 커밋된 뒤에야 배포된다. 404를 그냥 숫자로 보여주면 원인을 알 수 없다.
       if (response.status === 404) throw new Error(`${set.archive}가 아직 배포에 없습니다. scripts/build-mfds-sample-dataset.mjs --set=${set.id} 로 만들어 커밋하세요`);
       if (!response.ok) throw new Error(`샘플 데이터 다운로드 오류 ${response.status}`);
       const JSZip = await ensureZipLib();
-      const archive = await JSZip.loadAsync(await response.arrayBuffer());
+      if (!sampleImportIsCurrent(operation)) return;
+      const archiveBytes = await response.arrayBuffer();
+      if (!sampleImportIsCurrent(operation)) return;
+      const archive = await JSZip.loadAsync(archiveBytes);
+      if (!sampleImportIsCurrent(operation)) return;
       const answerEntry = archive.file('answer_sheet.csv');
       if (!answerEntry) throw new Error('샘플 ZIP에서 answer_sheet.csv를 찾지 못했습니다');
       const imageEntries = Object.values(archive.files).filter(entry => !entry.dir && /^images\/.+\.(?:jpe?g|png|webp)$/i.test(entry.name));
       if (imageEntries.length !== set.count * 2) throw new Error(`샘플 사진 수가 예상과 다릅니다: ${imageEntries.length}장`);
-      const answerFile = new File([await answerEntry.async('blob')], `${set.archive.replace(/\.zip$/, '')}_answer_sheet.csv`, { type: 'text/csv;charset=utf-8' });
+      const answerBlob = await answerEntry.async('blob');
+      if (!sampleImportIsCurrent(operation)) return;
+      const answerFile = new File([answerBlob], `${set.archive.replace(/\.zip$/, '')}_answer_sheet.csv`, { type: 'text/csv;charset=utf-8' });
       const imageFiles = await Promise.all(imageEntries.map(async entry => {
         const name = entry.name.split('/').pop();
         const type = /\.png$/i.test(name) ? 'image/png' : /\.webp$/i.test(name) ? 'image/webp' : 'image/jpeg';
         return new File([await entry.async('blob')], name, { type });
       }));
+      if (!sampleImportIsCurrent(operation)) return;
       const parsed = await readAnswerKeyFile(answerFile);
+      if (!sampleImportIsCurrent(operation)) return;
       if (parsed.rows.length !== set.count) throw new Error(`샘플 정답지 행이 예상과 다릅니다: ${parsed.rows.length}건`);
       state.dataset = {
         answerFile,
@@ -1342,11 +1607,13 @@
         rows: parsed.rows,
         loadedRows: [],
         imageFiles,
+        imageSourceName: set.archive,
         validation: null,
         confirmed: true,
         requiresConfirmation: false,
         importMeta: parsed,
         randomQueue: null,
+        answerError: '',
       };
       resetDatasetOcrUi();
       document.getElementById('arenaDatasetAnswerName').textContent = answerFile.name;
@@ -1359,10 +1626,11 @@
       }
       setDatasetStatus(`식약처 ${set.label}과 앞·뒷면 사진 ${set.count * 2}장을 불러왔습니다 · 아래에서 5건씩 선택하거나 랜덤으로 뽑으세요`);
     } catch (error) {
+      if (!sampleImportIsCurrent(operation)) return;
       clearDataset();
       setDatasetStatus(error.message || '고정 샘플을 불러오지 못했습니다', true);
     } finally {
-      button.disabled = false;
+      if (sampleImportIsCurrent(operation)) releaseSampleLoadButton();
     }
   }
 
@@ -1370,10 +1638,8 @@
     const file = event.target.files && event.target.files[0];
     event.target.value = '';
     if (!file) return;
-    if (datasetOcrAbort) {
-      cancelDatasetOcr();
-      return setDatasetStatus('실행 중인 OCR을 취소했습니다. 정리가 끝난 뒤 새 정답지를 다시 선택하세요', true);
-    }
+    if (datasetOcrAbort) cancelDatasetOcr();
+    const operation = beginAnswerImport();
     state.dataset.answerFile = file;
     state.dataset.rows = [];
     state.dataset.sourceType = '';
@@ -1382,22 +1648,27 @@
     state.dataset.confirmed = false;
     state.dataset.requiresConfirmation = false;
     resetDatasetOcrUi();
+    refreshDatasetValidation();
     document.getElementById('arenaDatasetAnswerName').textContent = file.name;
     setDatasetStatus('정답지의 열과 데이터 행을 확인하는 중...');
     try {
       let parsed;
       try {
         parsed = await readAnswerKeyFile(file);
+        if (!answerImportIsCurrent(operation)) return;
       } catch (error) {
+        if (!answerImportIsCurrent(operation)) return;
         if (!isPdfFile(file)) throw error;
         setDatasetStatus('PDF 텍스트 표를 찾지 못해 브라우저 로컬 OCR로 전환합니다...');
-        await importScannedAnswerKey(file);
+        await importScannedAnswerKey(file, operation);
         return;
       }
+      if (!answerImportIsCurrent(operation)) return;
       applyDatasetImport(file, parsed);
       state.dataset.answerError = '';
       setDatasetStatus(`${file.name} · ${parsed.rows.length}개 데이터 행을 읽었습니다${parsed.requiresConfirmation ? ' · PDF 추출 내용을 확인하세요' : ''}`);
     } catch (error) {
+      if (!answerImportIsCurrent(operation)) return;
       state.dataset.rows = [];
       state.dataset.sourceType = '';
       state.dataset.requiresConfirmation = false;
@@ -1411,28 +1682,63 @@
     }
   }
 
-  function handleDatasetImages(event) {
+  async function handleDatasetImages(event) {
     const files = [...(event.target.files || [])];
     event.target.value = '';
     if (!files.length) return;
-    if (files.length > MAX_DATASET_IMAGES) return setDatasetStatus(`사진은 한 번에 최대 ${MAX_DATASET_IMAGES.toLocaleString('ko-KR')}장까지 선택할 수 있습니다`, true);
-    if (files.some(file => file.type && !file.type.startsWith('image/'))) return setDatasetStatus('알약 사진이 아닌 파일이 포함되어 있습니다', true);
-    if (files.some(file => file.size > 30 * 1024 * 1024)) return setDatasetStatus('사진 1장당 30MB 이하만 사용할 수 있습니다', true);
-    state.dataset.imageFiles = files;
-    document.getElementById('arenaDatasetImageName').textContent = `${files.length.toLocaleString('ko-KR')}장 선택됨`;
+    const archives = files.filter(isZipFile);
+    if (archives.length > 1 || (archives.length && files.length > 1)) return setDatasetStatus('ZIP은 한 번에 1개만 선택하세요. ZIP과 개별 사진을 섞을 수 없습니다', true);
+    const operation = beginImageImport();
+    state.dataset.imageFiles = [];
+    state.dataset.imageSourceName = '';
+    state.dataset.validation = null;
+    document.getElementById('arenaDatasetImageName').textContent = `${files[0].name || '사진 데이터'} 읽는 중`;
     refreshDatasetValidation();
-    // 정답지가 아직 실패 상태면 사진 대조 결과보다 그 이유를 다시 보여 준다.
-    // 덮어써 버리면 "사진은 올라갔는데 왜 아무 일도 안 일어나지"만 남는다.
-    if (state.dataset.answerError) {
-      setDatasetStatus(`${state.dataset.answerError} · 사진 ${files.length.toLocaleString('ko-KR')}장은 정답지를 고친 뒤 대조됩니다`, true);
-      return;
+    try {
+      let imageFiles = files;
+      let sourceName = '';
+      let ignoredEntries = 0;
+      if (archives.length) {
+        const archiveFile = archives[0];
+        setDatasetStatus(`${archiveFile.name}의 사진 목록을 브라우저에서 읽는 중입니다. 큰 ZIP은 잠시 걸릴 수 있습니다...`);
+        const imported = await readDatasetImageArchive(archiveFile);
+        if (!imageImportIsCurrent(operation)) return;
+        imageFiles = imported.imageFiles;
+        sourceName = imported.archiveName;
+        ignoredEntries = imported.ignoredEntries;
+      } else {
+        if (files.length > MAX_DATASET_IMAGES) throw new Error(`사진은 한 번에 최대 ${MAX_DATASET_IMAGES.toLocaleString('ko-KR')}장까지 선택할 수 있습니다`);
+        if (files.some(file => file.type && !file.type.startsWith('image/'))) throw new Error('알약 사진이 아닌 파일이 포함되어 있습니다');
+        if (files.some(file => file.size > 30 * 1024 * 1024)) throw new Error('사진 1장당 30MB 이하만 사용할 수 있습니다');
+      }
+      if (!imageImportIsCurrent(operation)) return;
+      state.dataset.imageFiles = imageFiles;
+      state.dataset.imageSourceName = sourceName;
+      const sourceText = sourceName ? `${sourceName} · ` : '';
+      document.getElementById('arenaDatasetImageName').textContent = `${sourceText}${imageFiles.length.toLocaleString('ko-KR')}장`;
+      refreshDatasetValidation();
+      // 정답지가 아직 실패 상태면 사진 대조 결과보다 그 이유를 다시 보여 준다.
+      // 덮어써 버리면 "사진은 올라갔는데 왜 아무 일도 안 일어나지"만 남는다.
+      if (state.dataset.answerError) {
+        setDatasetStatus(`${state.dataset.answerError} · 사진 ${imageFiles.length.toLocaleString('ko-KR')}장은 정답지를 고친 뒤 대조됩니다`, true);
+        return;
+      }
+      const ignored = ignoredEntries ? ` · 사진이 아닌 항목 ${ignoredEntries}개 제외` : '';
+      setDatasetStatus(`${sourceName ? 'ZIP에서 ' : ''}알약 사진 ${imageFiles.length.toLocaleString('ko-KR')}장을 파일명으로 대조했습니다${ignored}`);
+    } catch (error) {
+      if (!imageImportIsCurrent(operation)) return;
+      setDatasetStatus(error.message || '사진 데이터셋을 읽지 못했습니다', true);
     }
-    setDatasetStatus(`알약 사진 ${files.length.toLocaleString('ko-KR')}장을 파일명으로 대조했습니다`);
   }
 
   function refreshDatasetValidation() {
     state.dataset.validation = validateDatasetRows(state.dataset.rows, state.dataset.imageFiles);
     renderDatasetValidation();
+  }
+
+  function datasetValidationCanImport(validation) {
+    const summary = validation && validation.summary || {};
+    return summary.totalRows > 0 && summary.invalidRows === 0 && summary.validRows >= 1;
   }
 
   function datasetRowIssueHtml(row) {
@@ -1450,6 +1756,7 @@
     const key = safeText(target && target.dataset && target.dataset.datasetColumn);
     if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= state.dataset.rows.length) return;
     if (!DATASET_COLUMNS.some(column => column.key === key)) return;
+    invalidateDatasetBatchLoad();
     state.dataset.rows[rowIndex] = { ...state.dataset.rows[rowIndex], [key]: safeText(target.value).trim() };
     state.dataset.confirmed = false;
     const confirm = document.getElementById('arenaPdfConfirm');
@@ -1465,12 +1772,18 @@
     document.getElementById('arenaDatasetValid').textContent = summary.validRows.toLocaleString('ko-KR');
     document.getElementById('arenaDatasetInvalid').textContent = summary.invalidRows.toLocaleString('ko-KR');
     document.getElementById('arenaDatasetImagesCount').textContent = summary.imageCount.toLocaleString('ko-KR');
+    document.getElementById('arenaDatasetMatched').textContent = `${summary.matchedImages.toLocaleString('ko-KR')} / ${summary.expectedImages.toLocaleString('ko-KR')}`;
+    document.getElementById('arenaDatasetSingleSided').textContent = summary.singleSidedRows.toLocaleString('ko-KR');
     const notices = [];
     const meta = state.dataset.importMeta || {};
     if (meta.duplicateHeaders && meta.duplicateHeaders.length) notices.push(`중복 머리글: ${meta.duplicateHeaders.join(', ')}`);
     if (meta.unknownHeaders && meta.unknownHeaders.length) notices.push(`채점에서 제외되는 열: ${meta.unknownHeaders.slice(0, 8).join(', ')}${meta.unknownHeaders.length > 8 ? ' 외' : ''}`);
     if (validation.duplicateImages.length) notices.push(`같은 파일명의 사진이 중복 선택됨: ${validation.duplicateImages.slice(0, 5).join(', ')}`);
+    if (validation.duplicateReferences && validation.duplicateReferences.length) notices.push(`정답지의 여러 면·행에 중복 지정된 사진: ${validation.duplicateReferences.slice(0, 5).join(', ')}`);
     if (validation.orphanImages.length) notices.push(`정답지에 연결되지 않은 사진 ${validation.orphanImages.length}장`);
+    const derivedCaseIds = validation.rows.filter(row => row._derivedCaseId).length;
+    if (derivedCaseIds) notices.push(`case_id가 없는 ${derivedCaseIds}행은 알약번호로 PILL-001 형식 시험번호를 만들었습니다`);
+    if (summary.singleSidedRows) notices.push(`한 면 알약 ${summary.singleSidedRows}건은 미제공 면을 추측하지 않고 제공된 면만 채점합니다`);
     if (datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed) notices.push('PDF/OCR 추출값을 직접 확인하고 확인란을 선택해야 합니다');
     document.getElementById('arenaDatasetNotices').innerHTML = notices.length
       ? `<div class="arena-dataset-notices">${notices.map(message => `<div>⚠ ${esc(message)}</div>`).join('')}</div>` : '';
@@ -1496,31 +1809,46 @@
     const importArea = document.getElementById('arenaDatasetImport');
     const select = document.getElementById('arenaDatasetBatchSelect');
     const button = document.getElementById('arenaDatasetLoadBatch');
-    const canImport = validation.validRows.length >= CASE_COUNT;
+    const canImport = datasetValidationCanImport(validation);
     importArea.hidden = !canImport;
     if (canImport) {
       const options = [];
-      for (let index = 0; index + CASE_COUNT <= validation.validRows.length; index += CASE_COUNT) {
-        const first = validation.validRows[index], last = validation.validRows[index + CASE_COUNT - 1];
-        options.push(`<option value="${index}">${index + 1}–${index + CASE_COUNT}번 · ${esc(first.case_id)} ~ ${esc(last.case_id)}</option>`);
+      for (let index = 0; index < validation.validRows.length; index += CASE_COUNT) {
+        const size = Math.min(CASE_COUNT, validation.validRows.length - index);
+        const first = validation.validRows[index], last = validation.validRows[index + size - 1];
+        const partial = size < CASE_COUNT ? ` · 마지막 ${size}건` : '';
+        options.push(`<option value="${index}">${index + 1}–${index + size}번${partial} · ${esc(first.case_id)} ~ ${esc(last.case_id)}</option>`);
       }
       select.innerHTML = options.join('');
+      const batchCount = Math.ceil(validation.validRows.length / CASE_COUNT);
+      const callCount = batchCount * MODEL_LABELS.length;
+      const plan = document.getElementById('arenaDatasetPlan');
+      if (plan) plan.textContent = `${validation.validRows.length.toLocaleString('ko-KR')}건 전수 비교: ${batchCount}배치 · 모델 4개 기준 ${callCount}회 API 호출${callCount > 40 ? ' · 기본 일일 40회 한도 초과' : ''}`;
       const locked = datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed;
-      button.disabled = locked;
+      select.disabled = datasetBatchLoading;
+      button.disabled = locked || datasetBatchLoading;
       // 유효 행 수가 달라지면(수정·재업로드) 뽑기 이력을 버리고 새로 섞는다.
       const queue = state.dataset.randomQueue;
       if (!queue || queue.total !== validation.validRows.length) {
         state.dataset.randomQueue = createRandomBatchQueue(validation.validRows.length);
       }
       const randomButton = document.getElementById('arenaDatasetRandomBatch');
-      if (randomButton) randomButton.disabled = locked;
+      if (randomButton) randomButton.disabled = locked || datasetBatchLoading;
       renderRandomNote();
+    } else {
+      select.innerHTML = '';
+      select.disabled = true;
+      button.disabled = true;
+      const randomButton = document.getElementById('arenaDatasetRandomBatch');
+      if (randomButton) randomButton.disabled = true;
     }
   }
 
   function clearDataset() {
     cancelDatasetOcr();
+    invalidateAllDatasetAsync();
     state.dataset = blankDataset();
+    resetExperimentState();
     document.getElementById('arenaDatasetAnswer').value = '';
     document.getElementById('arenaDatasetImages').value = '';
     document.getElementById('arenaDatasetAnswerName').textContent = '선택된 파일 없음';
@@ -1528,7 +1856,7 @@
     document.getElementById('arenaPdfConfirmWrap').hidden = true;
     document.getElementById('arenaPdfConfirm').checked = false;
     resetDatasetOcrUi();
-    setDatasetStatus('데이터셋을 브라우저 메모리에서 지웠습니다');
+    setDatasetStatus('데이터셋과 불러온 배치 사진을 브라우저 메모리에서 지웠습니다');
     refreshDatasetValidation();
   }
 
@@ -1565,28 +1893,29 @@
     const note = document.getElementById('arenaDatasetRandomNote');
     if (!note) return;
     const queue = state.dataset.randomQueue;
-    if (!queue || queue.total < CASE_COUNT) { note.textContent = ''; return; }
-    const perRound = Math.floor(queue.total / CASE_COUNT);
+    if (!queue || queue.total < 1) { note.textContent = ''; return; }
+    const perRound = Math.ceil(queue.total / CASE_COUNT);
     note.textContent = draw
       ? `무작위 ${draw.draw}회차 · seed ${draw.seed} · ${draw.round}바퀴 ${Math.ceil((queue.cursor) / CASE_COUNT)}/${perRound} · 이번 바퀴 미출제 ${draw.remaining}건`
-      : `🎲 ${queue.total}건 중 무작위 5건 · seed ${queue.seed} · 한 바퀴 ${perRound}배치, 같은 바퀴에서는 중복 없음`;
+      : `🎲 ${queue.total}건 중 최대 5건 · seed ${queue.seed} · 한 바퀴 ${perRound}배치, 마지막 나머지도 빠짐없이 출제`;
   }
 
   // 무작위 뽑기도 정답지 자체는 건드리지 않는다. 어느 5건을 풀지만 정한다.
   async function loadRandomDatasetBatch() {
     const validation = state.dataset.validation;
-    if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
+    if (datasetBatchLoading) return;
+    if (!datasetValidationCanImport(validation)) return setDatasetStatus('정답지의 모든 행이 검증을 통과해야 배치를 불러올 수 있습니다', true);
     if (!state.dataset.randomQueue || state.dataset.randomQueue.total !== validation.validRows.length) {
       state.dataset.randomQueue = createRandomBatchQueue(validation.validRows.length);
     }
-    const draw = drawRandomBatch(state.dataset.randomQueue, CASE_COUNT);
+    const draw = drawRandomBatch(state.dataset.randomQueue, CASE_COUNT, { allowPartial: true });
     if (!draw) return setDatasetStatus('무작위로 뽑을 데이터가 부족합니다', true);
     await loadDatasetBatch({ indices: draw.indices, draw });
   }
 
   async function loadDatasetBatch(options) {
     const validation = state.dataset.validation;
-    if (!validation || validation.validRows.length < CASE_COUNT) return setDatasetStatus('검증을 통과한 데이터가 5건 이상 필요합니다', true);
+    if (!datasetValidationCanImport(validation)) return setDatasetStatus('정답지의 모든 행이 검증을 통과해야 배치를 불러올 수 있습니다', true);
     if (datasetRequiresConfirmation(state.dataset) && !state.dataset.confirmed) return setDatasetStatus('PDF/OCR 추출 내용을 확인한 뒤 확인란을 선택하세요', true);
     const draw = options && options.draw ? options.draw : null;
     const explicit = options && Array.isArray(options.indices) ? options.indices : null;
@@ -1594,22 +1923,53 @@
     const rows = explicit
       ? explicit.map(index => validation.validRows[index]).filter(Boolean)
       : validation.validRows.slice(start, start + CASE_COUNT);
-    if (rows.length !== CASE_COUNT) return setDatasetStatus('선택한 범위에서 5건을 불러오지 못했습니다', true);
-    setDatasetStatus('앞·뒷면 사진 10장을 비교용 크기로 최적화하는 중...');
+    if (!rows.length || rows.length > CASE_COUNT) return setDatasetStatus('선택한 범위에서 1–5건을 불러오지 못했습니다', true);
+    const operation = beginDatasetBatchLoad();
+    if (!operation) return;
+    const expectedImages = rows.reduce((sum, row) => sum + 1 + (safeText(row.back_image).trim() ? 1 : 0), 0);
+    setDatasetStatus(`사진 ${expectedImages}장을 EXIF 방향에 맞춰 비교용 크기로 최적화하는 중...`);
     try {
-      const pairs = await Promise.all(rows.map(async row => {
-        const frontFile = datasetFileByName(row.front_image), backFile = datasetFileByName(row.back_image);
-        if (!frontFile || !backFile) throw new Error(`${row.case_id}의 앞·뒷면 파일을 찾지 못했습니다`);
-        const [front, back] = await Promise.all([fileToDataUrl(frontFile), fileToDataUrl(backFile)]);
-        return { front, back, frontName: frontFile.name, backName: backFile.name };
-      }));
-      state.images = pairs;
+      const pairs = [];
+      for (let index = 0; index < rows.length; index += 1) {
+        const row = rows[index];
+        const frontRef = datasetFileByName(row.front_image);
+        const backRef = safeText(row.back_image).trim() ? datasetFileByName(row.back_image) : null;
+        if (!frontRef || (safeText(row.back_image).trim() && !backRef)) throw new Error(`${row.case_id}의 정답지 사진 파일을 찾지 못했습니다`);
+        setDatasetStatus(`${row.case_id} 사진을 최적화하는 중 · ${index + 1}/${rows.length}`);
+        const frontFile = await materializeDatasetImage(frontRef);
+        if (!datasetBatchLoadIsCurrent(operation)) return;
+        const front = await fileToDataUrl(frontFile);
+        if (!datasetBatchLoadIsCurrent(operation)) return;
+        let back = '', backName = '', backMissing = true;
+        if (backRef) {
+          const backFile = await materializeDatasetImage(backRef);
+          if (!datasetBatchLoadIsCurrent(operation)) return;
+          back = await fileToDataUrl(backFile);
+          if (!datasetBatchLoadIsCurrent(operation)) return;
+          backName = backFile.name;
+          backMissing = false;
+        }
+        pairs.push({ front, back, frontName: frontFile.name, backName, frontMissing: false, backMissing });
+      }
+      if (!datasetBatchLoadIsCurrent(operation)) return;
+      state.images = pairs.concat(blankImages().slice(pairs.length));
       state.dataset.loadedRows = rows.map(row => ({ ...row, variant: variantFromDatasetRow(row) }));
+      setActiveCaseCount(rows.length);
       const sourceName = safeText(state.dataset.answerFile && state.dataset.answerFile.name).replace(/\.[^.]+$/, '') || 'DATASET';
       // 무작위 배치는 seed와 회차를 배치 ID에 남긴다 — 나중에 같은 문제를 다시 뽑을 수 있어야 한다.
       document.getElementById('arenaBatchId').value = draw
         ? `${sourceName}-RND${draw.seed}-${String(draw.draw).padStart(2, '0')}`
-        : `${sourceName}-${String(start + 1).padStart(3, '0')}-${String(start + CASE_COUNT).padStart(3, '0')}`;
+        : `${sourceName}-${String(start + 1).padStart(3, '0')}-${String(start + rows.length).padStart(3, '0')}`;
+      for (let index = 0; index < CASE_COUNT; index += 1) {
+        const number = index + 1;
+        if (index >= rows.length) {
+          document.getElementById(`arenaCaseId${number}`).value = `CASE-${number}`;
+          document.getElementById(`arenaClarity${number}`).value = '각인 명확';
+          document.getElementById(`arenaTruthName${number}`).value = '';
+          document.getElementById(`arenaTruthFront${number}`).value = '';
+          document.getElementById(`arenaTruthBack${number}`).value = '';
+        }
+      }
       rows.forEach((row, index) => {
         const number = index + 1;
         document.getElementById(`arenaCaseId${number}`).value = row.case_id;
@@ -1623,11 +1983,18 @@
       refreshUploadCount();
       switchArenaView('experiment');
       if (draw) renderRandomNote(draw);
-      setArenaStatus(draw
-        ? `무작위 5건(seed ${draw.seed} · ${draw.draw}회차)을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`
-        : `검증된 데이터셋 ${start + 1}–${start + CASE_COUNT}번을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`);
+      const loadedMessage = draw
+        ? `무작위 ${rows.length}건(seed ${draw.seed} · ${draw.draw}회차)을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`
+        : `검증된 데이터셋 ${start + 1}–${start + rows.length}번을 불러왔습니다 · 모델 실행 전 전송 동의가 필요합니다`;
+      setArenaStatus(loadedMessage);
+      setDatasetStatus(loadedMessage);
       document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (error) { setDatasetStatus(error.message || '데이터셋을 불러오지 못했습니다', true); }
+    } catch (error) {
+      if (datasetBatchLoadIsCurrent(operation)) setDatasetStatus(error.message || '데이터셋을 불러오지 못했습니다', true);
+    } finally {
+      finishDatasetBatchLoad(operation);
+      if (datasetBatchLoadIsCurrent(operation)) renderDatasetValidation();
+    }
   }
 
   function restorePreset() {
@@ -1642,7 +2009,10 @@
     const zone = document.getElementById(`arenaCase${number}${cap}Zone`);
     const handle = async input => {
       if (!input.files || !input.files[0]) return;
-      try { await assignFile(index, side, input.files[0]); setArenaStatus(`알약 ${number} ${side === 'front' ? '앞면' : '뒷면'} 등록 완료`); }
+      try {
+        const applied = await assignFile(index, side, input.files[0]);
+        if (applied) setArenaStatus(`알약 ${number} ${side === 'front' ? '앞면' : '뒷면'} 등록 완료`);
+      }
       catch (error) { setArenaStatus(error.message, true); }
       input.value = '';
     };
@@ -1653,10 +2023,24 @@
   async function assignFile(index, side, file) {
     if (file.type && !file.type.startsWith('image/')) throw new Error('사진 파일만 선택하세요');
     if (file.size > 30 * 1024 * 1024) throw new Error('사진 1장당 30MB 이하만 가능합니다');
-    const data = await fileToDataUrl(file);
+    invalidateDatasetBatchLoad();
+    const generation = experimentImageGeneration;
+    const key = `${index}:${side}`;
+    const token = (slotImportTokens.get(key) || 0) + 1;
+    slotImportTokens.set(key, token);
+    let data;
+    try {
+      data = await fileToDataUrl(file);
+    } catch (error) {
+      if (generation !== experimentImageGeneration || slotImportTokens.get(key) !== token) return false;
+      throw error;
+    }
+    if (generation !== experimentImageGeneration || slotImportTokens.get(key) !== token) return false;
     state.images[index][side] = data;
     state.images[index][`${side}Name`] = file.name || `CASE-${index + 1}-${side}`;
+    state.images[index][`${side}Missing`] = false;
     refreshUploadSlot(index, side); refreshUploadCount();
+    return true;
   }
 
   async function handleBatchFiles(event) {
@@ -1664,47 +2048,82 @@
     event.target.value = '';
     if (files.length !== CASE_COUNT * 2) return setArenaStatus('일괄 선택은 정확히 10장을 선택해야 합니다', true);
     if (files.some(file => file.type && !file.type.startsWith('image/'))) return setArenaStatus('사진이 아닌 파일이 포함되어 있습니다', true);
+    invalidateDatasetBatchLoad();
+    const generation = ++experimentImageGeneration;
+    slotImportTokens.clear();
     setArenaStatus('사진 10장을 전송용으로 최적화하고 순서대로 배치 중...');
     try {
       const optimized = await Promise.all(files.map(file => fileToDataUrl(file)));
+      if (generation !== experimentImageGeneration) return;
+      setActiveCaseCount(CASE_COUNT);
       optimized.forEach((data, fileIndex) => {
         const index = Math.floor(fileIndex / 2), side = fileIndex % 2 === 0 ? 'front' : 'back';
         state.images[index][side] = data; state.images[index][`${side}Name`] = files[fileIndex].name || `${fileIndex + 1}`;
+        state.images[index][`${side}Missing`] = false;
         refreshUploadSlot(index, side);
       });
       refreshUploadCount();
       const chars = totalImageChars();
       if (chars > MAX_REQUEST_IMAGE_CHARS) setArenaStatus('10장 등록 완료 · 전체 용량이 커서 더 작은 사진으로 다시 등록하세요', true);
       else setArenaStatus('10장 등록 완료 · 1앞/1뒤부터 5앞/5뒤 순서로 자동 배치했습니다');
-    } catch (error) { setArenaStatus(error.message, true); }
+    } catch (error) {
+      if (generation === experimentImageGeneration) setArenaStatus(error.message, true);
+    }
   }
 
   function refreshUploadSlot(index, side) {
     const number = index + 1, cap = side === 'front' ? 'Front' : 'Back';
     const zone = document.getElementById(`arenaCase${number}${cap}Zone`);
     const image = zone.querySelector('img'), value = state.images[index][side];
+    const missing = !!state.images[index][`${side}Missing`];
     image.src = value || ''; image.hidden = !value; zone.classList.toggle('has-image', !!value);
-    zone.querySelector('.arena-file-name').textContent = state.images[index][`${side}Name`] || '';
+    zone.classList.toggle('is-missing', missing);
+    const placeholder = zone.querySelector('.arena-up-ph');
+    if (placeholder) placeholder.innerHTML = missing
+      ? `${side === 'front' ? '앞면' : '뒷면'} 이미지 미제공<br><small>정답지의 단면 항목</small>`
+      : `${side === 'front' ? '앞면' : '뒷면'} 사진<br><small>선택 또는 촬영</small>`;
+    zone.querySelector('.arena-file-name').textContent = missing ? '정답지에서 미제공' : (state.images[index][`${side}Name`] || '');
   }
 
   function clearImage(index, side) {
+    invalidateDatasetBatchLoad();
+    const key = `${index}:${side}`;
+    slotImportTokens.set(key, (slotImportTokens.get(key) || 0) + 1);
     state.images[index][side] = ''; state.images[index][`${side}Name`] = '';
+    state.images[index][`${side}Missing`] = false;
     refreshUploadSlot(index, side); refreshUploadCount();
   }
 
   function clearAllImages() {
+    invalidateDatasetBatchLoad();
+    invalidateExperimentImageOperations();
     state.images = blankImages();
+    state.dataset.loadedRows = [];
     for (let index = 0; index < CASE_COUNT; index += 1) { refreshUploadSlot(index, 'front'); refreshUploadSlot(index, 'back'); }
     refreshUploadCount(); setArenaStatus('등록 사진을 모두 지웠습니다');
   }
 
-  function totalImageChars() { return state.images.reduce((sum, pair) => sum + pair.front.length + pair.back.length, 0); }
-  function uploadedCount() { return state.images.reduce((sum, pair) => sum + (pair.front ? 1 : 0) + (pair.back ? 1 : 0), 0); }
+  function activeImagePairs() { return state.images.slice(0, activeCaseCount()); }
+  function totalImageChars() { return activeImagePairs().reduce((sum, pair) => sum + pair.front.length + pair.back.length, 0); }
+  function uploadedCount() { return activeImagePairs().reduce((sum, pair) => sum + (pair.front ? 1 : 0) + (pair.back ? 1 : 0), 0); }
+  function missingSideCount() { return activeImagePairs().reduce((sum, pair) => sum + (pair.frontMissing ? 1 : 0) + (pair.backMissing ? 1 : 0), 0); }
+  function imageSlotsReady() {
+    return activeImagePairs().every(pair => !!pair.front && (!!pair.back || !!pair.backMissing));
+  }
 
   function refreshUploadCount() {
     const count = uploadedCount();
+    const missing = missingSideCount();
+    const cases = activeCaseCount();
     const element = document.getElementById('arenaBatchCount');
-    if (element) { element.textContent = `${count} / 10`; element.classList.toggle('complete', count === 10); }
+    if (element) {
+      element.textContent = missing ? `${count}장 + 미제공 ${missing}면` : `${count} / ${cases * 2}`;
+      element.classList.toggle('complete', imageSlotsReady());
+    }
+    const consentText = document.getElementById('arenaConsentText');
+    if (consentText) consentText.textContent = `등록한 ${count}장${missing ? `과 미제공 ${missing}면 표기` : ''}가 같은 배치의 연구용 자료이며 개인 식별정보가 없고, 외부 AI API 전송 기준을 확인했습니다.`;
+    const run = document.getElementById('arenaRun');
+    if (run) run.textContent = `🧪 알약 ${cases}개 · 사진 ${count}장 · 모델 4개 비교 시작`;
     refreshRunButton();
   }
 
@@ -1716,7 +2135,7 @@
   function refreshRunButton() {
     const button = document.getElementById('arenaRun');
     const consent = document.getElementById('arenaConsent');
-    if (button) button.disabled = uploadedCount() !== 10 || !consent || !consent.checked || !!state.current || totalImageChars() > MAX_REQUEST_IMAGE_CHARS;
+    if (button) button.disabled = !imageSlotsReady() || !consent || !consent.checked || !!state.current || totalImageChars() > MAX_REQUEST_IMAGE_CHARS;
   }
 
   function readModelConfigs() {
@@ -1726,8 +2145,8 @@
   function validateConfigs(configs) {
     if (configs.some(config => !config.model)) throw new Error('4개 모델 ID를 모두 입력하세요');
     if (new Set(configs.map(config => config.model)).size !== MODEL_LABELS.length) throw new Error('서로 다른 4개 모델을 선택하세요');
-    if (uploadedCount() !== 10) throw new Error('알약 5개의 앞·뒷면 사진 10장을 모두 등록하세요');
-    if (totalImageChars() > MAX_REQUEST_IMAGE_CHARS) throw new Error('사진 10장의 전송 용량이 큽니다. 원본 크기를 줄여 다시 등록하세요');
+    if (!imageSlotsReady()) throw new Error(`알약 ${activeCaseCount()}개의 제공된 사진을 모두 등록하세요`);
+    if (totalImageChars() > MAX_REQUEST_IMAGE_CHARS) throw new Error('현재 배치 사진의 전송 용량이 큽니다. 원본 크기를 줄여 다시 등록하세요');
   }
 
   function setArenaStatus(message, error) {
@@ -1737,7 +2156,7 @@
   }
 
   function readCases(batchId) {
-    return Array.from({ length: CASE_COUNT }, (_, index) => {
+    return Array.from({ length: activeCaseCount() }, (_, index) => {
       const number = index + 1;
       const id = document.getElementById(`arenaCaseId${number}`).value.trim() || `${batchId}-${String(number).padStart(2, '0')}`;
       const datasetRow = (state.dataset.loadedRows || []).find(row => safeText(row.case_id).trim() === id) || {};
@@ -1755,6 +2174,9 @@
       const blur = safeText(datasetRow.blur).trim() || clarity;
       const angle = safeText(datasetRow.angle).trim();
       const variant = imported ? variantFromDatasetRow(datasetRow) : 'original';
+      const frontProvided = !!state.images[index].front;
+      const backProvided = !!state.images[index].back;
+      const providedSides = frontProvided && backProvided ? '앞면+뒷면' : frontProvided ? '앞면만' : backProvided ? '뒷면만' : '미제공';
       // 정답지에 제품명이 없어 품목 ID를 제품명 칸에 채운 경우, 그 ID를 제품명 정답으로 채점하지 않는다.
       const answerDrugName = imported && !safeText(datasetRow.drug_name).trim() && mfdsItemId && mfdsItemId === truthName ? '' : truthName;
       return {
@@ -1766,6 +2188,10 @@
         truthFront,
         truthBack,
         pillId: safeText(datasetRow.pill_id).trim(),
+        sourceFrontImage: safeText(state.images[index].frontName).trim(),
+        sourceBackImage: safeText(state.images[index].backName).trim(),
+        scoreLine: safeText(datasetRow.score_line).trim(),
+        providedSides,
         mfdsItemId,
         truthShape,
         truthColor,
@@ -1783,7 +2209,7 @@
           shape: truthShape,
           color: truthColor,
         },
-        condition: { expected_readable: expectedReadable, light, background, blur, angle, variant },
+        condition: { expected_readable: expectedReadable, light, background, blur, angle, variant, provided_sides: providedSides },
       };
     });
   }
@@ -1802,14 +2228,20 @@
     const batchId = document.getElementById('arenaBatchId').value.trim() || `BATCH-${Date.now()}`;
     state.current = {
       id: batchId, createdAt: new Date().toISOString(), promptVersion: PROMPT_VERSION,
-      condition: { sides: '앞면+뒷면 5쌍', costMode, costModeLabel: costConfig.label },
+      condition: { sides: missingSideCount() ? '앞·뒷면 혼합' : '앞면+뒷면', costMode, costModeLabel: costConfig.label },
+      dataset: {
+        answerFile: safeText(state.dataset.answerFile && state.dataset.answerFile.name).trim(),
+        imageSource: safeText(state.dataset.imageSourceName).trim(),
+        totalRows: state.dataset.validation && state.dataset.validation.summary.totalRows || 0,
+      },
       cases: readCases(batchId), blindOrder: {}, results: {}, vote: '',
     };
     MODEL_LABELS.forEach(label => { state.current.blindOrder[label] = publicModelSnapshot(order[label]); });
     refreshRunButton();
-    setArenaStatus('모델 A–D에 같은 사진 10장과 같은 프롬프트를 4회 병렬 전송 중...');
+    const pairs = activeImagePairs();
+    setArenaStatus(`모델 A–D에 같은 알약 ${pairs.length}개·사진 ${uploadedCount()}장과 같은 프롬프트를 4회 병렬 전송 중...`);
     const dbPromise = typeof root.ensurePillDb === 'function' ? root.ensurePillDb().catch(() => null) : Promise.resolve(null);
-    const settled = await Promise.allSettled(MODEL_LABELS.map(label => callCandidate(order[label], state.images, costMode)));
+    const settled = await Promise.allSettled(MODEL_LABELS.map(label => callCandidate(order[label], pairs, costMode)));
     await dbPromise;
     MODEL_LABELS.forEach((label, index) => {
       const item = settled[index];
@@ -1836,11 +2268,12 @@
 
   function renderComparison() {
     document.getElementById('arenaCompare').innerHTML = MODEL_LABELS.map(label => resultHtml(label, state.current.results[label])).join('');
+    const count = state.current.cases.length;
     MODEL_LABELS.forEach(label => {
       const result = state.current.results[label];
       const voteButton = document.querySelector(`[data-vote="${label}"]`);
       if (voteButton) voteButton.disabled = !!result.error;
-      for (let index = 0; index < CASE_COUNT; index += 1) {
+      for (let index = 0; index < count; index += 1) {
         const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`);
         select.value = '';
         select.title = '';
@@ -1909,7 +2342,7 @@
         applyAutomaticRatingToControls(label, rating);
       } else {
         (rating.missing_ground_truth || []).forEach(item => issues.push(`${item.sample_id || '알약'}: ${item.error}`));
-        for (let index = 0; index < CASE_COUNT; index += 1) {
+        for (let index = 0; index < state.current.cases.length; index += 1) {
           const select = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`);
           if (select) select.value = suggestedVerdict(state.current.cases[index].truthName, result.cases[index] && result.cases[index].drug_name);
         }
@@ -1925,8 +2358,9 @@
 
   function ratingFor(label, strict) {
     if (!state.current || state.current.results[label].error) return null;
-    const caseVerdicts = Array.from({ length: CASE_COUNT }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`).value);
-    const caseScores = Array.from({ length: CASE_COUNT }, (_, index) => {
+    const count = state.current.cases.length;
+    const caseVerdicts = Array.from({ length: count }, (_, index) => document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="verdict"]`).value);
+    const caseScores = Array.from({ length: count }, (_, index) => {
       const input = document.querySelector(`[data-score-label="${label}"][data-case-index="${index}"][data-score-field="points"]`);
       const raw = input ? input.value : '';
       return raw === '' ? null : Number(raw);
@@ -1946,7 +2380,7 @@
     const valid = scoresValid && caseVerdicts.every(Boolean) && Number.isFinite(rating.evidence) && rating.evidence >= 0 && rating.evidence <= 25 && Number.isFinite(rating.hallucination) && rating.hallucination >= 0 && rating.hallucination <= 20 && Number.isFinite(rating.clarity) && rating.clarity >= 0 && rating.clarity <= 15;
     if (strict && !valid) {
       throw new Error(scoresValid
-        ? `모델 ${label}의 알약 5개 정확성과 나머지 3개 점수를 모두 입력하세요`
+        ? `모델 ${label}의 알약 ${count}개 정확성과 나머지 3개 점수를 모두 입력하세요`
         : `모델 ${label}의 알약별 점수는 0~40 사이여야 합니다`);
     }
     const overrideFields = [];
@@ -2059,7 +2493,7 @@
     revealIdentities(); renderDashboard();
     if (!saved.ok) setArenaStatus(saveFailureMessage(saved), true);
     else if (saved.dropped) setArenaStatus(`평가를 저장했습니다 · ${sourceLabel} · 저장공간이 모자라 오래된 배치 ${saved.dropped}건을 덜어냈습니다. 백업을 내려받으세요`, true);
-    else setArenaStatus(`4모델 × 5알약 블라인드 평가를 저장했습니다 · ${sourceLabel}`);
+    else setArenaStatus(`4모델 × ${state.current.cases.length}알약 블라인드 평가를 저장했습니다 · ${sourceLabel}`);
   }
 
   function revealIdentities() {
@@ -2071,16 +2505,36 @@
     reveal.classList.add('show'); document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => { element.disabled = true; }); document.getElementById('arenaAcceptAuto').disabled = true; document.getElementById('arenaPostActions').hidden = false;
   }
 
-  function resetExperiment() {
-    state.current = null; clearAllImages();
+  function resetExperimentState() {
+    invalidateDatasetBatchLoad();
+    invalidateExperimentImageOperations();
+    state.current = null;
+    state.images = blankImages();
+    state.dataset.loadedRows = [];
+    setActiveCaseCount(CASE_COUNT);
     document.getElementById('arenaBatchId').value = '';
+    const batchFiles = document.getElementById('arenaBatchFiles');
+    if (batchFiles) batchFiles.value = '';
     for (let index = 1; index <= CASE_COUNT; index += 1) {
       document.getElementById(`arenaCaseId${index}`).value = `CASE-${index}`;
       document.getElementById(`arenaClarity${index}`).value = '각인 명확';
       ['TruthName','TruthFront','TruthBack'].forEach(field => { document.getElementById(`arena${field}${index}`).value = ''; });
+      ['Front','Back'].forEach(cap => {
+        const side = cap === 'Front' ? 'front' : 'back';
+        ['File','Cam'].forEach(kind => {
+          const input = document.getElementById(`arenaCase${index}${cap}${kind}`);
+          if (input) input.value = '';
+        });
+        refreshUploadSlot(index - 1, side);
+      });
     }
     document.getElementById('arenaConsent').checked = false; document.getElementById('arenaSetupCard').classList.remove('arena-running');
-    document.getElementById('arenaResults').classList.remove('show', 'arena-all-failed'); document.getElementById('arenaReveal').classList.remove('show'); document.getElementById('arenaPostActions').hidden = true;
+    document.getElementById('arenaResults').classList.remove('show', 'arena-all-failed');
+    document.getElementById('arenaCompare').innerHTML = '';
+    const reveal = document.getElementById('arenaReveal');
+    reveal.innerHTML = '';
+    reveal.classList.remove('show');
+    document.getElementById('arenaPostActions').hidden = true;
     document.querySelectorAll('[data-vote],[data-score-label]').forEach(element => {
       element.disabled = false;
       element.classList.remove('auto-recommended');
@@ -2089,12 +2543,23 @@
       delete element.dataset.scoreAuto;
       delete element.dataset.scoreEdited;
     });
+    MODEL_LABELS.forEach(label => { document.getElementById(`arenaTotal${label}`).textContent = '—'; });
     document.getElementById('arenaAcceptAuto').disabled = true;
     document.getElementById('arenaAcceptAuto').textContent = '자동 추천 결과로 평가 저장';
     document.getElementById('arenaAutoStatus').textContent = '자동채점 대기';
     document.getElementById('arenaAutoStatus').classList.remove('error');
     document.getElementById('arenaAutoReasons').innerHTML = '';
-    setArenaStatus(''); refreshRunButton(); switchArenaView('experiment'); document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const details = document.getElementById('arenaAutoDetails');
+    if (details) details.open = false;
+    refreshUploadCount();
+    refreshRunButton();
+  }
+
+  function resetExperiment() {
+    resetExperimentState();
+    setArenaStatus('');
+    switchArenaView('experiment');
+    document.getElementById('arenaRoot').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function pct(value) { return value == null || !Number.isFinite(value) ? '—' : `${value.toFixed(1)}%`; }

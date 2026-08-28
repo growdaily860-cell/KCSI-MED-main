@@ -14,6 +14,10 @@ const cases = Array.from({ length: 5 }, (_, index) => ({
   truthBack: '20',
   truthShape: '타원형',
   truthColor: '흰색',
+  sourceFrontImage: `synthetic_${index + 1}_front.jpg`,
+  sourceBackImage: index === 4 ? '' : `synthetic_${index + 1}_back.jpg`,
+  providedSides: index === 4 ? '앞면만' : '앞면+뒷면',
+  scoreLine: index % 2 ? '없음' : '있음',
   clarity: index === 4 ? '각인 불명확' : '각인 명확',
   blur: index === 4 ? '흐림' : '선명',
   variant: index === 4 ? 'blur:흐림' : 'original',
@@ -73,6 +77,27 @@ const run = {
 const converted = bridge.arenaRunsToContractData([run]);
 assert.equal(converted.groundTruths.length, 5);
 assert.equal(converted.results.length, 10);
+assert.equal(converted.groundTruths[0].images.front, 'synthetic_1_front.jpg');
+assert.equal(converted.groundTruths[4].images.back, '');
+assert.equal(converted.groundTruths[4].condition.provided_sides, '앞면만');
+assert.equal(converted.groundTruths[0].condition.score_line, '있음');
+const canonicalBlankTruth = bridge.truthFromArenaCase(run, {
+  id: 'CANONICAL-BLANK',
+  mfdsItemId: 'LEGACY-ID',
+  truthName: 'LEGACY-ID',
+  truthFront: 'LEGACY-FRONT',
+  answer: {
+    mfds_item_id: 'CANONICAL-ID',
+    drug_name: '',
+    front_imprint: '',
+    back_imprint: '(없음)',
+    shape: '',
+    color: '',
+  },
+}, 0);
+assert.equal(canonicalBlankTruth.answer.mfds_item_id, 'CANONICAL-ID');
+assert.equal(canonicalBlankTruth.answer.drug_name, '', '빈 canonical 제품명이 truthName으로 되살아났다');
+assert.equal(canonicalBlankTruth.answer.front_imprint, '', '빈 canonical 각인이 truthFront로 되살아났다');
 converted.results.forEach(result => assert.equal(contracts.validateResearchResult(result).valid, true));
 assert.deepEqual(converted.results.slice(0, 2).map(result => result.sample_id), ['ARENA-1', 'ARENA-1']);
 assert.equal(converted.results[0].usage.input_tokens, 100, 'batch usage must be apportioned once across five samples');

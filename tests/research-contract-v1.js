@@ -6,6 +6,7 @@ const path = require('path');
 const {
   SCHEMA_VERSION,
   createResearchInput,
+  validateResearchInput,
   createResearchResult,
   normalizeGroundTruth,
   normalizeResearchResult,
@@ -135,6 +136,19 @@ assert.equal(truth.condition.expected_readable, true);
 const input = createResearchInput({ run_id: 'RUN-1', sample_id: 'MED-1', images: { front: 'f', back: 'b' } });
 assert.equal(input.options.cost_mode, 'practice');
 assert.equal(input.options.detail, 'low');
+
+// 단면 연구 입력은 제공된 한 면만으로 유효하고, 양면이 모두 비었을 때만 거부한다.
+const frontOnlyInput = createResearchInput({ run_id:'RUN-FRONT', sample_id:'SYNTH-FRONT', images:{ front:'data:image/jpeg;base64,front', back:'' } });
+assert.deepEqual(validateResearchInput(frontOnlyInput), { valid:true, errors:[] });
+const backOnlyInput = createResearchInput({ run_id:'RUN-BACK', sample_id:'SYNTH-BACK', images:{ front:'', back:'data:image/jpeg;base64,back' } });
+assert.deepEqual(validateResearchInput(backOnlyInput), { valid:true, errors:[] });
+const noSideInput = createResearchInput({ run_id:'RUN-NONE', sample_id:'SYNTH-NONE', images:{ front:'  ', back:'' } });
+assert.equal(validateResearchInput(noSideInput).valid, false);
+assert(validateResearchInput(noSideInput).errors.some(message => message.includes('at least one')));
+assert.equal(validateResearchInput(noSideInput, { requireImages:false }).valid, true, '이미지 선택 검증을 명시적으로 끈 계약 사용처는 유지해야 한다');
+const inputSchema = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'schemas', 'research-input.schema.json'), 'utf8'));
+assert.deepEqual(inputSchema.properties.images.required, ['front','back'], '단면도 두 슬롯을 문자열로 직렬화해야 한다');
+assert.equal(inputSchema.properties.images.anyOf.length, 2, 'JSON schema도 앞면 또는 뒷면 중 하나를 요구해야 한다');
 
 // JS ModelProvider interface
 class DemoProvider extends ModelProvider {

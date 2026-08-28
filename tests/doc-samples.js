@@ -8,6 +8,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const JSZip = require('jszip');
 
 (async () => {
   const forms = await import('../scripts/lib/doc-forms.mjs');
@@ -71,11 +72,13 @@ const path = require('path');
   assert.match(manifest.notice, /합성 문서/);
 
   // 정답지에 적힌 크기가 실제 이미지와 같아야 한다. 어긋나면 좌표가 전부 밀린다.
-  const entries = require('child_process').execFileSync('unzip', ['-Z1', result.archivePath], { encoding: 'utf8' }).trim().split(/\r?\n/);
+  const archive = await JSZip.loadAsync(fs.readFileSync(result.archivePath));
+  const entries = Object.values(archive.files).filter(entry => !entry.dir).map(entry => entry.name);
   assert.ok(entries.includes('answer_sheet.json') && entries.includes('README.txt'));
   for (const doc of manifest.documents) {
-    assert.ok(entries.includes(`images/${doc.image}`), `${doc.doc_id}: 이미지가 ZIP에 없다`);
-    const bytes = require('child_process').execFileSync('unzip', ['-p', result.archivePath, `images/${doc.image}`], { encoding: 'buffer' });
+    const imageEntry = archive.file(`images/${doc.image}`);
+    assert.ok(imageEntry, `${doc.doc_id}: 이미지가 ZIP에 없다`);
+    const bytes = await imageEntry.async('nodebuffer');
     const meta = await sharp(bytes).metadata();
     assert.equal(meta.width, doc.width, `${doc.doc_id}(${doc.condition}): 정답지 너비가 실제와 다르다`);
     assert.equal(meta.height, doc.height, `${doc.doc_id}(${doc.condition}): 정답지 높이가 실제와 다르다`);
@@ -95,7 +98,7 @@ const path = require('path');
   assert.equal(new Set(manifest.documents.map(doc => doc.items.length)).size, 1, '조건에 따라 항목 수가 달라졌다');
 
   // 정답 상자 안이 실제로 글자(어두운 픽셀)인지 — 좌표가 밀렸으면 흰 종이만 잡힌다.
-  const buffer = require('child_process').execFileSync('unzip', ['-p', result.archivePath, `images/${original.image}`], { encoding: 'buffer' });
+  const buffer = await archive.file(`images/${original.image}`).async('nodebuffer');
   for (const item of original.items) {
     const patch = await sharp(buffer).extract({
       left: item.box.x, top: item.box.y,
@@ -125,7 +128,8 @@ const path = require('path');
     assert.equal(committed.item_count, committed.documents.reduce((sum, doc) => sum + doc.items.length, 0));
     assert.match(committed.notice, /합성 문서/, '합성 문서 고지가 없다');
 
-    const zipEntries = require('child_process').execFileSync('unzip', ['-Z1', committedArchive], { encoding: 'utf8' }).trim().split(/\r?\n/);
+    const committedZip = await JSZip.loadAsync(fs.readFileSync(committedArchive));
+    const zipEntries = Object.values(committedZip.files).filter(entry => !entry.dir).map(entry => entry.name);
     assert.ok(zipEntries.includes('answer_sheet.json') && zipEntries.includes('README.txt'));
     assert.equal(zipEntries.filter(name => /^images\/.+\.jpg$/.test(name)).length, committed.document_count, 'ZIP 안 이미지 수가 다르다');
 
@@ -142,7 +146,9 @@ const path = require('path');
     for (const doc of committed.documents) {
       if (seen.has(doc.condition)) continue;
       seen.add(doc.condition);
-      const bytes = require('child_process').execFileSync('unzip', ['-p', committedArchive, `images/${doc.image}`], { encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
+      const imageEntry = committedZip.file(`images/${doc.image}`);
+      assert.ok(imageEntry, `${doc.doc_id}: 이미지가 ZIP에 없다`);
+      const bytes = await imageEntry.async('nodebuffer');
       const meta = await sharp(bytes).metadata();
       assert.equal(meta.width, doc.width, `${doc.doc_id}(${doc.condition}): 정답지 너비가 실제와 다르다`);
       assert.equal(meta.height, doc.height, `${doc.doc_id}(${doc.condition}): 정답지 높이가 실제와 다르다`);

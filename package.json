@@ -1,6 +1,6 @@
 {
   "name": "kcsi-med",
-  "version": "12.11.0",
+  "version": "12.12.0",
   "description": "현장 의약품 식별 및 법의학 검토 보조 도구",
   "private": true,
   "repository": {
@@ -22,6 +22,7 @@
   "devDependencies": {
     "acorn": "^8.18.0",
     "esbuild": "^0.28.1",
+    "jszip": "3.10.1",
     "wrangler": "^4.121.0"
   }
 }

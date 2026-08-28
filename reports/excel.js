@@ -53,8 +53,28 @@ function safe(value) { return value == null ? '' : value; }
 function buildSheets(dataset) {
   const summary = dataset.summary || {};
   const summaryRows = [['Metric','Value'], ...Object.entries(summary).map(([key, value]) => [key, safe(value)])];
-  const modelRows = [['Provider','Model','Samples','Top1 Accuracy','Partial Rate','Dangerous Misidentification','Front CER','Back CER','Brier Loss','Latency ms','Total Cost USD','Cost/Sample USD','Robustness Score'], ...(dataset.models || []).map(m => [m.provider,m.model,m.samples,safe(m.top1_accuracy),safe(m.partial_rate),m.high_confidence_misidentification,safe(m.front_imprint_CER),safe(m.back_imprint_CER),safe(m.Brier_loss),safe(m.average_latency_ms),safe(m.total_cost_usd),safe(m.cost_per_sample_usd),safe(m.robustness_score)])];
-  const perSampleRows = [['Sample ID','Run ID','Provider','Model','Variant','Classification','Dangerous Misidentification','Truth Drug','Predicted Drug','Truth Front','Pred Front','Truth Back','Pred Back','Drug Similarity','Front Similarity','Back Similarity','Imprint CER','Confidence','Brier Loss','Latency ms','Cost USD','Legacy Score'], ...(dataset.samples || []).map(s => [s.sample_id,s.run_id,s.provider,s.model,s.variant,s.classification,s.high_confidence_misidentification,s.answer?.drug_name,s.prediction?.drug_name,s.answer?.front_imprint,s.prediction?.front_imprint,s.answer?.back_imprint,s.prediction?.back_imprint,s.metrics?.drug_name_similarity,s.metrics?.front_imprint_similarity,s.metrics?.back_imprint_similarity,s.metrics?.imprint_CER,s.metrics?.confidence,s.metrics?.Brier_loss,s.metrics?.latency,s.usage?.cost_usd,s.legacy_score?.total])];
+  const modelRows = [[
+    'Provider','Model','Samples','Truth Mode','Drug Samples','Top1 Accuracy','Drug Partial Rate',
+    'Imprint Samples','Imprint Accuracy','Imprint Partial Rate','Imprint CER','Evaluated Imprint Sides','Invented Imprints',
+    'Dangerous Misidentification','Front CER','Back CER','Brier Loss','Latency ms','Total Cost USD','Cost/Sample USD','Robustness Score',
+  ], ...(dataset.models || []).map(m => [
+    m.provider,m.model,m.samples,m.truth_mode,m.drug_samples,safe(m.top1_accuracy),safe(m.partial_rate),
+    m.imprint_samples,safe(m.imprint_accuracy),safe(m.imprint_partial_rate),safe(m.imprint_CER),m.evaluated_imprint_sides,m.invented_imprints,
+    m.high_confidence_misidentification,safe(m.front_imprint_CER),safe(m.back_imprint_CER),safe(m.Brier_loss),safe(m.average_latency_ms),safe(m.total_cost_usd),safe(m.cost_per_sample_usd),safe(m.robustness_score),
+  ])];
+  const perSampleRows = [[
+    'Sample ID','Pill ID','Source Front Image','Source Back Image','Provided Sides','Score Line',
+    'Run ID','Provider','Model','Variant','Truth Mode','Classification','Dangerous Misidentification',
+    'Truth Drug','Predicted Drug','Truth Front','Pred Front','Truth Back','Pred Back','Drug Similarity','Drug Code Exact',
+    'Front Similarity','Back Similarity','Imprint Exact','Imprint Partial','Imprint Similarity','Front CER','Back CER','Imprint CER',
+    'Imprint Orientation','Evaluated Imprint Sides','Invented Imprints','Confidence','Brier Loss','Latency ms','Cost USD','Legacy Score',
+  ], ...(dataset.samples || []).map(s => [
+    s.sample_id,s.pill_id,s.images?.front,s.images?.back,s.provided_sides || s.condition?.provided_sides,s.score_line || s.condition?.score_line,
+    s.run_id,s.provider,s.model,s.variant,s.truth_mode || s.metrics?.truth_mode,s.classification,s.high_confidence_misidentification,
+    s.answer?.drug_name,s.prediction?.drug_name,s.answer?.front_imprint,s.prediction?.front_imprint,s.answer?.back_imprint,s.prediction?.back_imprint,s.metrics?.drug_name_similarity,s.metrics?.drug_code_exact,
+    s.metrics?.front_imprint_similarity,s.metrics?.back_imprint_similarity,s.metrics?.imprint_exact_match,s.metrics?.imprint_partial_match,s.metrics?.imprint_similarity,s.metrics?.front_imprint_CER,s.metrics?.back_imprint_CER,s.metrics?.imprint_CER,
+    s.metrics?.imprint_orientation,s.metrics?.evaluated_imprint_sides,s.metrics?.invented_imprints,s.metrics?.confidence,s.metrics?.Brier_loss,s.metrics?.latency,s.usage?.cost_usd,s.legacy_score?.total,
+  ])];
   const errorRows = [['Sample ID','Provider','Model','Classification','Dangerous Misidentification','Predicted Drug','Confidence','Error'], ...(dataset.failures || []).map(f => [f.sample_id,f.provider,f.model,f.classification,f.high_confidence_misidentification,f.predicted_drug_name,safe(f.confidence),f.error && (f.error.message || f.error.code || f.error)])];
   const robustnessRows = [['Sample ID','Provider','Model','Variants','Original Accuracy','Variant Accuracy','Accuracy Drop','Consistency','Robustness Score'], ...(dataset.robustness?.per_sample || []).map(r => [r.sample_id,r.provider,r.model,(r.variants || []).join('|'),r.original_accuracy,safe(r.variant_accuracy),safe(r.accuracy_drop),safe(r.consistency),safe(r.robustness_score)])];
   const costRows = [['Provider','Model','Total Cost USD','Cost/Sample USD'], ...(dataset.costs?.by_model || []).map(c => [c.provider,c.model,safe(c.total_cost_usd),safe(c.cost_per_sample_usd)])];

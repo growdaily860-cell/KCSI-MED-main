@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const JSZip = require('jszip');
 const arena = require('../arena.js');
 
 (async () => {
@@ -117,12 +117,13 @@ const arena = require('../arena.js');
   assert.deepEqual(manifest.items.map(item => item.case_id),
     ['TEST-001', 'TEST-002', 'TEST-003', 'TEST-004', 'TEST-005', 'TEST-006']);
 
-  const entries = execFileSync('unzip', ['-Z1', archivePath], { encoding: 'utf8' }).trim().split(/\r?\n/);
+  const archive = await JSZip.loadAsync(fs.readFileSync(archivePath));
+  const entries = Object.values(archive.files).filter(entry => !entry.dir).map(entry => entry.name);
   assert.ok(entries.includes('answer_sheet.csv') && entries.includes('source_manifest.csv') && entries.includes('README.txt'));
   const imageEntries = entries.filter(name => /^images\/.+_(?:front|back)\.jpg$/.test(name));
   assert.equal(imageEntries.length, 12);
 
-  const answerCsv = execFileSync('unzip', ['-p', archivePath, 'answer_sheet.csv'], { encoding: 'utf8' });
+  const answerCsv = await archive.file('answer_sheet.csv').async('string');
   const parsed = arena.normalizeDatasetTable(arena.parseDelimitedRows(answerCsv));
   const validation = arena.validateDatasetRows(parsed.rows, imageEntries);
   assert.equal(parsed.rows.length, 6);
@@ -130,7 +131,7 @@ const arena = require('../arena.js');
   assert.equal(validation.summary.invalidRows, 0);
   assert.equal(validation.summary.matchedImages, 12);
 
-  const readme = execFileSync('unzip', ['-p', archivePath, 'README.txt'], { encoding: 'utf8' });
+  const readme = await archive.file('README.txt').async('string');
   assert.ok(readme.includes('테스트 샘플 6건') && readme.includes('앞·뒷면 12장'));
   assert.ok(readme.includes('사람이 최종 확인'), '해석 주의 문구가 빠졌다');
 
@@ -157,24 +158,13 @@ const arena = require('../arena.js');
     '같은 입력인데 ZIP 바이트가 달라졌다 — 무결성 해시를 비교할 수 없다');
   fs.rmSync(rebuiltRoot, { recursive: true, force: true });
 
-  // 화면은 JSZip으로 이 ZIP을 푼다. 설치돼 있으면 실제 소비자로 한 번 더 확인한다.
-  let JSZip = null;
-  try { JSZip = require('jszip'); } catch (_) { /* 선택 의존성 */ }
-  if (JSZip) {
-    const archive = await JSZip.loadAsync(fs.readFileSync(archivePath));
-    const names = Object.values(archive.files).filter(entry => !entry.dir).map(entry => entry.name);
-    assert.equal(names.filter(name => /^images\/.+\.jpg$/.test(name)).length, 12);
-    const jszipAnswer = await archive.file('answer_sheet.csv').async('string');
-    assert.equal(jszipAnswer, answerCsv, 'JSZip이 읽은 정답지가 unzip 결과와 다르다');
-    const jszipReadme = await archive.file('README.txt').async('string');
-    assert.ok(jszipReadme.includes('테스트 샘플 6건'), 'JSZip이 한글 README를 깨뜨렸다');
-    const jpeg = await archive.file(`images/${manifest.items[0].files.front}`).async('nodebuffer');
-    assert.equal(crypto.createHash('sha256').update(jpeg).digest('hex'), manifest.items[0].file_sha256.front,
-      'JSZip으로 푼 사진이 매니페스트 해시와 다르다');
-    console.log('[sample-dataset-builder] JSZip 해석 검증 완료');
-  } else {
-    console.log('[sample-dataset-builder] JSZip 검증 건너뜀 — jszip 미설치');
-  }
+  // 화면과 같은 JSZip 소비 경로로 한글 이름·사진 바이트까지 확인한다.
+  assert.equal(entries.filter(name => /^images\/.+\.jpg$/.test(name)).length, 12);
+  assert.ok(readme.includes('테스트 샘플 6건'), 'JSZip이 한글 README를 깨뜨렸다');
+  const jpeg = await archive.file(`images/${manifest.items[0].files.front}`).async('nodebuffer');
+  assert.equal(crypto.createHash('sha256').update(jpeg).digest('hex'), manifest.items[0].file_sha256.front,
+    'JSZip으로 푼 사진이 매니페스트 해시와 다르다');
+  console.log('[sample-dataset-builder] JSZip 해석 검증 완료');
 
   // ── 4. 실제 이미지 분할(설치돼 있을 때만) ───────────────────────────────
   let sharp = null;

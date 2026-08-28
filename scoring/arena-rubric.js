@@ -40,7 +40,8 @@
   // 괄호를 떼지 않으면 "(없음)"이 글자 각인으로 비교돼, 무각인 알약에서
   // 모델이 아무 말도 안 해도 틀린 것으로 세게 된다.
   //   (없음)     글자 각인이 없다              → ∅
-  //   (마크)     로고만 있고 글자는 없다        → 로고 표기를 떼고 남은 글자로 본다
+  //   (마크)     로고가 있다                    → ¤ (무각인과 구분)
+  //   (마크) 255 로고와 글자 255가 함께 있다    → ¤255
   //   (확인불가) 사진으로 판정할 수 없다        → ? (채점에서 제외)
   function normalizeImprint(value) {
     const text = safeText(value).normalize('NFKC').trim()
@@ -49,9 +50,11 @@
       .trim();
     if (/^(?:없음|무각인|빈면|blank|none|[-—–])$/i.test(text)) return '∅';
     if (/^(?:확인불가|판독불가|식별불가|unreadable|unknown)$/i.test(text)) return '?';
-    // "마크 255"처럼 로고와 글자가 함께 적힌 경우 글자만 남긴다.
-    const withoutLogo = text.replace(/(?:^|\s)(?:마크|로고|logo|mark)(?=\s|$)/gi, ' ').trim();
+    const logoPattern = /(?:^|\s)(?:마크|로고|logo|mark)(?=\s|$)/i;
+    const hasLogo = logoPattern.test(text);
+    const withoutLogo = text.replace(new RegExp(logoPattern.source, 'gi'), ' ').trim();
     const cleaned = withoutLogo.toUpperCase().replace(/[^0-9A-Z가-힣]/g, '');
+    if (hasLogo) return `¤${cleaned}`;
     if (!cleaned) return text ? '∅' : '';
     return cleaned;
   }
@@ -108,24 +111,30 @@
 
   function normalizeGroundTruth(value, index = 0) {
     const input = value && typeof value === 'object' ? value : {};
-    const answer = input.answer && typeof input.answer === 'object' ? input.answer : {};
+    const hasCanonicalAnswer = input.answer && typeof input.answer === 'object' && !Array.isArray(input.answer);
+    const answer = hasCanonicalAnswer ? input.answer : {};
     const condition = input.condition && typeof input.condition === 'object' ? input.condition : {};
+    const answerValue = (key, ...legacyValues) => hasCanonicalAnswer
+      ? answer[key]
+      : legacyValues.find(value => value != null && safeText(value).trim() !== '');
     return {
       schema_version: safeText(input.schema_version || SCHEMA_VERSION),
       sample_id: safeText(input.sample_id || input.id || input.case_id || `CASE-${index + 1}`).trim(),
       answer: {
-        mfds_item_id: safeText(answer.mfds_item_id || input.mfdsItemId || input.mfds_item_id).trim(),
-        drug_name: safeText(answer.drug_name || input.truthName || input.truth_drug_name || input.drug_name).trim(),
-        front_imprint: safeText(answer.front_imprint || input.truthFront || input.truth_imprint_front || input.front_imprint).trim(),
-        back_imprint: safeText(answer.back_imprint || input.truthBack || input.truth_imprint_back || input.back_imprint).trim(),
-        shape: safeText(answer.shape || input.truthShape || input.truth_shape || input.shape).trim(),
-        color: safeText(answer.color || input.truthColor || input.truth_color || input.color).trim(),
+        mfds_item_id: safeText(answerValue('mfds_item_id', input.mfdsItemId, input.mfds_item_id)).trim(),
+        drug_name: safeText(answerValue('drug_name', input.truthName, input.truth_drug_name, input.drug_name)).trim(),
+        front_imprint: safeText(answerValue('front_imprint', input.truthFront, input.truth_imprint_front, input.front_imprint)).trim(),
+        back_imprint: safeText(answerValue('back_imprint', input.truthBack, input.truth_imprint_back, input.back_imprint)).trim(),
+        shape: safeText(answerValue('shape', input.truthShape, input.truth_shape, input.shape)).trim(),
+        color: safeText(answerValue('color', input.truthColor, input.truth_color, input.color)).trim(),
       },
       condition: {
         expected_readable: parseExpectedReadable(
           condition.expected_readable != null ? condition.expected_readable : input.expectedReadable,
           true,
         ),
+        provided_sides: safeText(condition.provided_sides || input.providedSides || input.provided_sides).trim(),
+        score_line: safeText(condition.score_line || input.scoreLine || input.score_line).trim(),
       },
     };
   }
@@ -205,21 +214,39 @@
     // 정답을 아는 면만 비교한다. (확인불가)는 사람이 사진으로도 판정하지 못한 면이라
     // 정답이 없는 것과 같다. 이걸 아는 면으로 세면 모델이 무엇을 답하든 0점이 되어,
     // 판정할 수 없는 면 하나가 그 알약의 점수를 절반으로 깎는다.
-    const known = expected.map(value => {
-      const normalized = normalizeImprint(value);
-      return normalized !== '' && normalized !== '?';
-    });
+    const normalizedExpected = expected.map(normalizeImprint);
+    const known = normalizedExpected.map(value => value !== '' && value !== '?');
     const scoreOrientation = swapped => {
       const scores = expected.map((value, index) => {
         if (!known[index]) return null;
         const actualIndex = swapped ? 1 - index : index;
-        return normalizedSimilarity(normalizeImprint(value), normalizeImprint(actual[actualIndex]));
+        const expectedValue = normalizedExpected[index];
+        let actualValue = normalizeImprint(actual[actualIndex]);
+        // 모델의 빈 답은 평소에는 미판독이지만, 정답이 명시적인 무각인일 때는
+        // 그 면에 글자가 없다고 답한 것으로 해석한다.
+        if (expectedValue === '∅' && actualValue === '') actualValue = '∅';
+        return normalizedSimilarity(expectedValue, actualValue);
       });
-      return { scores, mean: mean(scores) };
+      const alignedActual = expected.map((value, index) => {
+        const actualIndex = swapped ? 1 - index : index;
+        let normalized = normalizeImprint(actual[actualIndex]);
+        if (normalizedExpected[index] === '∅' && normalized === '') normalized = '∅';
+        return normalized;
+      });
+      const invented = normalizedExpected.filter((value, index) => known[index]
+        && value === '∅'
+        && alignedActual[index]
+        && alignedActual[index] !== '∅'
+        && alignedActual[index] !== '?').length;
+      return { scores, mean: mean(scores), alignedActual, invented };
     };
     const direct = scoreOrientation(false);
     const swapped = scoreOrientation(true);
-    const useSwapped = Number.isFinite(swapped.mean) && (!Number.isFinite(direct.mean) || swapped.mean > direct.mean);
+    // A single graded side has no reliable orientation. Allowing a swap here lets a
+    // prediction from the absent side slide onto the graded side and hide inventions.
+    const useSwapped = known.filter(Boolean).length === 2
+      && Number.isFinite(swapped.mean)
+      && (!Number.isFinite(direct.mean) || swapped.mean > direct.mean);
     const selected = useSwapped ? swapped : direct;
     return {
       available: known.some(Boolean),
@@ -227,6 +254,9 @@
       front_similarity: selected.scores[0],
       back_similarity: selected.scores[1],
       orientation: useSwapped ? 'swapped' : 'direct',
+      evaluated_sides: known.filter(Boolean).length,
+      invented_imprints: selected.invented,
+      aligned_actual: selected.alignedActual,
     };
   }
 
@@ -278,20 +308,15 @@
    * 그건 유사도 0이 아니라 환각이고, 이 정답지를 만든 이유이기도 하다.
    */
   function classifyImprintCase(truth, prediction, imprint) {
-    const expected = [truth.answer.front_imprint, truth.answer.back_imprint].map(normalizeImprint);
-    const actual = [prediction.front_imprint, prediction.back_imprint].map(normalizeImprint);
-    // 판정할 수 있는 면만 본다. (확인불가)와 빈칸은 정답이 없는 것이므로 제외한다.
-    const graded = expected.map((value, index) => ({ value, actual: actual[index], index }))
-      .filter(item => item.value && item.value !== '?');
-    if (!graded.length) return { verdict: 'wrong', reason: '채점할 각인 정답이 없음', invented: 0 };
+    if (!imprint.evaluated_sides) return { verdict: 'wrong', reason: '채점할 각인 정답이 없음', invented: 0 };
 
     // 무각인인데 글자를 적어 낸 면 = 지어낸 각인.
-    const invented = graded.filter(item => item.value === '∅' && item.actual && item.actual !== '∅' && item.actual !== '?');
-    if (invented.length) {
+    const invented = Number(imprint.invented_imprints) || 0;
+    if (invented) {
       return {
         verdict: 'wrong',
-        reason: `무각인 면에 없는 글자를 만들어 냄(${invented.length}면)`,
-        invented: invented.length,
+        reason: `무각인 면에 없는 글자를 만들어 냄(${invented}면)`,
+        invented,
       };
     }
     const similarity = Number(imprint.similarity);
@@ -301,7 +326,7 @@
     return { verdict: 'wrong', reason: `각인이 정답과 다름(유사도 ${round(similarity * 100, 1)}%)`, invented: 0 };
   }
 
-  function evidenceSpecificity(prediction, verdict) {
+  function evidenceSpecificity(prediction, verdict, mode = 'drug') {
     const evidence = safeText(prediction.evidence).normalize('NFKC').trim();
     if (!evidence) return 0;
     const features = [prediction.front_imprint, prediction.back_imprint, prediction.shape, prediction.color]
@@ -310,7 +335,7 @@
     const citesFeature = features.some(feature => normalizedEvidence.includes(feature));
     const citesMethod = /각인|모양|형태|색|분할|식약처|mfds|품목|등록|사진|관찰|대조|일치/i.test(evidence);
     let ratio = citesFeature || citesMethod ? 1 : evidence.length >= 12 ? 0.6 : 0.3;
-    if (verdict === 'wrong' && normalizeDrugName(prediction.drug_name)) ratio *= 0.25;
+    if (mode === 'drug' && verdict === 'wrong' && normalizeDrugName(prediction.drug_name)) ratio *= 0.25;
     return ratio;
   }
 
@@ -326,21 +351,29 @@
     return { available: true, ratio: 0, reason: '식약처 DB 후보가 정답과 다름' };
   }
 
-  function scoreEvidence(truth, prediction, verdict, imprint, appearance, database) {
-    const db = databaseMetric(truth, prediction, database);
-    const entries = [
-      { key: 'identity', weight: 8, ratio: verdict === 'correct' ? 1 : verdict === 'partial' ? 0.5 : 0, reason: '제품명·품목 ID 정답 일치' },
-      imprint.available ? { key: 'imprint', weight: 7, ratio: imprint.similarity || 0, reason: `앞·뒤 각인 일치도 ${round((imprint.similarity || 0) * 100, 1)}%` } : null,
-      appearance.available ? { key: 'appearance', weight: 4, ratio: appearance.similarity || 0, reason: `모양·색상 일치도 ${round((appearance.similarity || 0) * 100, 1)}%` } : null,
-      { key: 'statement', weight: 3, ratio: evidenceSpecificity(prediction, verdict), reason: prediction.evidence ? '관찰 근거의 구체성' : '근거 문장 없음' },
-      db.available ? { key: 'database', weight: 3, ratio: db.ratio, reason: db.reason } : null,
-    ].filter(Boolean);
+  function scoreEvidence(truth, prediction, verdict, imprint, appearance, database, mode = 'drug') {
+    const db = mode === 'drug'
+      ? databaseMetric(truth, prediction, database)
+      : { available: false, ratio: null, reason: '각인 정답 모드에서는 제품 DB 정합성을 채점하지 않음' };
+    const entries = mode === 'imprint'
+      ? [
+        imprint.available ? { key: 'imprint', weight: 18, ratio: imprint.similarity || 0, reason: `채점 가능 각인 일치도 ${round((imprint.similarity || 0) * 100, 1)}%` } : null,
+        appearance.available ? { key: 'appearance', weight: 4, ratio: appearance.similarity || 0, reason: `모양·색상 일치도 ${round((appearance.similarity || 0) * 100, 1)}%` } : null,
+        { key: 'statement', weight: 3, ratio: evidenceSpecificity(prediction, verdict, mode), reason: prediction.evidence ? '관찰 근거의 구체성' : '근거 문장 없음' },
+      ].filter(Boolean)
+      : [
+        { key: 'identity', weight: 8, ratio: verdict === 'correct' ? 1 : verdict === 'partial' ? 0.5 : 0, reason: '제품명·품목 ID 정답 일치' },
+        imprint.available ? { key: 'imprint', weight: 7, ratio: imprint.similarity || 0, reason: `앞·뒤 각인 일치도 ${round((imprint.similarity || 0) * 100, 1)}%` } : null,
+        appearance.available ? { key: 'appearance', weight: 4, ratio: appearance.similarity || 0, reason: `모양·색상 일치도 ${round((appearance.similarity || 0) * 100, 1)}%` } : null,
+        { key: 'statement', weight: 3, ratio: evidenceSpecificity(prediction, verdict, mode), reason: prediction.evidence ? '관찰 근거의 구체성' : '근거 문장 없음' },
+        db.available ? { key: 'database', weight: 3, ratio: db.ratio, reason: db.reason } : null,
+      ].filter(Boolean);
     const possible = entries.reduce((sum, entry) => sum + entry.weight, 0);
     const earned = entries.reduce((sum, entry) => sum + entry.weight * clamp(entry.ratio, 0, 1), 0);
     return { score: round(possible ? earned / possible * 25 : 0, 1), entries, database: db };
   }
 
-  function scoreHallucination(truth, prediction, verdict, imprint, database) {
+  function scoreHallucination(truth, prediction, verdict, imprint, database, mode = 'drug') {
     const namedAnswer = !!(normalizeDrugName(prediction.drug_name) || normalizeIdentifier(prediction.drug_code));
     const uncertainty = hasHonestUncertainty(prediction);
     const confidence = normalizeConfidence(prediction.confidence);
@@ -350,6 +383,22 @@
     const db = databaseMetric(truth, prediction, database);
     let score;
     const reasons = [];
+
+    if (mode === 'imprint') {
+      const invented = Number(imprint.invented_imprints) || 0;
+      score = invented ? 20 - invented * 10 : 20;
+      reasons.push(invented
+        ? `무각인 면에 없는 글자를 만들어 냄(${invented}면)`
+        : '무각인 면에 없는 글자를 만들지 않음');
+      if (namedAnswer) {
+        reasons.push('제품명 정답이 없어 제품명 주장은 정확도 채점에서 제외함');
+        if (confidence != null && confidence >= 0.85 && !uncertainty) {
+          score -= 2;
+          reasons.push('검증할 수 없는 제품명에 높은 신뢰도를 부여하고 한계를 밝히지 않음');
+        }
+      }
+      return { score: round(clamp(score, 0, 20), 1), reasons, confidence, honest_uncertainty: uncertainty };
+    }
 
     if (verdict === 'correct') {
       score = 20;
@@ -391,19 +440,57 @@
     return { score: round(clamp(score, 0, 20), 1), reasons, confidence, honest_uncertainty: uncertainty };
   }
 
-  function scoreClarity(prediction) {
+  function scoreClarity(prediction, truth, mode = 'drug', imprint = null) {
+    if (mode === 'imprint') {
+      const expected = [truth.answer.front_imprint, truth.answer.back_imprint].map(normalizeImprint);
+      const alignedActual = imprint && imprint.aligned_actual
+        ? imprint.aligned_actual
+        : [prediction.front_imprint, prediction.back_imprint].map(normalizeImprint);
+      const known = expected.map(value => value && value !== '?');
+      const answered = expected.map((value, index) => !known[index]
+        ? null
+        : value === '∅' ? alignedActual[index] === '∅' : !!alignedActual[index]);
+      const explicitDecision = answered.filter(value => value != null).every(Boolean) || isAbstention(prediction);
+      const sideEntries = [
+        known[0] ? { key: 'front_imprint', points: answered[0] ? 2 : 0, max: 2, reason: '채점 가능한 앞면 각인 응답' } : null,
+        known[1] ? { key: 'back_imprint', points: answered[1] ? 2 : 0, max: 2, reason: '채점 가능한 뒷면 각인 응답' } : null,
+      ].filter(Boolean);
+      const entries = [
+        { key: 'decision', points: explicitDecision ? 4 : 0, max: 4, reason: explicitDecision ? '각인 판독 또는 판독 보류가 명확함' : '각인 판독 결론이 불명확함' },
+        ...sideEntries,
+        { key: 'shape', points: safeText(prediction.shape).trim() ? 1 : 0, max: 1, reason: '모양 명시' },
+        { key: 'color', points: safeText(prediction.color).trim() ? 1 : 0, max: 1, reason: '색상 명시' },
+        { key: 'confidence', points: normalizeConfidence(prediction.confidence) == null ? 0 : 2, max: 2, reason: '수치 신뢰도 명시' },
+        { key: 'evidence', points: safeText(prediction.evidence).trim() ? 1.5 : 0, max: 1.5, reason: '근거 명시' },
+        { key: 'uncertainty', points: safeText(prediction.uncertainty).trim() ? 1.5 : 0, max: 1.5, reason: '불확실성 명시' },
+      ];
+      const possible = entries.reduce((sum, entry) => sum + entry.max, 0);
+      const earned = entries.reduce((sum, entry) => sum + entry.points, 0);
+      return { score: round(possible ? earned / possible * 15 : 0, 1), entries };
+    }
     const explicitDecision = !!(normalizeDrugName(prediction.drug_name) || normalizeIdentifier(prediction.drug_code) || isAbstention(prediction));
+    const provided = safeText(truth && truth.condition && truth.condition.provided_sides)
+      .normalize('NFKC').trim().toLowerCase();
+    const frontOnly = /^(?:앞면만|앞만|front(?:\s*only)?|front_only)$/.test(provided);
+    const backOnly = /^(?:뒷면만|뒤면만|뒷만|back(?:\s*only)?|back_only)$/.test(provided);
+    const includeFront = !backOnly;
+    const includeBack = !frontOnly;
+    const sideEntries = [
+      includeFront ? { key: 'front_imprint', points: safeText(prediction.front_imprint).trim() ? 2 : 0, max: 2, reason: '앞면 각인 명시' } : null,
+      includeBack ? { key: 'back_imprint', points: safeText(prediction.back_imprint).trim() ? 2 : 0, max: 2, reason: '뒷면 각인 명시' } : null,
+    ].filter(Boolean);
     const entries = [
       { key: 'decision', points: explicitDecision ? 4 : 0, max: 4, reason: explicitDecision ? '제품명 또는 판독 보류가 명확함' : '식별 결론이 불명확함' },
-      { key: 'front_imprint', points: safeText(prediction.front_imprint).trim() ? 2 : 0, max: 2, reason: '앞면 각인 명시' },
-      { key: 'back_imprint', points: safeText(prediction.back_imprint).trim() ? 2 : 0, max: 2, reason: '뒷면 각인 명시' },
+      ...sideEntries,
       { key: 'shape', points: safeText(prediction.shape).trim() ? 1 : 0, max: 1, reason: '모양 명시' },
       { key: 'color', points: safeText(prediction.color).trim() ? 1 : 0, max: 1, reason: '색상 명시' },
       { key: 'confidence', points: normalizeConfidence(prediction.confidence) == null ? 0 : 2, max: 2, reason: '수치 신뢰도 명시' },
       { key: 'evidence', points: safeText(prediction.evidence).trim() ? 1.5 : 0, max: 1.5, reason: '근거 명시' },
       { key: 'uncertainty', points: safeText(prediction.uncertainty).trim() ? 1.5 : 0, max: 1.5, reason: '불확실성 명시' },
     ];
-    return { score: round(entries.reduce((sum, entry) => sum + entry.points, 0), 1), entries };
+    const possible = entries.reduce((sum, entry) => sum + entry.max, 0);
+    const earned = entries.reduce((sum, entry) => sum + entry.points, 0);
+    return { score: round(possible ? earned / possible * 15 : 0, 1), entries };
   }
 
   function evaluateCase(groundTruth, researchResult, options = {}) {
@@ -435,9 +522,9 @@
       ? classifyImprintCase(truth, result.prediction, imprint)
       : classifyCase(truth, result.prediction, drug);
     const appearance = appearanceMetric(truth, result.prediction);
-    const evidence = scoreEvidence(truth, result.prediction, classification.verdict, imprint, appearance, options.database);
-    const hallucination = scoreHallucination(truth, result.prediction, classification.verdict, imprint, options.database);
-    const clarity = scoreClarity(result.prediction);
+    const evidence = scoreEvidence(truth, result.prediction, classification.verdict, imprint, appearance, options.database, mode);
+    const hallucination = scoreHallucination(truth, result.prediction, classification.verdict, imprint, options.database, mode);
+    const clarity = scoreClarity(result.prediction, truth, mode, imprint);
     const accuracyScore = classification.verdict === 'correct' ? 40 : classification.verdict === 'partial' ? 20 : 0;
 
     return {
@@ -460,13 +547,16 @@
         drug_name_partial: drug.partial,
         drug_name_similarity: round(drug.similarity, 4),
         imprint_similarity: round(imprint.similarity, 4),
+        front_imprint_similarity: round(imprint.front_similarity, 4),
+        back_imprint_similarity: round(imprint.back_similarity, 4),
         imprint_orientation: imprint.orientation,
+        evaluated_imprint_sides: imprint.evaluated_sides,
         shape_similarity: round(appearance.shape, 4),
         color_similarity: round(appearance.color, 4),
         confidence: hallucination.confidence,
         expected_readable: truth.condition.expected_readable,
         // 무각인 면에 글자를 지어낸 횟수. 각인 정답지를 만드는 이유가 이 숫자다.
-        invented_imprints: Number(classification.invented) || 0,
+        invented_imprints: Number(imprint.invented_imprints) || 0,
       },
       reasons: {
         accuracy: [classification.reason],

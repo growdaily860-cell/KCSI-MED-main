@@ -41,8 +41,11 @@ function validateResearchInput(value, options = {}) {
   if (typeof value.sample_id !== 'string' || !value.sample_id.trim()) errors.push('sample_id must be a non-empty string.');
   if (!isObject(value.images)) errors.push('images must be an object.');
   if (requireImages && isObject(value.images)) {
-    if (typeof value.images.front !== 'string' || !value.images.front) errors.push('images.front must be a non-empty string.');
-    if (typeof value.images.back !== 'string' || !value.images.back) errors.push('images.back must be a non-empty string.');
+    const front = typeof value.images.front === 'string' ? value.images.front.trim() : '';
+    const back = typeof value.images.back === 'string' ? value.images.back.trim() : '';
+    if (typeof value.images.front !== 'string') errors.push('images.front must be a string.');
+    if (typeof value.images.back !== 'string') errors.push('images.back must be a string.');
+    if (!front && !back) errors.push('at least one of images.front or images.back must be a non-empty string.');
   }
   if (!isObject(value.options)) errors.push('options must be an object.');
   if (isObject(value.options) && !COST_MODES.has(value.options.cost_mode)) errors.push('options.cost_mode must be "practice" or "research".');
