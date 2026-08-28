@@ -36,11 +36,24 @@
     return safeText(value).normalize('NFKC').trim().toUpperCase().replace(/[^0-9A-Z가-힣]/g, '');
   }
 
+  // 각인 정답 입력 도구는 (없음)·(마크)·(확인불가)라는 표기를 쓴다.
+  // 괄호를 떼지 않으면 "(없음)"이 글자 각인으로 비교돼, 무각인 알약에서
+  // 모델이 아무 말도 안 해도 틀린 것으로 세게 된다.
+  //   (없음)     글자 각인이 없다              → ∅
+  //   (마크)     로고만 있고 글자는 없다        → 로고 표기를 떼고 남은 글자로 본다
+  //   (확인불가) 사진으로 판정할 수 없다        → ? (채점에서 제외)
   function normalizeImprint(value) {
-    const text = safeText(value).normalize('NFKC').trim();
+    const text = safeText(value).normalize('NFKC').trim()
+      .replace(/[()（）]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (/^(?:없음|무각인|빈면|blank|none|[-—–])$/i.test(text)) return '∅';
     if (/^(?:확인불가|판독불가|식별불가|unreadable|unknown)$/i.test(text)) return '?';
-    return text.toUpperCase().replace(/[^0-9A-Z가-힣]/g, '');
+    // "마크 255"처럼 로고와 글자가 함께 적힌 경우 글자만 남긴다.
+    const withoutLogo = text.replace(/(?:^|\s)(?:마크|로고|logo|mark)(?=\s|$)/gi, ' ').trim();
+    const cleaned = withoutLogo.toUpperCase().replace(/[^0-9A-Z가-힣]/g, '');
+    if (!cleaned) return text ? '∅' : '';
+    return cleaned;
   }
 
   function normalizeCategory(value) {
@@ -141,9 +154,28 @@
     };
   }
 
-  function hasGroundTruth(truth) {
+  // 정답 제품명이 있으면 "이 약을 맞혔나"를, 각인 정답만 있으면 "각인을 제대로
+  // 읽었나"를 잰다. 각인 정답지는 그 자체로 정당한 정답지이므로 제품명이 없다는
+  // 이유로 채점을 막지 않는다. 다만 두 수치는 다른 것을 재므로 모드를 남긴다.
+  function hasDrugTruth(truth) {
     const answer = truth && truth.answer || {};
     return !!(normalizeDrugName(answer.drug_name) || normalizeIdentifier(answer.mfds_item_id));
+  }
+
+  function hasImprintTruth(truth) {
+    const answer = truth && truth.answer || {};
+    return [answer.front_imprint, answer.back_imprint]
+      .map(normalizeImprint)
+      .some(value => value && value !== '?');
+  }
+
+  function truthMode(truth) {
+    if (hasDrugTruth(truth)) return 'drug';
+    return hasImprintTruth(truth) ? 'imprint' : 'none';
+  }
+
+  function hasGroundTruth(truth) {
+    return truthMode(truth) !== 'none';
   }
 
   function nameMetric(truth, prediction) {
@@ -170,7 +202,13 @@
     const answer = truth.answer || {};
     const expected = [answer.front_imprint, answer.back_imprint];
     const actual = [prediction.front_imprint, prediction.back_imprint];
-    const known = expected.map(value => safeText(value).trim() !== '');
+    // 정답을 아는 면만 비교한다. (확인불가)는 사람이 사진으로도 판정하지 못한 면이라
+    // 정답이 없는 것과 같다. 이걸 아는 면으로 세면 모델이 무엇을 답하든 0점이 되어,
+    // 판정할 수 없는 면 하나가 그 알약의 점수를 절반으로 깎는다.
+    const known = expected.map(value => {
+      const normalized = normalizeImprint(value);
+      return normalized !== '' && normalized !== '?';
+    });
     const scoreOrientation = swapped => {
       const scores = expected.map((value, index) => {
         if (!known[index]) return null;
@@ -230,6 +268,37 @@
       return { verdict: 'wrong', reason: '판독 가능 정답에 대해 제품명 또는 품목 ID를 제시하지 않음' };
     }
     return { verdict: 'wrong', reason: `제품명이 정답과 일치하지 않음(유사도 ${round(drug.similarity * 100, 1)}%)` };
+  }
+
+  /**
+   * 각인 정답지로 채점할 때의 판정.
+   *
+   * 재는 것은 "약을 맞혔나"가 아니라 "각인을 제대로 읽었나"다. 두 면 각각을 보고
+   * 평균 유사도로 가른다. 무각인 면은 특별히 다룬다 — 모델이 없는 글자를 지어내면
+   * 그건 유사도 0이 아니라 환각이고, 이 정답지를 만든 이유이기도 하다.
+   */
+  function classifyImprintCase(truth, prediction, imprint) {
+    const expected = [truth.answer.front_imprint, truth.answer.back_imprint].map(normalizeImprint);
+    const actual = [prediction.front_imprint, prediction.back_imprint].map(normalizeImprint);
+    // 판정할 수 있는 면만 본다. (확인불가)와 빈칸은 정답이 없는 것이므로 제외한다.
+    const graded = expected.map((value, index) => ({ value, actual: actual[index], index }))
+      .filter(item => item.value && item.value !== '?');
+    if (!graded.length) return { verdict: 'wrong', reason: '채점할 각인 정답이 없음', invented: 0 };
+
+    // 무각인인데 글자를 적어 낸 면 = 지어낸 각인.
+    const invented = graded.filter(item => item.value === '∅' && item.actual && item.actual !== '∅' && item.actual !== '?');
+    if (invented.length) {
+      return {
+        verdict: 'wrong',
+        reason: `무각인 면에 없는 글자를 만들어 냄(${invented.length}면)`,
+        invented: invented.length,
+      };
+    }
+    const similarity = Number(imprint.similarity);
+    if (!Number.isFinite(similarity)) return { verdict: 'wrong', reason: '각인을 비교할 수 없음', invented: 0 };
+    if (similarity >= 0.9) return { verdict: 'correct', reason: `각인이 정답과 일치함(유사도 ${round(similarity * 100, 1)}%)`, invented: 0 };
+    if (similarity >= 0.6) return { verdict: 'partial', reason: `각인을 일부만 읽음(유사도 ${round(similarity * 100, 1)}%)`, invented: 0 };
+    return { verdict: 'wrong', reason: `각인이 정답과 다름(유사도 ${round(similarity * 100, 1)}%)`, invented: 0 };
   }
 
   function evidenceSpecificity(prediction, verdict) {
@@ -346,7 +415,7 @@
         rubric_version: RUBRIC_VERSION,
         sample_id: truth.sample_id,
         ready: false,
-        error: '정답 제품명 또는 식약처 품목 ID가 없습니다',
+        error: '정답 제품명·식약처 품목 ID·각인 정답이 모두 없습니다',
       };
     }
     if (result.error) {
@@ -359,9 +428,12 @@
       };
     }
 
+    const mode = truthMode(truth);
     const drug = nameMetric(truth, result.prediction);
-    const classification = classifyCase(truth, result.prediction, drug);
     const imprint = imprintMetric(truth, result.prediction);
+    const classification = mode === 'imprint'
+      ? classifyImprintCase(truth, result.prediction, imprint)
+      : classifyCase(truth, result.prediction, drug);
     const appearance = appearanceMetric(truth, result.prediction);
     const evidence = scoreEvidence(truth, result.prediction, classification.verdict, imprint, appearance, options.database);
     const hallucination = scoreHallucination(truth, result.prediction, classification.verdict, imprint, options.database);
@@ -373,6 +445,9 @@
       rubric_version: RUBRIC_VERSION,
       sample_id: truth.sample_id,
       ready: true,
+      // 무엇을 정답으로 삼아 채점했는지. 이 값을 빼면 각인 채점 결과가
+      // 약물 식별 정확도로 인용될 수 있다.
+      truth_mode: mode,
       verdict: classification.verdict,
       accuracy_score: accuracyScore,
       component_scores: {
@@ -390,6 +465,8 @@
         color_similarity: round(appearance.color, 4),
         confidence: hallucination.confidence,
         expected_readable: truth.condition.expected_readable,
+        // 무각인 면에 글자를 지어낸 횟수. 각인 정답지를 만드는 이유가 이 숫자다.
+        invented_imprints: Number(classification.invented) || 0,
       },
       reasons: {
         accuracy: [classification.reason],

@@ -129,6 +129,36 @@ const statusError = arenaCss.match(/\.arena-status\.error\{([^}]*)\}/);
 assert.ok(statusError, '.arena-status.error 규칙이 없다');
 assert.ok(/color:#fff/.test(statusError[1]), '오류 알림 글자색을 되돌리지 않아 읽을 수 없다');
 
+// ── 각인 정답지도 정답지다 ─────────────────────────────────────────────────
+// 각인 정답 입력 도구가 만든 정답지에는 약 이름이 없다. 그걸 이유로 막으면
+// "각인을 얼마나 정확히 읽는가"라는 질문 자체를 잴 수 없다.
+const imprintSheet = arena.validateDatasetRows(
+  [{ case_id: 'FIELD-001', front_image: 'a.jpg', back_image: 'b.jpg',
+     front_imprint: 'TYLENOL', back_imprint: '500' }],
+  ['a.jpg', 'b.jpg'],
+);
+assert.strictEqual(imprintSheet.validRows.length, 1, '각인 정답지를 통째로 막고 있다');
+assert.ok(
+  imprintSheet.rows[0]._warnings.some(w => /각인 정답지/.test(w)),
+  '각인 정답지라는 사실을 알려주지 않아 약물 식별 정확도로 오해할 수 있다'
+);
+
+// 각인도 약 이름도 없으면 채점할 정답이 없다.
+const emptySheet = arena.validateDatasetRows(
+  [{ case_id: 'X-1', front_image: 'a.jpg', back_image: 'b.jpg' }],
+  ['a.jpg', 'b.jpg'],
+);
+assert.strictEqual(emptySheet.validRows.length, 0);
+assert.ok(emptySheet.rows[0]._errors.some(e => /각인 정답/.test(e)));
+
+// 제품명이 있으면 경고 없이 통과한다(종전 동작).
+const drugSheet = arena.validateDatasetRows(
+  [{ case_id: 'D-1', front_image: 'a.jpg', back_image: 'b.jpg', drug_name: '타이레놀' }],
+  ['a.jpg', 'b.jpg'],
+);
+assert.strictEqual(drugSheet.validRows.length, 1);
+assert.ok(!drugSheet.rows[0]._warnings.some(w => /각인 정답지/.test(w)));
+
 (async () => {
   const buffer = await tools.buildXlsxTemplate({ arenaCore: arena, xlsx: xlsxAdapter, output: 'arraybuffer' });
   assert(buffer instanceof ArrayBuffer, 'output=arraybuffer는 ArrayBuffer를 반환합니다');

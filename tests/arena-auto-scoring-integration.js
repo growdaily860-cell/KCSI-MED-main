@@ -101,10 +101,37 @@ assert.equal(idMatchRating.caseVerdicts[0], 'correct', '품목 ID가 일치하�
 assert.equal(idMatchRating.caseMetrics[0].metrics.drug_name_exact, true);
 
 // 정답이 아예 없으면 자동채점은 보류되어야 한다(조사자 수동 채점으로 남긴다).
-const blankRating = arena.scoreBatchWithRubric([caseFromScreen(0, { answer: { drug_name: '', mfds_item_id: '' }, truthName: '' })], [goodPredictions[0]], []);
+// 각인 정답도 정답으로 인정하므로, "정답 없음"을 만들려면 각인까지 비워야 한다.
+const blankAnswer = { drug_name: '', mfds_item_id: '', front_imprint: '', back_imprint: '' };
+const blankCase = caseFromScreen(0, { answer: blankAnswer, truthName: '' });
+blankCase.truthFront = '';
+blankCase.truthBack = '';
+const blankRating = arena.scoreBatchWithRubric([blankCase], [goodPredictions[0]], []);
 assert.equal(blankRating.ready, false);
 assert.equal(blankRating.total, null);
 assert.equal(blankRating.missing_ground_truth.length, 1);
+
+// 약 이름이 없어도 각인 정답이 있으면 채점한다 — 각인 정답지로 4모델을 비교하는 경로다.
+const imprintOnlyCase = caseFromScreen(0, { answer: { drug_name: '', mfds_item_id: '' }, truthName: '' });
+const imprintOnlyRating = arena.scoreBatchWithRubric([imprintOnlyCase], [{
+  ...goodPredictions[0], drug_name: '', drug_code: '',
+  front_imprint: imprintOnlyCase.truthFront, back_imprint: imprintOnlyCase.truthBack,
+}], []);
+assert.equal(imprintOnlyRating.ready, true, '각인 정답지가 자동채점에서 보류됐다');
+assert.equal(imprintOnlyRating.caseVerdicts[0], 'correct');
+assert.equal(imprintOnlyRating.caseMetrics[0].truth_mode, 'imprint', '채점 근거가 각인임을 남기지 않았다');
+
+// 무각인 면에 글자를 지어내면 오답이어야 한다.
+const inventCase = caseFromScreen(0, {
+  answer: { drug_name: '', mfds_item_id: '', back_imprint: '(없음)' }, truthName: '',
+});
+inventCase.truthBack = '(없음)';
+const inventRating = arena.scoreBatchWithRubric([inventCase], [{
+  ...goodPredictions[0], drug_name: '', drug_code: '',
+  front_imprint: inventCase.truthFront, back_imprint: 'ZZ99',
+}], []);
+assert.equal(inventRating.caseVerdicts[0], 'wrong', '없는 각인을 지어냈는데 정답으로 셌다');
+assert.equal(inventRating.caseMetrics[0].metrics.invented_imprints, 1);
 
 // ── 4. 자동추천과 감사 기록이 기존 CSV에 남는지 ──────────────────────────
 const weakRating = arena.scoreBatchWithRubric(screenCases, goodPredictions.map((item, index) => index < 2

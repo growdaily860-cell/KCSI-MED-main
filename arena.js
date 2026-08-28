@@ -232,8 +232,16 @@
       else if ((caseCounts.get(caseId.normalize('NFKC').toLocaleLowerCase('en-US')) || 0) > 1) errors.push('시험번호가 중복되었습니다');
       if (!safeText(row.front_image).trim()) errors.push('앞면 이미지 파일명이 없습니다');
       if (!safeText(row.back_image).trim()) errors.push('뒷면 이미지 파일명이 없습니다');
-      if (!safeText(row.drug_name).trim() && !safeText(row.mfds_item_id).trim()) errors.push('정답 의약품명 또는 식약처 품목ID가 필요합니다');
-      if (!safeText(row.front_imprint).trim() && !safeText(row.back_imprint).trim()) warnings.push('앞·뒷면 정답 각인이 모두 비어 있습니다');
+      // 정답지는 두 종류다. 제품명이 있으면 "이 약을 맞혔나"를 채점하고,
+      // 각인 정답만 있으면 "각인을 제대로 읽었나"를 채점한다. 각인 정답지도
+      // 그 자체로 정당한 정답지이므로 제품명이 없다는 이유로 막지 않는다.
+      const hasDrugAnswer = !!(safeText(row.drug_name).trim() || safeText(row.mfds_item_id).trim());
+      const hasImprintAnswer = !!(safeText(row.front_imprint).trim() || safeText(row.back_imprint).trim());
+      if (!hasDrugAnswer && !hasImprintAnswer) {
+        errors.push('정답 의약품명·식약처 품목ID·각인 정답이 모두 없습니다');
+      } else if (!hasDrugAnswer) {
+        warnings.push('각인 정답지입니다 — 각인 판독을 채점하며 약물 식별 정확도는 나오지 않습니다');
+      }
       const frontKey = datasetImageKey(row.front_image), backKey = datasetImageKey(row.back_image);
       if (frontKey && backKey && frontKey === backKey) errors.push('앞면과 뒷면에 같은 파일이 지정되었습니다');
       [[frontKey, '앞면'], [backKey, '뒷면']].forEach(([key, label]) => {

@@ -138,4 +138,92 @@ const source = fs.readFileSync('arena.js', 'utf8');
 assert(source.includes('applyAutomaticRubric') && source.includes('arenaAcceptAuto'));
 assert(source.includes("voteSource = 'manual'"), 'automatic recommendation and investigator selection must be auditable');
 
+
+// ── 각인 정답지 채점 ────────────────────────────────────────────────────────
+// 각인 정답 입력 도구로 만든 정답지는 정답 약 이름이 없다. 그래도 "각인을 제대로
+// 읽었나"는 잴 수 있고, 그게 그 정답지를 만든 이유다.
+const imprintCase = (answer, prediction) => rubric.evaluateCase(
+  { sample_id: 'M-1', answer, condition: {} },
+  { model: 'gpt', prediction },
+);
+
+const readCorrect = imprintCase({ front_imprint: 'TYLENOL', back_imprint: '500' },
+  { front_imprint: 'TYLENOL', back_imprint: '500' });
+assert.strictEqual(readCorrect.ready, true, '약 이름이 없다고 채점을 막으면 안 된다');
+assert.strictEqual(readCorrect.truth_mode, 'imprint', '어느 정답으로 채점했는지 남기지 않는다');
+assert.strictEqual(readCorrect.verdict, 'correct');
+assert.strictEqual(readCorrect.accuracy_score, 40);
+
+// 앞뒤를 바꿔 읽어도 각인 자체는 맞게 읽은 것이다.
+assert.strictEqual(
+  imprintCase({ front_imprint: 'TYLENOL', back_imprint: '500' },
+    { front_imprint: '500', back_imprint: 'TYLENOL' }).verdict,
+  'correct',
+);
+// 일부만 읽으면 부분 점수.
+assert.strictEqual(
+  imprintCase({ front_imprint: 'SAMIL PB1', back_imprint: '(없음)' },
+    { front_imprint: 'PB1', back_imprint: '없음' }).verdict,
+  'partial',
+);
+
+// ── 무각인 면에 글자를 지어내는지 ──────────────────────────────────────────
+// 이 정답지를 만든 핵심 목적이다. (없음)을 글자로 비교하면 이 판정이 성립하지 않는다.
+const invented = imprintCase({ front_imprint: 'JWS SF', back_imprint: '(없음)' },
+  { front_imprint: 'JWS SF', back_imprint: 'AB12' });
+assert.strictEqual(invented.verdict, 'wrong', '없는 각인을 지어냈는데 정답으로 셌다');
+assert.strictEqual(invented.metrics.invented_imprints, 1, '지어낸 면 수를 세지 않는다');
+assert.ok(/만들어 냄/.test(invented.reasons.accuracy[0]), '지어냈다는 사실을 근거에 적지 않는다');
+
+const honestBlank = imprintCase({ front_imprint: 'JWS SF', back_imprint: '(없음)' },
+  { front_imprint: 'JWS SF', back_imprint: '없음' });
+assert.strictEqual(honestBlank.verdict, 'correct', '무각인을 없음이라 답했는데 틀렸다고 셌다');
+assert.strictEqual(honestBlank.metrics.invented_imprints, 0);
+
+// ── 입력 도구의 표기를 해석하는지 ──────────────────────────────────────────
+// (마크)는 로고만 있고 글자가 없다는 뜻이다. 괄호를 떼지 않으면 글자로 비교된다.
+assert.strictEqual(
+  imprintCase({ front_imprint: '(마크)', back_imprint: 'VCM' },
+    { front_imprint: '없음', back_imprint: 'VCM' }).verdict,
+  'correct',
+  '로고면 표기를 글자 각인으로 비교했다',
+);
+assert.strictEqual(
+  imprintCase({ front_imprint: '(마크) 255', back_imprint: '(없음)' },
+    { front_imprint: '255', back_imprint: '없음' }).verdict,
+  'correct',
+  '로고와 함께 적힌 글자를 읽어내지 못했다',
+);
+
+// (확인불가)는 사람도 판정하지 못한 면이다. 채점에서 빼야 한다.
+// 이 면을 0점으로 세면 판정 불가 한 면이 그 알약의 점수를 절반으로 깎는다.
+assert.strictEqual(
+  imprintCase({ front_imprint: 'HT', back_imprint: '(확인불가)' },
+    { front_imprint: 'HT', back_imprint: '무엇이든' }).verdict,
+  'correct',
+  '판정할 수 없는 면을 채점에 넣었다',
+);
+assert.strictEqual(
+  imprintCase({ front_imprint: 'HT', back_imprint: '(확인불가)' },
+    { front_imprint: 'ZZ', back_imprint: '무엇이든' }).verdict,
+  'wrong',
+  '판정 가능한 면이 틀렸는데 통과시켰다',
+);
+
+// 정답이 아무것도 없으면 채점하지 않는다.
+const nothing = rubric.evaluateCase(
+  { sample_id: 'M-2', answer: {}, condition: {} },
+  { model: 'gpt', prediction: { drug_name: '무언가' } },
+);
+assert.strictEqual(nothing.ready, false);
+assert.ok(/각인 정답/.test(nothing.error), '각인 정답도 없다는 사실을 오류에 적지 않는다');
+
+// 제품명 정답이 있으면 종전대로 약물 식별로 채점한다.
+const drugMode = rubric.evaluateCase(
+  { sample_id: 'D-1', answer: { drug_name: '타이레놀정500밀리그람', front_imprint: 'TYLENOL' }, condition: {} },
+  { model: 'gpt', prediction: { drug_name: '타이레놀정500밀리그람', front_imprint: 'TYLENOL' } },
+);
+assert.strictEqual(drugMode.truth_mode, 'drug', '제품명 정답지가 각인 모드로 채점됐다');
+assert.strictEqual(drugMode.verdict, 'correct');
+
 console.log('[arena-rubric] PASS — automatic 40+25+20+15 scoring · audit reasons · safe manual override');
