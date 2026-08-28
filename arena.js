@@ -49,14 +49,14 @@
   const EXTENDED_SAMPLE_SETS = SAMPLE_DATASETS.filter(item => item.id !== 'fixed20');
   const sampleDatasetById = id => SAMPLE_DATASETS.find(item => item.id === id) || SAMPLE_DATASETS[0];
   const DATASET_COLUMNS = [
-    { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', '시험번호', '익명시험번호', '검체번호'] },
+    { key: 'case_id', label: '시험번호', aliases: ['case_id', 'case id', 'case', 'caseno', 'case no', 'sample_id', 'sample id', '시험번호', '익명시험번호', '검체번호', '샘플번호', '사례번호', '연번'] },
     { key: 'pill_id', label: '알약번호', aliases: ['pill_id', 'pill id', '알약번호', '약물번호'] },
-    { key: 'front_image', label: '앞면 이미지', aliases: ['front_image', 'front image', '앞면이미지', '앞면사진', '앞사진'] },
-    { key: 'back_image', label: '뒷면 이미지', aliases: ['back_image', 'back image', '뒷면이미지', '뒷면사진', '뒤사진'] },
+    { key: 'front_image', label: '앞면 이미지', aliases: ['front_image', 'front image', 'image_front', 'img_front', 'front_file', 'front_photo', 'frontfilename', '앞면이미지', '앞면사진', '앞사진', '앞면파일', '앞면파일명', '앞면', '전면사진', '전면이미지'] },
+    { key: 'back_image', label: '뒷면 이미지', aliases: ['back_image', 'back image', 'image_back', 'img_back', 'back_file', 'back_photo', 'backfilename', '뒷면이미지', '뒷면사진', '뒤사진', '뒷면파일', '뒷면파일명', '뒷면', '후면사진', '후면이미지'] },
     { key: 'mfds_item_id', label: '식약처 품목ID', aliases: ['mfds_item_id', 'mfds id', 'item_seq', '품목일련번호', '품목id', '식약처id'] },
-    { key: 'drug_name', label: '정답 의약품명', aliases: ['drug_name', 'drug name', 'item_name', '의약품명', '제품명', '정답의약품명'] },
-    { key: 'front_imprint', label: '앞면 각인', aliases: ['front_imprint', 'imprint_front', '앞면각인', '앞각인'] },
-    { key: 'back_imprint', label: '뒷면 각인', aliases: ['back_imprint', 'imprint_back', '뒷면각인', '뒤각인'] },
+    { key: 'drug_name', label: '정답 의약품명', aliases: ['drug_name', 'drug name', 'item_name', 'product_name', 'name', '의약품명', '제품명', '정답의약품명', '약품명', '약명', '품명', '정답', '정답명'] },
+    { key: 'front_imprint', label: '앞면 각인', aliases: ['front_imprint', 'imprint_front', 'front_mark', '앞면각인', '앞각인', '앞면표기', '전면각인', '앞면마크'] },
+    { key: 'back_imprint', label: '뒷면 각인', aliases: ['back_imprint', 'imprint_back', 'back_mark', '뒷면각인', '뒤각인', '뒷면표기', '후면각인', '뒷면마크'] },
     { key: 'shape', label: '모양', aliases: ['shape', '모양', '제형모양'] },
     { key: 'color', label: '색상', aliases: ['color', 'colour', '색상', '색깔'] },
     { key: 'mark_id', label: '마크 ID', aliases: ['mark_id', 'mark id', 'logo_id', '마크id', '로고id', '마크'] },
@@ -148,6 +148,32 @@
     return rows;
   }
 
+  // 머리글 인식에 실패했을 때 "인식하지 못했습니다"만 말하면 고칠 방법이 없다.
+  // 파일에서 실제로 읽은 이름과 필요한 열을 함께 돌려줘야 사용자가 첫 줄만 고치면 된다.
+  const REQUIRED_DATASET_KEYS = ['case_id', 'front_image', 'back_image'];
+
+  function headerFailureMessage(rows, headerRowIndex, bestMatches) {
+    const candidate = headerRowIndex >= 0 ? (rows[headerRowIndex] || []) : (rows[0] || []);
+    const names = candidate.map(value => safeText(value).trim()).filter(Boolean).slice(0, 10);
+    const recognized = candidate
+      .map(value => DATASET_HEADER_LOOKUP.get(normalizeDatasetHeader(value)))
+      .filter(Boolean);
+    const missing = REQUIRED_DATASET_KEYS
+      .filter(key => !recognized.includes(key))
+      .map(key => {
+        const column = DATASET_COLUMNS.find(item => item.key === key);
+        return `${column.label}(${key})`;
+      });
+    if (!recognized.includes('drug_name') && !recognized.includes('mfds_item_id')) {
+      missing.push('정답 의약품명(drug_name) 또는 식약처 품목ID(mfds_item_id)');
+    }
+    const found = names.length ? `첫 줄에서 읽은 이름: ${names.join(' · ')}` : '첫 줄이 비어 있습니다';
+    const matched = bestMatches > 0
+      ? `이 중 ${bestMatches}개만 아는 열 이름이라 3개에 못 미칩니다.`
+      : '아는 열 이름이 하나도 없습니다.';
+    return `정답지 머리글을 인식하지 못했습니다. ${found} · ${matched} 필요한 열: ${missing.join(' · ')}`;
+  }
+
   function normalizeDatasetTable(table) {
     const rows = Array.isArray(table) ? table.map(row => Array.isArray(row) ? row : []) : [];
     if (!rows.length) throw new Error('정답지에서 표 데이터를 찾지 못했습니다');
@@ -157,7 +183,7 @@
       const matches = row.filter(value => DATASET_HEADER_LOOKUP.has(normalizeDatasetHeader(value))).length;
       if (matches > bestMatches) { bestMatches = matches; headerRowIndex = index; }
     });
-    if (headerRowIndex < 0 || bestMatches < 3) throw new Error('정답지 머리글을 인식하지 못했습니다. CSV 템플릿의 열 이름을 사용하세요');
+    if (headerRowIndex < 0 || bestMatches < 3) throw new Error(headerFailureMessage(rows, headerRowIndex, bestMatches));
     const rawHeaders = rows[headerRowIndex];
     const keyCounts = new Map();
     const mappedHeaders = rawHeaders.map(value => {
@@ -911,7 +937,9 @@
   if (typeof document === 'undefined') return;
 
   const blankImages = () => Array.from({ length: CASE_COUNT }, () => ({ front: '', back: '', frontName: '', backName: '' }));
-  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null });
+  // answerError는 정답지가 실패한 이유를 들고 있는다. 사진을 올리면 상태 줄이 덮이는데,
+  // 그러면 왜 안 되는지 볼 방법이 사라진다. 정답지가 풀릴 때까지 다시 보여 준다.
+  const blankDataset = () => ({ answerFile: null, sourceType: '', rows: [], loadedRows: [], imageFiles: [], validation: null, confirmed: false, requiresConfirmation: false, importMeta: null, randomQueue: null, answerError: '' });
   const state = { images: blankImages(), current: null, runs: readRuns(), dataset: blankDataset(), lastSave: null };
   let datasetOcrAbort = null;
 
@@ -1359,6 +1387,7 @@
         return;
       }
       applyDatasetImport(file, parsed);
+      state.dataset.answerError = '';
       setDatasetStatus(`${file.name} · ${parsed.rows.length}개 데이터 행을 읽었습니다${parsed.requiresConfirmation ? ' · PDF 추출 내용을 확인하세요' : ''}`);
     } catch (error) {
       state.dataset.rows = [];
@@ -1367,7 +1396,9 @@
       state.dataset.confirmed = false;
       document.getElementById('arenaPdfConfirmWrap').hidden = true;
       const cancelled = error && (error.name === 'AbortError' || error.code === 'cancelled');
-      setDatasetStatus(cancelled ? 'OCR 작업을 취소했습니다' : (error.message || '정답지를 읽지 못했습니다'), !cancelled);
+      const message = cancelled ? 'OCR 작업을 취소했습니다' : (error.message || '정답지를 읽지 못했습니다');
+      state.dataset.answerError = cancelled ? '' : message;
+      setDatasetStatus(message, !cancelled);
       refreshDatasetValidation();
     }
   }
@@ -1382,6 +1413,12 @@
     state.dataset.imageFiles = files;
     document.getElementById('arenaDatasetImageName').textContent = `${files.length.toLocaleString('ko-KR')}장 선택됨`;
     refreshDatasetValidation();
+    // 정답지가 아직 실패 상태면 사진 대조 결과보다 그 이유를 다시 보여 준다.
+    // 덮어써 버리면 "사진은 올라갔는데 왜 아무 일도 안 일어나지"만 남는다.
+    if (state.dataset.answerError) {
+      setDatasetStatus(`${state.dataset.answerError} · 사진 ${files.length.toLocaleString('ko-KR')}장은 정답지를 고친 뒤 대조됩니다`, true);
+      return;
+    }
     setDatasetStatus(`알약 사진 ${files.length.toLocaleString('ko-KR')}장을 파일명으로 대조했습니다`);
   }
 

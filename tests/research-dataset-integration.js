@@ -91,6 +91,19 @@ function storage() {
   };
 }
 
+
+// 정답지가 실패한 상태에서 사진을 올리면 오류 메시지가 덮여 사라졌다.
+// 그러면 "사진은 올라갔는데 왜 아무 일도 없지"만 남고 원인을 볼 방법이 없다.
+const arenaSource = require('fs').readFileSync('arena.js', 'utf8');
+assert.ok(/answerError/.test(arenaSource), '정답지 오류를 기억해 두지 않는다');
+assert.ok(
+  /if \(state\.dataset\.answerError\)[\s\S]{0,240}정답지를 고친 뒤 대조됩니다/.test(arenaSource),
+  '사진을 올리면 정답지 오류가 덮여 원인을 볼 수 없다'
+);
+assert.ok(
+  /state\.dataset\.answerError = ''/.test(arenaSource),
+  '정답지가 다시 읽히면 옛 오류를 지워야 한다'
+);
 (async () => {
   const document = new DocumentStub();
   const window = {
