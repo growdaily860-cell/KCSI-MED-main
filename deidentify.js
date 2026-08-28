@@ -767,6 +767,8 @@
     });
     return appendDocLog({
       docId: `DOC-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      // 사람 확인을 거친 실제 비식별화다. /deid-report의 직접 테스트와 섞이면 안 된다.
+      source: 'field',
       sourceType: telemetry.sourceType,
       sourceExt: telemetry.sourceExt,
       condition: telemetry.condition,
@@ -930,6 +932,50 @@
     return entry;
   }
 
+  // 요약용 기록 고르기. source를 주지 않으면 실사용(field)만 본다.
+  function docLogRows(options = {}) {
+    const rows = readDocLog();
+    if (!DOC_LOG || typeof DOC_LOG.recordSource !== 'function') return rows;
+    if (options.source === 'all') return rows;
+    const wanted = options.source || 'field';
+    return rows.filter(row => DOC_LOG.recordSource(row) === wanted);
+  }
+
+  /**
+   * detectOnly 결과를 처리기록에 남긴다.
+   *
+   * 사본을 만들지 않는 경로이므로 사람이 확인한 것도, 가린 것도 아니다.
+   * 그래서 manualBoxes는 0이고, 상자를 하나도 못 찾으면 'failed'로 분류된다 —
+   * 실제로 그 문서는 비식별화되지 않은 상태가 맞다.
+   */
+  function recordDetection(detection, meta = {}) {
+    const result = detection || {};
+    const boxKinds = {};
+    (result.boxes || []).forEach(box => {
+      const kind = String(box && box.kind || '기타');
+      boxKinds[kind] = (boxKinds[kind] || 0) + 1;
+    });
+    return appendDocLog({
+      docId: `DOC-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      source: meta.source || 'report_test',
+      sourceType: meta.sourceType || 'image',
+      sourceExt: meta.sourceExt,
+      condition: meta.condition,
+      ocrFailed: !!result.ocrFailed,
+      ocrError: result.ocrError,
+      wordCount: result.wordCount,
+      meanConfidence: result.meanConfidence,
+      lowConfidenceRatio: result.lowConfidenceRatio,
+      elapsedMs: result.elapsedMs,
+      pixels: Math.max(0, Number(result.width) || 0) * Math.max(0, Number(result.height) || 0),
+      autoBoxes: (result.boxes || []).length,
+      manualBoxes: 0,
+      erasedBoxes: 0,
+      boxKinds,
+      completed: true,
+    });
+  }
+
   function ocrQuality(words) {
     const scores = (words || []).map(word => Number(word && word.confidence)).filter(Number.isFinite);
     if (!scores.length) return { wordCount: (words || []).length, meanConfidence: null, lowConfidenceRatio: null };
@@ -1078,13 +1124,23 @@
     boxesFromWords,
     cancelActive,
     // 처리 기록 — 성능 수치를 뽑거나 내보낼 때 쓴다. 값이 아니라 숫자만 들어 있다.
+    // 요약과 문장은 기본이 실사용(field)이다. /deid-report에서 눌러 본 직접 테스트를
+    // 섞어 세면 같은 문서를 열 번 돌린 것이 실사용 성능으로 둔갑한다.
     readDocLog,
-    summarizeDocLog: () => (DOC_LOG ? DOC_LOG.summarizeDocs(readDocLog()) : null),
+    summarizeDocLog: (options = {}) => (DOC_LOG ? DOC_LOG.summarizeDocs(docLogRows(options)) : null),
+    // CSV는 전부 내보낸다. 출처 열이 있으므로 받는 쪽에서 갈라 볼 수 있고,
+    // 내보내기에서 조용히 빠지는 기록이 있으면 그게 더 나쁘다.
     docLogCsv: () => (DOC_LOG ? DOC_LOG.buildDocCsv(readDocLog()) : ''),
-    docLogSentences: () => (DOC_LOG ? DOC_LOG.performanceSentences(DOC_LOG.summarizeDocs(readDocLog())) : []),
+    docLogSentences: (options = {}) => (DOC_LOG
+      ? DOC_LOG.performanceSentences(DOC_LOG.summarizeDocs(docLogRows(options)), {
+        scopeLabel: options.scopeLabel || (options.source === 'report_test' ? '직접 테스트' : '실사용'),
+      })
+      : []),
     clearDocLog: () => { try { root.localStorage.removeItem(DOC_LOG_KEY); return true; } catch (_) { return false; } },
     // 합성 문서 배치 측정에서 쓴다. 사람 확인 흐름과 분리된 자동 탐지 전용 경로다.
     detectOnly,
+    // /deid-report의 직접 테스트가 결과를 기록에 남길 때 쓴다.
+    recordDetection,
     closeOcr,
     versions: { tesseract: '7.0.0', pdfjs: '6.2.108', heic2any: '0.0.4', zipRules: '1.0.0' },
   };

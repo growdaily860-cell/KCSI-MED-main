@@ -3,10 +3,12 @@
 
   // 비식별화 성능 보고 화면 (/deid-report).
   //
-  // 수치를 콘솔에서만 꺼낼 수 있으면 발표에 쓸 수 없다. 이 화면은 두 가지를 보여준다.
-  //   1) 실사용 처리기록 — 지금까지 이 브라우저에서 처리한 문서의 결과
-  //   2) 합성 문서 배치 측정 — 정답지가 붙은 문서를 돌려 재현율을 잰다
-  // 두 수치는 재는 것이 다르므로 화면에서도 끝까지 분리해 둔다.
+  // 수치를 콘솔에서만 꺼낼 수 있으면 발표에 쓸 수 없다. 이 화면은 세 가지를 보여준다.
+  //   1) 직접 테스트 — 문서 한 장을 지금 넣어 보고 무엇이 잡히는지 눈으로 본다
+  //   2) 실사용 처리기록 — /field에서 실제로 비식별화한 문서의 결과가 쌓인다
+  //   3) 합성 문서 배치 측정 — 정답지가 붙은 문서를 돌려 재현율을 잰다
+  // 세 수치는 재는 것이 다르므로 화면에서도 끝까지 분리해 둔다. 특히 1번은
+  // 같은 문서를 열 번 돌릴 수 있으므로 2번의 분모에 절대 섞지 않는다.
 
   const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const SAMPLE_URL = '/samples/KCSI_MED_synthetic_docs.zip';
@@ -43,22 +45,66 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  const state = { batch: null, running: false, stop: false, sheet: null, images: new Map() };
+  const state = {
+    batch: null, running: false, stop: false, sheet: null, images: new Map(),
+    // 직접 테스트는 결과만 들고 있다가 다시 그릴 때 쓴다. 이미지는 캔버스에만 있고
+    // 저장하지 않으므로 새로고침하면 사라진다 — 그게 맞는 동작이다.
+    trial: null, trialRunning: false,
+  };
 
   function markup() {
     return `<div class="arena-shell">
       <section class="arena-hero">
         <div class="arena-eyebrow">KCSI DEIDENTIFICATION · PERFORMANCE REPORT</div>
         <h1>비식별화 성능 보고</h1>
-        <p>실사용 처리기록과 정답지가 붙은 합성 문서 채점을 함께 봅니다. 두 수치는 재는 것이 다르므로 바꿔 쓰지 마세요.</p>
-        <div class="arena-privacy">🔐 이 화면은 숫자만 다룹니다. 문서 이미지와 개인정보 값은 저장하지도 전송하지도 않습니다.</div>
+        <p>직접 테스트 · 실사용 처리기록 · 정답지가 붙은 합성 문서 채점을 함께 봅니다. 세 수치는 재는 것이 다르므로 바꿔 쓰지 마세요.</p>
+        <div class="arena-privacy">🔐 문서는 브라우저 메모리에서만 처리합니다. 이미지와 개인정보 값은 저장하지도 전송하지도 않습니다.</div>
       </section>
 
       <section class="arena-card">
-        <div class="arena-card-h"><div><h2><span class="arena-step">1</span>실사용 처리기록</h2>
-        <p>이 브라우저에서 실제로 비식별화한 문서의 결과입니다. 정답지가 없으므로 "얼마나 손이 덜 갔는가"를 재고, 개인정보를 빠짐없이 가렸는지는 아래 2번에서 잽니다.</p></div></div>
+        <div class="arena-card-h"><div><h2><span class="arena-step">1</span>직접 테스트</h2>
+        <p>문서 한 장을 넣어 <b>지금 이 규칙이 무엇을 잡는지</b> 눈으로 봅니다. 아래 2번 실사용 기록과 분모를 섞지 않고 따로 셉니다.</p></div></div>
+        <div class="kcsi-report-warn">
+          <b>여기서는 가린 사본이 만들어지지 않습니다.</b>
+          이 화면은 탐지 결과만 보여주는 측정용입니다. 실제로 가린 파일을 받으려면
+          <a href="/field">/field</a>에서 사람 확인을 거쳐야 합니다.
+        </div>
+        <div class="arena-dataset-import" id="deidTrialControls">
+          <div><b>테스트할 문서</b><span>진단서·처방전·검사결과지 등 의료기록 이미지 한 장.</span>
+          <span class="arena-dataset-random" id="deidTrialNote">JPG · PNG · 사진 촬영</span></div>
+          <select class="arena-select" id="deidTrialCondition" aria-label="촬영 조건">
+            <option value="original" selected>정상 스캔</option>
+            <option value="fold">접힘</option>
+            <option value="crumple">구겨짐</option>
+            <option value="skew">기울어짐</option>
+            <option value="lowlight">저조도</option>
+            <option value="noise">노이즈</option>
+            <option value="lowres">저해상도</option>
+            <option value="unknown">모르겠음</option>
+          </select>
+          <button class="arena-action" type="button" id="deidTrialPick">📄 파일 선택</button>
+          <button class="arena-action arena-action-ghost" type="button" id="deidTrialCamera">📷 촬영</button>
+        </div>
+        <input type="file" id="deidTrialFile" accept="image/*">
+        <input type="file" id="deidTrialCameraFile" accept="image/*" capture="environment">
+        <div class="arena-ocr-panel" id="deidTrialProgressWrap" hidden>
+          <div class="arena-ocr-head"><div><b id="deidTrialPhase">준비 중</b><span id="deidTrialDetail"></span></div></div>
+          <div class="arena-ocr-track"><span id="deidTrialBar"></span></div>
+        </div>
+        <div class="arena-stat-grid" id="deidTrialStats"></div>
+        <div class="kcsi-report-preview" id="deidTrialPreviewWrap" hidden>
+          <canvas id="deidTrialCanvas"></canvas>
+          <div class="kcsi-report-preview-note" id="deidTrialPreviewNote"></div>
+        </div>
+        <div id="deidTrialFindings"></div>
+      </section>
+
+      <section class="arena-card">
+        <div class="arena-card-h"><div><h2><span class="arena-step">2</span>실사용 처리기록</h2>
+        <p><b>/field</b>에서 실제로 비식별화한 문서의 결과가 여기에 쌓입니다. 정답지가 없으므로 "얼마나 손이 덜 갔는가"를 재고, 개인정보를 빠짐없이 가렸는지는 아래 3번에서 잽니다.</p></div></div>
         <div class="arena-stat-grid" id="deidLiveStats"></div>
         <div class="arena-store" id="deidLiveSentences"></div>
+        <div id="deidLiveTrialNote"></div>
         <div class="arena-dashboard-actions">
           <button class="arena-action secondary" type="button" id="deidLiveCsv">처리기록 CSV</button>
           <button class="arena-action secondary" type="button" id="deidLiveCopy">문장 복사</button>
@@ -68,7 +114,7 @@
       </section>
 
       <section class="arena-card">
-        <div class="arena-card-h"><div><h2><span class="arena-step">2</span>합성 문서 배치 측정</h2>
+        <div class="arena-card-h"><div><h2><span class="arena-step">3</span>합성 문서 배치 측정</h2>
         <p>정답지가 붙은 합성 의료문서를 자동 탐지에 태워 <b>개인정보를 빠짐없이 가렸는지</b>를 잽니다. 사람 확인 창은 뜨지 않고 사본도 만들지 않습니다.</p></div></div>
         <div class="arena-dataset-import" id="deidBatchControls">
           <div><b>측정할 합성 문서 세트</b><span>npm run build:docs 로 만든 ZIP입니다.</span><span class="arena-dataset-random" id="deidBatchNote"></span></div>
@@ -86,6 +132,10 @@
           <button class="arena-preset" type="button" id="deidBatchStop">중단</button></div>
           <div class="arena-ocr-track"><span id="deidBatchBar"></span></div>
         </div>
+        <details class="arena-glossary" id="deidSetProfile">
+          <summary>이 합성 문서 세트는 무엇으로 만들어졌나</summary>
+          <div id="deidSetProfileBody"></div>
+        </details>
         <div class="arena-stat-grid" id="deidBatchStats"></div>
         <div class="arena-store" id="deidBatchSentences"></div>
         <div id="deidBatchTables"></div>
@@ -123,21 +173,156 @@
     </div>`;
   }
 
+  // ── 직접 테스트 ────────────────────────────────────────────────────────────
+  //
+  // 배치 측정은 정답지가 있어야 돌고, /field는 사람 확인 창을 띄운다. 그 사이에
+  // "내 문서 한 장 넣어 보면 뭐가 잡히나"를 볼 자리가 없었다. 여기가 그 자리다.
+  // 사본을 만들지 않으므로 이것으로 비식별화를 마쳤다고 오해하지 않도록
+  // 화면에도 못을 박아 둔다.
+
+  function trialProgress(phase, detail, ratio) {
+    const wrap = document.getElementById('deidTrialProgressWrap');
+    if (!wrap) return;
+    wrap.hidden = false;
+    document.getElementById('deidTrialPhase').textContent = phase;
+    document.getElementById('deidTrialDetail').textContent = detail || '';
+    document.getElementById('deidTrialBar').style.width = `${Math.round((ratio || 0) * 100)}%`;
+  }
+
+  // 가려질 영역을 덮어 그린다. 실제 가림과 같은 상자를 쓰되 사본은 만들지 않는다.
+  function drawTrialPreview(canvas, detection) {
+    const target = document.getElementById('deidTrialCanvas');
+    if (!target) return;
+    const maxWidth = 720;
+    const scale = Math.min(1, maxWidth / Math.max(1, canvas.width));
+    target.width = Math.round(canvas.width * scale);
+    target.height = Math.round(canvas.height * scale);
+    const context = target.getContext('2d');
+    context.drawImage(canvas, 0, 0, target.width, target.height);
+    const boxes = detection.boxes || [];
+    boxes.forEach(box => {
+      context.fillStyle = '#111827';
+      context.fillRect(box.x * scale, box.y * scale, box.w * scale, box.h * scale);
+    });
+    // 상자가 없으면 화면에 뜬 것은 가려진 그림이 아니라 원본 그대로다.
+    // 설명을 고정해 두면 아무것도 못 가린 문서를 가려진 것처럼 보여주게 된다.
+    document.getElementById('deidTrialPreviewNote').textContent = boxes.length
+      ? '가려질 영역을 덮어 그린 미리보기입니다. 이 이미지는 저장되지 않습니다.'
+      : '가릴 영역을 찾지 못해 원본 그대로입니다. 이 이미지는 저장되지 않습니다.';
+    document.getElementById('deidTrialPreviewWrap').hidden = false;
+  }
+
+  function renderTrial() {
+    const stats = document.getElementById('deidTrialStats');
+    const findings = document.getElementById('deidTrialFindings');
+    if (!stats || !findings) return;
+    const trial = state.trial;
+    if (!trial) {
+      stats.innerHTML = '';
+      findings.innerHTML = '';
+      return;
+    }
+    const kinds = trial.kinds || [];
+    const total = kinds.reduce((sum, row) => sum + row.count, 0);
+    stats.innerHTML = [
+      { value: trial.ocrFailed ? '실패' : `${total}곳`, label: '가릴 영역' },
+      { value: kinds.length ? `${kinds.length}종` : '—', label: '개인정보 종류' },
+      { value: Number.isFinite(trial.meanConfidence) ? `${Math.round(trial.meanConfidence * 100)}%` : '—', label: 'OCR 평균 신뢰도' },
+      { value: `${(trial.elapsedMs / 1000).toFixed(1)}초`, label: '소요 시간' },
+    ].map(card => `<div class="arena-stat"><b>${esc(card.value)}</b><span>${esc(card.label)}</span></div>`).join('');
+
+    // 무엇이 잡혔는지보다 "안 잡힌 게 있는지"가 중요하다. 판단은 사람이 해야 하므로
+    // 눈으로 대조하라고 분명히 적는다.
+    const verdict = trial.ocrFailed
+      ? `<div class="kcsi-report-warn"><b>글자를 읽지 못했습니다.</b> ${esc(trial.ocrError || '')} 해상도를 높이거나 더 밝게 찍어 다시 시도하세요. <a href="/field">/field</a>에서는 직접 상자를 그려 가릴 수 있습니다.</div>`
+      : (total
+        ? `<div class="kcsi-report-note"><b>가릴 영역 ${total}곳을 찾았습니다.</b><div>미리보기에서 <b>가려지지 않은 개인정보가 남아 있는지 눈으로 대조하세요.</b> 이 화면은 찾은 것만 보여줄 뿐, 못 찾은 것은 알려주지 못합니다.</div></div>`
+        : '<div class="kcsi-report-warn"><b>가릴 영역을 하나도 찾지 못했습니다.</b> 개인정보가 없는 문서일 수도 있고, 규칙이 못 잡은 것일 수도 있습니다. 문서에 이름·번호가 보인다면 규칙 공백입니다.</div>');
+
+    findings.innerHTML = `${verdict}${kinds.length ? `
+      <div class="arena-table-wrap"><table class="arena-table"><thead><tr><th>개인정보 종류</th><th>찾은 영역</th></tr></thead><tbody>${
+        kinds.map(row => `<tr><td>${esc(row.kind)}</td><td>${row.count}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+  }
+
+  async function runTrial(file, condition) {
+    const deid = root.KCSI_DEID;
+    if (!deid || typeof deid.detectOnly !== 'function') {
+      trialProgress('실행할 수 없음', '비식별화 모듈을 불러오지 못했습니다', 0);
+      return;
+    }
+    state.trialRunning = true;
+    state.trial = null;
+    renderTrial();
+    document.getElementById('deidTrialPreviewWrap').hidden = true;
+    try {
+      trialProgress('문서를 여는 중', file.name ? `${file.name.split('.').pop()} 파일` : '', 0.05);
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0);
+      if (bitmap.close) bitmap.close();
+
+      const detection = await deid.detectOnly(canvas, {
+        onProgress: message => trialProgress('탐지 중', message, 0.5),
+      });
+      const kinds = new Map();
+      (detection.boxes || []).forEach(box => {
+        const kind = String(box.kind || '기타');
+        kinds.set(kind, (kinds.get(kind) || 0) + 1);
+      });
+
+      // 이 문서로 한 번 돌린 것을 기록에 남긴다. 출처를 report_test로 박아
+      // /field 실사용 비율이 시험 삼아 돌린 것으로 흔들리지 않게 한다.
+      const ext = String(file.name || '').split('.').pop();
+      deid.recordDetection(detection, {
+        source: 'report_test',
+        sourceType: 'image',
+        sourceExt: ext && ext.length <= 8 ? ext : '',
+        condition,
+      });
+
+      state.trial = {
+        ...detection,
+        kinds: [...kinds.entries()].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count),
+      };
+      drawTrialPreview(canvas, detection);
+      trialProgress(detection.ocrFailed ? '탐지 실패' : '탐지 완료', `${(detection.elapsedMs / 1000).toFixed(1)}초`, 1);
+      renderTrial();
+      renderLive();
+    } catch (error) {
+      trialProgress('테스트 실패', (error && error.message) || '알 수 없는 오류', 0);
+    } finally {
+      state.trialRunning = false;
+      await deid.closeOcr().catch(() => {});
+    }
+  }
+
   function renderLive() {
     const deid = root.KCSI_DEID;
     const logger = root.KCSIDocLog;
     if (!deid || !logger) return;
-    const summary = deid.summarizeDocLog();
+    // 실사용(/field)만 센다. 위 직접 테스트는 같은 문서를 열 번 돌릴 수 있어
+    // 여기 분모에 들어가면 실사용 비율이 조용히 망가진다.
+    const summary = deid.summarizeDocLog({ source: 'field' });
+    const trials = deid.summarizeDocLog({ source: 'report_test' });
     const stats = document.getElementById('deidLiveStats');
     stats.innerHTML = [
-      { value: summary.docs, label: '처리 문서' },
+      { value: summary.docs, label: '처리 문서(/field)' },
       { value: pct(summary.autoOnlyRate), label: '자동만으로 완료' },
       { value: pct(summary.manualTouchedRate), label: '사람이 손댐' },
       { value: summary.failed, label: '가림 없이 종료' },
     ].map(card => `<div class="arena-stat"><b>${esc(card.value)}</b><span>${esc(card.label)}</span></div>`).join('');
     document.getElementById('deidLiveSentences').innerHTML = summary.docs
-      ? deid.docLogSentences().map(line => `<div>${esc(line)}</div>`).join('')
-      : '<div>아직 처리한 문서가 없습니다. <b>/field</b>에서 의료기록을 비식별화하면 여기에 쌓입니다.</div>';
+      ? deid.docLogSentences({ source: 'field' }).map(line => `<div>${esc(line)}</div>`).join('')
+      : '<div>아직 <b>/field</b>에서 처리한 문서가 없습니다. 의료기록을 비식별화하면 여기에 쌓입니다.</div>';
+    // 직접 테스트 기록은 있다는 사실만 알리고 분모 밖에 둔다. CSV에는 출처 열로 함께 나간다.
+    document.getElementById('deidLiveTrialNote').innerHTML = trials.docs
+      ? `<div class="kcsi-report-note"><b>직접 테스트 ${trials.docs}건은 위 수치에서 빠져 있습니다.</b>`
+        + `<div>같은 문서를 여러 번 돌릴 수 있어 실사용 비율과 섞으면 안 됩니다. `
+        + `참고로 그중 ${trials.autoOnly}건(${pct(trials.autoOnlyRate)})에서 자동 탐지가 영역을 찾았습니다. `
+        + `CSV에는 <code>source</code> 열로 함께 들어갑니다.</div></div>`
+      : '';
     const conditions = summary.conditions.filter(item => item.condition !== 'unknown');
     document.getElementById('deidLiveConditions').innerHTML = conditions.length
       ? `<div class="arena-table-wrap"><table class="arena-table"><thead><tr><th>조건</th><th>문서</th><th>자동만</th><th>가림 완료율</th></tr></thead><tbody>${
@@ -167,6 +352,62 @@
         <div>OCR 손실 ${ocrLoss == null ? '—' : `${ocrLoss}%p`} — 규칙은 잡을 수 있는데 글자를 못 읽어 놓친 몫입니다. 촬영·해상도로 줄어듭니다.</div>
         ${gaps.length ? `<div>규칙이 못 잡는 칸: ${gaps.map(gap => `${esc(gap.label || gap.type)}(${gap.count}건)`).join(', ')}</div>` : ''}
       </div>`;
+  }
+
+  // ── 합성 문서 세트 구성 ────────────────────────────────────────────────────
+  //
+  // "합성 문서 120건으로 쟀습니다"만 적으면 그 120건이 무엇인지 알 수 없다. 어떤 칸을
+  // 지어냈는지, 촬영 조건이 실제 왜곡인지 흉내인지, 값이 몇 종류인지를 보여준다.
+  // 설명은 화면에 적어 두지 않고 불러온 정답지에서 뽑는다 — 적어 두면 팩을 바꿔도
+  // 설명은 그대로 남아 조용히 거짓말이 된다.
+  function renderSetProfile() {
+    const body = document.getElementById('deidSetProfileBody');
+    const wrap = document.getElementById('deidSetProfile');
+    const describe = root.KCSISyntheticProfile;
+    if (!body || !wrap) return;
+    if (!state.sheet || !describe) {
+      body.innerHTML = '<div class="kcsi-report-note">합성 문서 ZIP을 불러오면 이 세트가 무엇으로 만들어졌는지 여기에 표시됩니다.</div>';
+      return;
+    }
+    const profile = describe.describeSyntheticSet(state.sheet);
+    if (!profile.available) {
+      body.innerHTML = `<div class="kcsi-report-warn">${esc(profile.reason || '정답지를 읽지 못했습니다.')}</div>`;
+      return;
+    }
+
+    const formTables = profile.forms.map(form => `
+      <h4>${esc(form.label)} · ${form.docs}건 · 개인정보 ${form.items}개</h4>
+      <div class="arena-table-wrap"><table class="arena-table"><thead><tr>
+        <th>서식의 칸</th><th>종류</th><th>건수</th><th>값 가짓수</th><th>합성값 예시</th>
+      </tr></thead><tbody>${form.fields.map(field => `<tr>
+        <td>${esc(field.label || '(라벨 없음)')}</td><td>${esc(field.type)}</td>
+        <td>${field.count}</td><td>${field.distinct || '—'}</td>
+        <td>${field.samples.length ? esc(field.samples.join(', ')) : '—'}</td>
+      </tr>`).join('')}</tbody></table></div>`).join('');
+
+    const rrn = profile.rrn;
+    const rrnNote = rrn.checked
+      ? (rrn.safe
+        ? `<div class="kcsi-report-note"><b>주민등록번호 ${rrn.checked}개 전부가 실제로 발급될 수 없는 번호입니다.</b>`
+          + `<div>정답지에 실린 값을 직접 검사한 결과입니다 — 월·일 자리가 존재하지 않는 조합(13월, 32일 이상)이라 어떤 실존 인물과도 겹칠 수 없습니다.</div></div>`
+        : `<div class="kcsi-report-warn"><b>주민등록번호 ${rrn.checked}개 가운데 ${rrn.checked - rrn.impossible}개는 월·일이 실재할 수 있는 조합입니다.</b>`
+          + `<div>예: ${esc(rrn.possible.join(', '))} — 실존 번호와 겹칠 수 있으므로 확인이 필요합니다.</div></div>`)
+      : '';
+
+    body.innerHTML = `
+      <div class="arena-store">${describe.profileSentences(profile).map(line => `<div>${esc(line)}</div>`).join('')}</div>
+      ${rrnNote}
+      <h4>촬영 조건 — 무엇을 바꾼 것인가</h4>
+      <div class="arena-table-wrap"><table class="arena-table"><thead><tr>
+        <th>조건</th><th>문서</th><th>변형 방식</th><th>구체적으로</th>
+      </tr></thead><tbody>${profile.conditions.map(row => `<tr>
+        <td>${esc(row.label)}</td><td>${row.docs}</td>
+        <td>${esc(row.kindLabel)}</td><td>${esc(row.detail || '—')}</td>
+      </tr>`).join('')}</tbody></table></div>
+      <h4>서식별로 무엇을 합성했나</h4>
+      ${formTables}
+      <h4>이 세트로 말할 수 없는 것</h4>
+      <ul>${profile.caveats.map(line => `<li>${esc(line)}</li>`).join('')}</ul>`;
   }
 
   function renderBatch() {
@@ -239,6 +480,7 @@
     state.sheet = sheet;
     state.images = images;
     document.getElementById('deidBatchNote').textContent = `${sheet.document_count || sheet.documents.length}건 · 항목 ${sheet.item_count || '?'}개 · 조건 ${(sheet.conditions || []).length}종`;
+    renderSetProfile();
     return sheet;
   }
 
@@ -286,6 +528,27 @@
   }
 
   function bind() {
+    // 직접 테스트. 파일 선택과 촬영은 입력만 다르고 이후 흐름은 같다.
+    const startTrial = async file => {
+      if (state.trialRunning || !file) return;
+      const condition = document.getElementById('deidTrialCondition').value;
+      await runTrial(file, condition);
+    };
+    document.getElementById('deidTrialPick').addEventListener('click', () => {
+      if (!state.trialRunning) document.getElementById('deidTrialFile').click();
+    });
+    document.getElementById('deidTrialCamera').addEventListener('click', () => {
+      if (!state.trialRunning) document.getElementById('deidTrialCameraFile').click();
+    });
+    ['deidTrialFile', 'deidTrialCameraFile'].forEach(id => {
+      document.getElementById(id).addEventListener('change', async event => {
+        const file = event.target.files && event.target.files[0];
+        // 같은 파일을 연달아 고를 수 있게 값을 비운다.
+        event.target.value = '';
+        await startTrial(file);
+      });
+    });
+
     document.getElementById('deidLiveCsv').addEventListener('click', () => {
       const csv = root.KCSI_DEID.docLogCsv();
       if (!csv || csv.split('\r\n').length < 2) return;
@@ -358,6 +621,8 @@
     header.insertAdjacentElement('afterend', container);
     bind();
     renderLive();
+    renderTrial();
+    renderSetProfile();
     renderBatch();
   }
 
@@ -375,6 +640,8 @@
     render() {
       if (!document.getElementById('deidReportRoot')) return false;
       renderLive();
+      renderTrial();
+      renderSetProfile();
       renderBatch();
       return true;
     },

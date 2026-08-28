@@ -101,6 +101,19 @@ export async function backfillDocAnswers(options = {}) {
     });
   });
 
+  // 조건 메타(각도·배율·분류)도 함께 채운다. 화면이 "접힘"을 실제 종이 왜곡으로
+  // 설명하지 않으려면 조건 id를 보고 짐작하는 대신 이 값을 읽어야 한다.
+  const conditionMeta = new Map(CONDITIONS.map(item => [item.id, item]));
+  manifest.conditions = (manifest.conditions || []).map(row => {
+    const meta = conditionMeta.get(row.id);
+    if (!meta) throw new Error(`${row.id}: 빌더의 조건 목록에 없습니다. 이미지를 다시 만들어야 합니다.`);
+    return {
+      id: meta.id, label: meta.label, logged: meta.logged, kind: meta.kind,
+      ...(meta.angle ? { angle: meta.angle } : {}),
+      ...(meta.scale ? { scale: meta.scale } : {}),
+    };
+  });
+
   manifest.version = 2;
   manifest.answer_fields = ['type', 'label', 'value', 'box'];
 
